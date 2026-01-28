@@ -28,6 +28,7 @@ type Action =
   | { type: 'SET_AUTH'; payload: { auth: TwitterAuth; user: TwitterUser } }
   | { type: 'LOGOUT' }
   | { type: 'SET_TWEETS'; payload: Tweet[] }
+  | { type: 'APPEND_TWEETS'; payload: Tweet[] }
   | { type: 'SET_FILTERS'; payload: TweetFilter[] }
   | { type: 'TOGGLE_EXCLUDE'; payload: string }
   | { type: 'SET_DELETION_PROGRESS'; payload: Partial<DeletionProgress> }
@@ -45,6 +46,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...initialState };
     case 'SET_TWEETS':
       return { ...state, tweets: action.payload };
+    case 'APPEND_TWEETS':
+      return { ...state, tweets: [...state.tweets, ...action.payload] };
     case 'SET_FILTERS':
       return { ...state, filters: action.payload };
     case 'TOGGLE_EXCLUDE': {

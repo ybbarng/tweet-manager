@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw, Upload } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,7 +9,7 @@ import { createLikesFilter } from '@/lib/filters/likes';
 import { createRetweetsFilter } from '@/lib/filters/retweets';
 import { createThreadFilter } from '@/lib/filters/thread';
 import { fetchTweets, isElectron, onDeleteProgress } from '@/lib/ipc';
-import { useDeleteBatch, useParseArchive, useSaveBackup } from '@/lib/queries';
+import { useDeleteBatch, useSaveBackup } from '@/lib/queries';
 import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
 import type { DeletionProgress as DeletionProgressType, Tweet } from '@/types';
 import QueryBuilder from '../filters/QueryBuilder';
@@ -22,10 +22,9 @@ export default function TweetManager() {
 
   // 데이터 로드 상태
   const [apiLoading, setApiLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
   const [loadError, setLoadError] = useState('');
-  const [showAdvancedUpload, setShowAdvancedUpload] = useState(false);
-  const archiveMutation = useParseArchive();
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState(true);
 
   // 필터 상태 (삭제 조건)
   const [likesEnabled, setLikesEnabled] = useState(false);
@@ -96,84 +95,52 @@ export default function TweetManager() {
   }, [displayedTweetsKey]);
 
   // 데이터 로드 함수들
-  const handleApiLoad = async () => {
+  const handleApiLoad = async (cursor?: string) => {
     if (!isElectron()) return;
     setApiLoading(true);
     setLoadError('');
-    setLoadingMessage('트윗을 불러오고 있습니다...');
 
-    // 삭제 진행 상태 초기화
-    dispatch({
-      type: 'SET_DELETION_PROGRESS',
-      payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
-    });
+    // 첫 로드 시 삭제 진행 상태 초기화
+    if (!cursor) {
+      dispatch({
+        type: 'SET_DELETION_PROGRESS',
+        payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
+      });
+    }
 
     try {
-      const allTweets: Tweet[] = [];
-      let cursor: string | undefined;
+      const result = await fetchTweets(cursor);
+      if (!result.success || !result.data) {
+        setLoadError(result.error || '트윗 조회에 실패했습니다.');
+        return;
+      }
 
-      while (true) {
-        const result = await fetchTweets(cursor);
-        if (!result.success || !result.data) {
-          if (allTweets.length === 0) {
-            setLoadError(result.error || '트윗 조회에 실패했습니다.');
-          }
-          break;
+      const loadedTweets = result.data.tweets.map((t: Tweet) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+      }));
+
+      if (loadedTweets.length > 0) {
+        if (cursor) {
+          dispatch({ type: 'APPEND_TWEETS', payload: loadedTweets });
+        } else {
+          dispatch({ type: 'SET_TWEETS', payload: loadedTweets });
         }
-
-        const loadedTweets = result.data.tweets.map((t: Tweet) => ({
-          ...t,
-          createdAt: new Date(t.createdAt),
-        }));
-        allTweets.push(...loadedTweets);
-        setLoadingMessage(
-          `트윗을 불러오고 있습니다... (${allTweets.length}개)`,
-        );
-
-        cursor = result.data.nextCursor;
-        if (!cursor || loadedTweets.length === 0) break;
       }
 
-      if (allTweets.length > 0) {
-        dispatch({ type: 'SET_TWEETS', payload: allTweets });
-      }
+      setNextCursor(result.data.nextCursor);
+      setHasMore(!!result.data.nextCursor && loadedTweets.length > 0);
     } catch (err) {
       setLoadError((err as Error).message);
     } finally {
       setApiLoading(false);
-      setLoadingMessage('');
     }
   };
 
-  const handleArchiveUpload = () => {
-    if (!isElectron()) return;
-    setLoadError('');
-    setLoadingMessage('아카이브 파일을 파싱하고 있습니다...');
-
-    // 삭제 진행 상태 초기화
-    dispatch({
-      type: 'SET_DELETION_PROGRESS',
-      payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
-    });
-
-    archiveMutation.mutate(undefined, {
-      onSuccess: (result) => {
-        if (result.success && result.data) {
-          const loadedTweets = result.data.map((t: Tweet) => ({
-            ...t,
-            createdAt: new Date(t.createdAt),
-          }));
-          dispatch({ type: 'SET_TWEETS', payload: loadedTweets });
-        } else {
-          setLoadError(result.error || '아카이브 파싱에 실패했습니다.');
-        }
-        setLoadingMessage('');
-      },
-      onError: (err) => {
-        setLoadError(err.message);
-        setLoadingMessage('');
-      },
-    });
+  const handleLoadMore = () => {
+    if (nextCursor && hasMore) {
+      handleApiLoad(nextCursor);
+    }
   };
 
   // 트윗 선택/해제 토글
@@ -239,7 +206,15 @@ export default function TweetManager() {
     return unsubscribe;
   }, [dispatch]);
 
-  const loading = archiveMutation.isPending || apiLoading;
+  // 로그인 후 자동으로 트윗 로드 (마운트 시 1회만 실행)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 의도적으로 마운트 시에만 실행
+  useEffect(() => {
+    if (tweets.length === 0 && !apiLoading) {
+      handleApiLoad(undefined);
+    }
+  }, []);
+
+  const loading = apiLoading;
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
   const progress =
@@ -247,105 +222,15 @@ export default function TweetManager() {
       ? Math.round((deletionProgress.completed / deletionProgress.total) * 100)
       : 0;
 
-  // 트윗이 없으면 데이터 로드 화면
-  if (tweets.length === 0 && !loading) {
-    return (
-      <div className="max-w-lg mx-auto">
-        <h2 className="text-2xl font-bold mb-2">트윗 불러오기</h2>
-        {user && (
-          <p className="text-neutral-500 mb-6">
-            @{user.screenName} 계정의 트윗을 불러옵니다.
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={handleApiLoad}
-          disabled={loading}
-          className="w-full flex items-center gap-3 p-4 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className="w-8 h-8 text-green-500" />
-          <div className="text-left">
-            <p className="font-semibold">API로 가져오기</p>
-            <p className="text-sm text-neutral-500">
-              Twitter API를 통해 트윗을 가져옵니다
-            </p>
-          </div>
-        </button>
-
-        {/* 고급 옵션: 아카이브 업로드 */}
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setShowAdvancedUpload(!showAdvancedUpload)}
-            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-          >
-            <svg
-              className={`w-4 h-4 transition-transform ${showAdvancedUpload ? 'rotate-90' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-            고급 옵션
-          </button>
-
-          {showAdvancedUpload && (
-            <button
-              type="button"
-              onClick={handleArchiveUpload}
-              disabled={loading}
-              className="mt-3 w-full flex items-center gap-3 p-4 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors disabled:opacity-50"
-            >
-              <Upload className="w-8 h-8 text-blue-500" />
-              <div className="text-left">
-                <p className="font-semibold">아카이브 파일 업로드</p>
-                <p className="text-sm text-neutral-500">
-                  X 설정에서 다운로드한 아카이브의 tweets.js 파일
-                </p>
-              </div>
-            </button>
-          )}
-        </div>
-
-        {loadingMessage && (
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-            <p className="text-sm text-blue-600 dark:text-blue-400">
-              {loadingMessage}
-            </p>
-          </div>
-        )}
-
-        {loadError && <p className="mt-4 text-red-500 text-sm">{loadError}</p>}
-      </div>
-    );
-  }
-
-  // 로딩 중
-  if (loading) {
-    return (
-      <div className="max-w-lg mx-auto">
-        <div className="p-6 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
-          <RefreshCw className="w-8 h-8 mx-auto mb-3 text-blue-500 animate-spin" />
-          <p className="text-blue-600 dark:text-blue-400">{loadingMessage}</p>
-        </div>
-      </div>
-    );
-  }
-
   // 메인 관리 화면
   return (
     <div className="max-w-4xl mx-auto">
       {/* 데이터 상태 바 */}
       <div className="flex items-center justify-between mb-6 p-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
-        <div>
+        <div className="flex items-center gap-2">
+          {loading && (
+            <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+          )}
           <span className="font-semibold">
             {tweets.length.toLocaleString()}
           </span>
@@ -353,16 +238,34 @@ export default function TweetManager() {
           {user && (
             <span className="text-neutral-400 ml-2">@{user.screenName}</span>
           )}
+          {loading && (
+            <span className="text-blue-500 text-sm">불러오는 중...</span>
+          )}
+          {loadError && (
+            <span className="text-red-500 text-sm">{loadError}</span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={handleApiLoad}
-          disabled={loading || isRunning}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          새로고침
-        </button>
+        <div className="flex items-center gap-2">
+          {hasMore && !loading && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loading || isRunning}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 disabled:bg-neutral-400 text-white rounded-lg"
+            >
+              더 불러오기
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => handleApiLoad(undefined)}
+            disabled={loading || isRunning}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            새로고침
+          </button>
+        </div>
       </div>
 
       {/* 삭제 진행/완료 상태 */}

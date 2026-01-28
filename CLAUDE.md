@@ -29,6 +29,7 @@ pnpm run test:watch       # vitest watch 모드
 - **electron-builder 패키징**: `files` 설정에서 `node_modules`를 제외하고 `wretch`만 포함. Next.js, React 등은 정적 빌드(`out/`) 후 런타임에 불필요. `sharp`는 아이콘 생성 스크립트용(devDependency).
 - **프로덕션 정적 파일 서빙**: 커스텀 `app://` 프로토콜 사용. Next.js 정적 빌드의 절대 경로(`/_next/...`)를 `file://`에서 로드할 수 없어 `protocol.handle`로 해결. 개발 모드 판별은 `app.isPackaged` 사용.
 - **아이콘 관리**: 원본은 `src/app/icon.svg` 하나만 유지. Next.js App Router가 이 파일을 favicon 및 `/icon.svg` 경로로 제공. Electron 앱 아이콘(`resources/icon.png`)은 `pnpm run icon:build` 또는 `electron:build` 시 자동 생성.
+- **트윗 로딩 전략**: 한 번에 20개씩 페이지네이션으로 로드. 로그인 시 자동으로 첫 20개 로드, "더 불러오기" 버튼으로 추가 로드. rate limit 방지 및 UX 개선 목적.
 
 ## 코딩 컨벤션
 
