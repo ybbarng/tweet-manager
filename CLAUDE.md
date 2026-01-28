@@ -26,6 +26,7 @@ pnpm run test:watch       # vitest watch 모드
 - **HTTP 클라이언트**: Electron 메인 프로세스에서 wretch 사용 (fetch 래퍼). `electron/twitter/api.ts` 참고.
 - **서버 상태 관리**: 렌더러에서 @tanstack/react-query 사용. mutation 훅은 `src/lib/queries.ts`에 정의.
 - **electron-builder 패키징**: `files` 설정에서 `node_modules`를 제외하고 `wretch`만 포함. Next.js, React 등은 정적 빌드(`out/`) 후 런타임에 불필요. `sharp`는 아이콘 생성 스크립트용(devDependency).
+- **프로덕션 정적 파일 서빙**: 커스텀 `app://` 프로토콜 사용. Next.js 정적 빌드의 절대 경로(`/_next/...`)를 `file://`에서 로드할 수 없어 `protocol.handle`로 해결. 개발 모드 판별은 `app.isPackaged` 사용.
 
 ## 코딩 컨벤션
 

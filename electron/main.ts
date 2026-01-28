@@ -1,9 +1,32 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  net,
+  protocol,
+  session,
+} from 'electron';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = !app.isPackaged;
+
+// 프로덕션 빌드에서 정적 파일 서빙을 위한 커스텀 프로토콜
+if (!isDev) {
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: 'app',
+      privileges: {
+        standard: true,
+        secure: true,
+        supportFetchAPI: true,
+      },
+    },
+  ]);
+}
 
 let mainWindow: BrowserWindow | null = null;
 let twitterClient: TwitterApiClient | null = null;
@@ -32,7 +55,7 @@ function createWindow() {
     mainWindow.loadURL(`http://localhost:${port}`);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../out/index.html'));
+    mainWindow.loadURL('app://./index.html');
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -45,6 +68,22 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // 프로덕션에서 커스텀 프로토콜 핸들러 등록
+  if (!isDev) {
+    const outDir = path.join(__dirname, '../out');
+    protocol.handle('app', (request) => {
+      const url = new URL(request.url);
+      let filePath = path.join(outDir, url.pathname);
+
+      // 디렉토리면 index.html 반환
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+        filePath = path.join(filePath, 'index.html');
+      }
+
+      return net.fetch(`file://${filePath}`);
+    });
+  }
+
   // macOS Dock 아이콘 설정
   if (process.platform === 'darwin' && app.dock) {
     app.dock.setIcon(path.join(__dirname, '../resources/icon.png'));
