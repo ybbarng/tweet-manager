@@ -76,6 +76,12 @@ export default function TweetManager() {
     setLoadError('');
     setLoadingMessage('트윗을 불러오고 있습니다...');
 
+    // 삭제 진행 상태 초기화
+    dispatch({
+      type: 'SET_DELETION_PROGRESS',
+      payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
+    });
+
     try {
       const allTweets: Tweet[] = [];
       let cursor: string | undefined;
@@ -117,6 +123,12 @@ export default function TweetManager() {
     if (!isElectron()) return;
     setLoadError('');
     setLoadingMessage('아카이브 파일을 파싱하고 있습니다...');
+
+    // 삭제 진행 상태 초기화
+    dispatch({
+      type: 'SET_DELETION_PROGRESS',
+      payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
+    });
 
     archiveMutation.mutate(undefined, {
       onSuccess: (result) => {
@@ -402,69 +414,60 @@ export default function TweetManager() {
               preserved={tweets.length - toDelete.length}
             />
 
-            {filters.length === 0 ? (
-              <div className="text-center py-12 text-neutral-500 border border-neutral-200 dark:border-neutral-700 rounded-lg">
-                하나 이상의 필터를 활성화하면
-                <br />
-                삭제 대상 트윗이 표시됩니다
-              </div>
-            ) : (
-              <>
-                <h4 className="font-medium text-sm text-red-500 mb-2">
-                  삭제 후보 ({deletionCandidates.length.toLocaleString()}개)
-                  {excludedTweetIds.size > 0 && (
-                    <span className="text-neutral-400 font-normal ml-2">
-                      (체크 해제: {excludedTweetIds.size}개)
-                    </span>
-                  )}
-                </h4>
-                <p className="text-xs text-neutral-500 mb-2">
-                  체크를 해제하면 보존됩니다. 흐리게 표시된 트윗은 삭제 대상에서
-                  제외됩니다.
-                </p>
-                <TweetList
-                  tweets={deletionCandidates}
-                  showCheckbox
-                  checkedIds={excludedTweetIds}
-                  onToggle={handleToggleExclude}
+            <h4 className="font-medium text-sm text-red-500 mb-2">
+              삭제 후보 ({deletionCandidates.length.toLocaleString()}개)
+              {excludedTweetIds.size > 0 && (
+                <span className="text-neutral-400 font-normal ml-2">
+                  (체크 해제: {excludedTweetIds.size}개)
+                </span>
+              )}
+            </h4>
+            <p className="text-xs text-neutral-500 mb-2">
+              {filters.length === 0
+                ? '필터가 없으면 전체 트윗이 삭제 대상입니다. 체크를 해제하여 보존할 트윗을 선택하세요.'
+                : '체크를 해제하면 보존됩니다. 흐리게 표시된 트윗은 삭제 대상에서 제외됩니다.'}
+            </p>
+            <TweetList
+              tweets={deletionCandidates}
+              showCheckbox
+              checkedIds={excludedTweetIds}
+              onToggle={handleToggleExclude}
+            />
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={handleBackup}
+                disabled={backupMutation.isPending || toDelete.length === 0}
+                className="w-full py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
+              >
+                {backupMutation.isPending
+                  ? '저장 중...'
+                  : '삭제 대상 백업 다운로드 (JSON)'}
+              </button>
+
+              <label className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
                 />
+                <span className="text-sm text-red-600">
+                  {toDelete.length.toLocaleString()}개의 트윗을 영구 삭제하는
+                  것에 동의합니다
+                </span>
+              </label>
 
-                <div className="mt-6 space-y-3">
-                  <button
-                    type="button"
-                    onClick={handleBackup}
-                    disabled={backupMutation.isPending}
-                    className="w-full py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  >
-                    {backupMutation.isPending
-                      ? '저장 중...'
-                      : '삭제 대상 백업 다운로드 (JSON)'}
-                  </button>
-
-                  <label className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                      className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-red-600">
-                      {toDelete.length.toLocaleString()}개의 트윗을 영구
-                      삭제하는 것에 동의합니다
-                    </span>
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={!confirmed || toDelete.length === 0}
-                    className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 disabled:bg-neutral-400 text-white rounded-lg font-medium transition-colors"
-                  >
-                    {toDelete.length.toLocaleString()}개 트윗 삭제 실행
-                  </button>
-                </div>
-              </>
-            )}
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={!confirmed || toDelete.length === 0}
+                className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 disabled:bg-neutral-400 text-white rounded-lg font-medium transition-colors"
+              >
+                {toDelete.length.toLocaleString()}개 트윗 삭제 실행
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -11,12 +11,9 @@ export function getPreservedTweets(
   const preserved = new Set<string>();
   const enabledFilters = filters.filter((f) => f.enabled);
 
-  // 활성 필터가 없으면 전체 보존 (삭제 대상 없음)
+  // 활성 필터가 없으면 전체 삭제 후보 (사용자가 수동으로 보존 선택)
   if (enabledFilters.length === 0) {
-    for (const t of tweets) {
-      preserved.add(t.id);
-    }
-    return preserved;
+    return preserved; // 빈 Set 반환 = 보존할 트윗 없음
   }
 
   for (const filter of enabledFilters) {

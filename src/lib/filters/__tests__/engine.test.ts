@@ -27,9 +27,9 @@ describe('필터 엔진', () => {
     makeTweet({ id: '5', likes: 0, retweets: 0 }),
   ];
 
-  it('필터가 없으면 전체 보존', () => {
+  it('필터가 없으면 전체 삭제 후보', () => {
     const preserved = getPreservedTweets(tweets, []);
-    expect(preserved.size).toBe(tweets.length);
+    expect(preserved.size).toBe(0); // 보존할 트윗 없음 = 전체 삭제 후보
   });
 
   it('좋아요 필터: minLikes 이상인 트윗만 보존', () => {
@@ -91,7 +91,7 @@ describe('필터 엔진', () => {
     const filter = createLikesFilter(5);
     filter.enabled = false;
     const preserved = getPreservedTweets(tweets, [filter]);
-    // 활성 필터가 없으므로 전체 보존
-    expect(preserved.size).toBe(tweets.length);
+    // 활성 필터가 없으므로 전체 삭제 후보
+    expect(preserved.size).toBe(0);
   });
 });
