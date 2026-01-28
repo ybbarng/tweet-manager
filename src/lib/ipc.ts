@@ -24,7 +24,12 @@ interface ElectronAPI {
     deleteBatch: (
       tweetIds: string[],
     ) => Promise<
-      IpcResponse<{ total: number; completed: number; failed: number }>
+      IpcResponse<{
+        total: number;
+        completed: number;
+        failed: number;
+        failedTweetIds?: { id: string; error: string }[];
+      }>
     >;
     parseArchive: () => Promise<IpcResponse<Tweet[]>>;
     saveBackup: (data: string) => Promise<IpcResponse<void>>;
