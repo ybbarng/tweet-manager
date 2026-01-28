@@ -30,6 +30,13 @@ pnpm run test:watch       # vitest watch 모드
 - **프로덕션 정적 파일 서빙**: 커스텀 `app://` 프로토콜 사용. Next.js 정적 빌드의 절대 경로(`/_next/...`)를 `file://`에서 로드할 수 없어 `protocol.handle`로 해결. 개발 모드 판별은 `app.isPackaged` 사용.
 - **아이콘 관리**: 원본은 `src/app/icon.svg` 하나만 유지. Next.js App Router가 이 파일을 favicon 및 `/icon.svg` 경로로 제공. Electron 앱 아이콘(`resources/icon.png`)은 `pnpm run icon:build` 또는 `electron:build` 시 자동 생성.
 - **트윗 로딩 전략**: 한 번에 20개씩 페이지네이션으로 로드. 로그인 시 자동으로 첫 20개 로드, "더 불러오기" 버튼으로 추가 로드. rate limit 방지 및 UX 개선 목적.
+- **API 안전 장치**:
+  - 트윗 삭제 간격: 1~2초 랜덤 딜레이 (계정 보호)
+  - 연속 5회 실패 시 자동 중단
+  - Rate limit (429) 시 최대 3회 재시도, 대기 시간 점진적 증가 (5초, 10초, 15초)
+  - fetch API 호출 최소 500ms 간격 유지
+  - 중복 요청 방지 로직
+- **삭제 전 백업**: 기본 활성화된 백업 옵션 제공. 실패한 트윗 ID 및 에러 추적.
 
 ## 코딩 컨벤션
 
