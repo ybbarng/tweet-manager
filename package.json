@@ -1,5 +1,5 @@
 {
-  "name": "x-manager",
+  "name": "twit-manager",
   "version": "0.1.0",
   "private": true,
   "main": "dist-electron/main.js",
@@ -48,8 +48,8 @@
     ]
   },
   "build": {
-    "appId": "com.x-manager.app",
-    "productName": "X Manager",
+    "appId": "com.twit-manager.app",
+    "productName": "Twit Manager",
     "directories": {
       "output": "release"
     },

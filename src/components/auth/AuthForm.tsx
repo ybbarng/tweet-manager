@@ -7,7 +7,7 @@ import { useAppDispatch } from '@/lib/store/tweet-store';
 import type { TwitterAuth } from '@/types';
 import SecurityWarningModal from './SecurityWarningModal';
 
-const STORAGE_KEY = 'x-manager-warning-dismissed';
+const STORAGE_KEY = 'twit-manager-warning-dismissed';
 
 export function resetWarningDismissed() {
   localStorage.removeItem(STORAGE_KEY);
