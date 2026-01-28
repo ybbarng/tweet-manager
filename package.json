@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "electron:dev": "concurrently -n next,electron -k \"next dev\" \"wait-on http://localhost:${PORT:-3000} && pnpm run electron:compile && electron .\"",
-    "electron:build": "next build && pnpm run electron:compile && electron-builder",
+    "icon:build": "node scripts/build-icon.js",
+    "electron:build": "pnpm run icon:build && next build && pnpm run electron:compile && electron-builder",
     "electron:compile": "tsc -p tsconfig.electron.json"
   },
   "dependencies": {

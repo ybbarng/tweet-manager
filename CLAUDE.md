@@ -9,7 +9,8 @@ pnpm install              # 의존성 설치
 pnpm run dev              # Next.js 개발 서버만 실행
 pnpm run electron:dev     # Electron + Next.js 동시 실행 (개발 모드)
 pnpm run electron:compile # Electron TypeScript만 컴파일
-pnpm run electron:build   # 프로덕션 빌드 + 패키징
+pnpm run electron:build   # 프로덕션 빌드 + 패키징 (아이콘 빌드 포함)
+pnpm run icon:build       # 앱 아이콘 생성 (src/app/icon.svg → resources/icon.png)
 pnpm run build            # Next.js 빌드만
 pnpm run lint             # biome check --write (포맷 + 린트 자동 수정)
 pnpm run check            # biome check (수정 없이 검사만)
@@ -27,6 +28,7 @@ pnpm run test:watch       # vitest watch 모드
 - **서버 상태 관리**: 렌더러에서 @tanstack/react-query 사용. mutation 훅은 `src/lib/queries.ts`에 정의.
 - **electron-builder 패키징**: `files` 설정에서 `node_modules`를 제외하고 `wretch`만 포함. Next.js, React 등은 정적 빌드(`out/`) 후 런타임에 불필요. `sharp`는 아이콘 생성 스크립트용(devDependency).
 - **프로덕션 정적 파일 서빙**: 커스텀 `app://` 프로토콜 사용. Next.js 정적 빌드의 절대 경로(`/_next/...`)를 `file://`에서 로드할 수 없어 `protocol.handle`로 해결. 개발 모드 판별은 `app.isPackaged` 사용.
+- **아이콘 관리**: 원본은 `src/app/icon.svg` 하나만 유지. Next.js App Router가 이 파일을 favicon 및 `/icon.svg` 경로로 제공. Electron 앱 아이콘(`resources/icon.png`)은 `pnpm run icon:build` 또는 `electron:build` 시 자동 생성.
 
 ## 코딩 컨벤션
 
