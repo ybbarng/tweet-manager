@@ -3,9 +3,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useReducer } from 'react';
 import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
-import DeletionProgress from '@/components/deletion/DeletionProgress';
-import FilterPanel from '@/components/filters/FilterPanel';
-import ArchiveUpload from '@/components/upload/ArchiveUpload';
+import TweetManager from '@/components/manager/TweetManager';
 import { getQueryClient } from '@/lib/query-client';
 import {
   AppDispatchContext,
@@ -14,18 +12,10 @@ import {
   reducer,
 } from '@/lib/store/tweet-store';
 
-const STEPS = ['auth', 'load', 'filter', 'preview', 'delete'] as const;
-const STEP_LABELS: Record<string, string> = {
-  auth: '인증',
-  load: '트윗 불러오기',
-  filter: '필터 설정',
-  preview: '미리보기 & 삭제',
-};
-
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const currentStepIndex = STEPS.indexOf(state.step);
+  const isAuthenticated = !!state.auth;
 
   return (
     <QueryClientProvider client={getQueryClient()}>
@@ -64,7 +54,7 @@ export default function Home() {
             </header>
 
             {/* 제품 설명 */}
-            {state.step === 'auth' && (
+            {!isAuthenticated && (
               <div className="max-w-4xl mx-auto px-6 pt-6">
                 <div className="text-center mb-6">
                   <p className="text-neutral-600 dark:text-neutral-400">
@@ -75,49 +65,9 @@ export default function Home() {
               </div>
             )}
 
-            {/* 스텝 인디케이터 */}
-            <div className="max-w-4xl mx-auto px-6 py-4">
-              <div className="flex items-center gap-2 mb-8">
-                {STEPS.filter((s) => s !== 'delete').map((step, i) => (
-                  <div key={step} className="flex items-center gap-2">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        i <= currentStepIndex
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500'
-                      }`}
-                    >
-                      {i + 1}
-                    </div>
-                    <span
-                      className={`text-sm ${
-                        i <= currentStepIndex
-                          ? 'text-foreground'
-                          : 'text-neutral-400'
-                      }`}
-                    >
-                      {STEP_LABELS[step]}
-                    </span>
-                    {i < STEPS.length - 2 && (
-                      <div
-                        className={`w-8 h-px ${
-                          i < currentStepIndex
-                            ? 'bg-blue-600'
-                            : 'bg-neutral-300 dark:bg-neutral-600'
-                        }`}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* 메인 콘텐츠 */}
-              {state.step === 'auth' && <AuthForm />}
-              {state.step === 'load' && <ArchiveUpload />}
-              {state.step === 'filter' && <FilterPanel />}
-              {(state.step === 'preview' || state.step === 'delete') && (
-                <DeletionProgress />
-              )}
+            {/* 메인 콘텐츠 */}
+            <div className="max-w-4xl mx-auto px-6 py-6">
+              {!isAuthenticated ? <AuthForm /> : <TweetManager />}
             </div>
           </div>
         </AppDispatchContext.Provider>

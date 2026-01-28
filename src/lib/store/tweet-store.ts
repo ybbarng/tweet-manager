@@ -45,7 +45,6 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         auth: action.payload.auth,
         user: action.payload.user,
-        step: 'load',
       };
     case 'LOGOUT':
       return { ...initialState };
