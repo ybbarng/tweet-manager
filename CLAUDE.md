@@ -36,3 +36,20 @@ pnpm run test:watch       # vitest watch 모드
 - 공통 타입은 `src/types/index.ts`에 정의
 - 필터 추가 시: `TweetFilter` 인터페이스 구현 → `src/lib/filters/`에 파일 추가 → `FilterPanel.tsx`에 UI 연결
 - IPC 채널 추가 시: `electron/main.ts`에 핸들러 → `electron/preload.ts`에 노출 → `src/lib/ipc.ts`에 래퍼 함수 → `src/lib/queries.ts`에 query/mutation 훅
+
+## 작업 완료 체크리스트
+
+매 작업이 끝나면 다음을 확인:
+
+1. **검증**: `pnpm run check`, `pnpm test`, `pnpm run electron:compile` 통과 확인
+2. **문서화**: 작업 내용에 따라 README.md 또는 CLAUDE.md 업데이트
+3. **커밋**: 의미 있는 단위로 분리하여 커밋 생성
+
+## 작업 중 다른 이슈 발견 시
+
+작업 중간에 다른 해야 할 일(린트 에러, 버그 등)이 발견되면:
+
+1. 현재 작업 롤백 (`git restore .`)
+2. 발견된 이슈 먼저 해결
+3. 해결 내용 커밋
+4. 기존에 하려던 작업 재개
