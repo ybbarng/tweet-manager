@@ -121,7 +121,7 @@ ipcMain.handle(
       const rawUserAgent = session.defaultSession.getUserAgent();
       const userAgent = rawUserAgent
         .replace(/\s*Electron\/[\d.]+\s*/g, ' ')
-        .replace(/\s*twit-manager\/[\d.]+\s*/g, ' ')
+        .replace(/\s*tweet-manager\/[\d.]+\s*/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
       console.log('[twitter:verify] 인증 시도:', {

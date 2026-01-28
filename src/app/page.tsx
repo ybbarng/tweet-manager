@@ -32,7 +32,10 @@ export default function Home() {
             {/* 헤더 */}
             <header className="border-b border-neutral-200 dark:border-neutral-800">
               <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-                <h1 className="text-xl font-bold">Twit Manager</h1>
+                <div className="flex items-center gap-2">
+                  <img src="/icon.svg" alt="Tweet Eraser" className="w-8 h-8" />
+                  <h1 className="text-xl font-bold">Tweet Eraser</h1>
+                </div>
                 {state.user && (
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-neutral-500">

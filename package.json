@@ -1,5 +1,5 @@
 {
-  "name": "twit-manager",
+  "name": "tweet-manager",
   "version": "0.1.0",
   "private": true,
   "main": "dist-electron/main.js",
@@ -53,8 +53,8 @@
     ]
   },
   "build": {
-    "appId": "com.twit-manager.app",
-    "productName": "Twit Eraser",
+    "appId": "com.tweet-manager.app",
+    "productName": "Tweet Eraser",
     "directories": {
       "output": "release"
     },

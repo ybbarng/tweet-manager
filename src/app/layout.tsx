@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Twit Eraser',
+  title: 'Tweet Eraser',
   description: 'Twitter(X) 트윗 삭제 도구',
 };
 

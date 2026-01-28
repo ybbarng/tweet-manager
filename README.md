@@ -1,4 +1,4 @@
-# Twit Manager
+# Tweet Eraser
 
 Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 삭제할 수 있는 데스크톱 앱.
 
@@ -47,7 +47,7 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 
 ```bash
 git clone <저장소 URL>
-cd twit-manager
+cd tweet-manager
 pnpm install
 ```
 
@@ -79,8 +79,8 @@ pnpm run electron:build
 
 | OS | 생성 파일 | 위치 |
 |----|----------|------|
-| Windows | `Twit Manager Setup x.x.x.exe` | `release/` |
-| macOS | `Twit Manager-x.x.x.dmg` | `release/` |
+| Windows | `Tweet Eraser Setup x.x.x.exe` | `release/` |
+| macOS | `Tweet Eraser-x.x.x.dmg` | `release/` |
 
 ### Windows에서 빌드
 
@@ -96,7 +96,7 @@ pnpm run electron:build
 2. **프로젝트 클론 및 의존성 설치**
    ```powershell
    git clone <저장소 URL>
-   cd twit-manager
+   cd tweet-manager
    pnpm install
    ```
 
@@ -110,7 +110,7 @@ pnpm run electron:build
    pnpm run electron:build
    ```
 
-   완료되면 `release/Twit Manager Setup x.x.x.exe` 파일이 생성됩니다.
+   완료되면 `release/Tweet Eraser Setup x.x.x.exe` 파일이 생성됩니다.
 
 ### macOS에서 빌드
 
@@ -118,7 +118,7 @@ pnpm run electron:build
 pnpm run electron:build
 ```
 
-완료되면 `release/Twit Manager-x.x.x.dmg` 파일이 생성됩니다.
+완료되면 `release/Tweet Eraser-x.x.x.dmg` 파일이 생성됩니다.
 
 ### 배포
 
