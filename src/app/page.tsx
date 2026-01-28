@@ -1,7 +1,7 @@
 'use client';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
 import SecurityWarningModal from '@/components/auth/SecurityWarningModal';
 import TweetManager from '@/components/manager/TweetManager';
@@ -13,11 +13,29 @@ import {
   reducer,
 } from '@/lib/store/tweet-store';
 
+const taglines = [
+  '흑역사, 깔끔하게 정리하세요.',
+  '과거의 트윗, 새 출발의 시작.',
+  '트윗 정리, 클릭 몇 번이면 끝.',
+  '디지털 발자국, 내 손으로 관리하세요.',
+  '타임라인을 가볍게, 마음도 가볍게.',
+  '묵혀둔 트윗, 이제 보내줄 시간.',
+  '깨끗한 타임라인, 새로운 시작.',
+];
+
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [showWarning, setShowWarning] = useState(false);
+  const [taglineIndex, setTaglineIndex] = useState(0);
 
   const isAuthenticated = !!state.auth;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTaglineIndex((prev) => (prev + 1) % taglines.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleShowWarning = () => {
     resetWarningDismissed();
@@ -62,13 +80,10 @@ export default function Home() {
 
             {/* 제품 설명 */}
             {!isAuthenticated && (
-              <div className="max-w-4xl mx-auto px-6 pt-6">
-                <div className="text-center mb-6">
-                  <p className="text-neutral-600 dark:text-neutral-400">
-                    오래된 트윗을 한 번에 정리하세요. 보존할 트윗을 필터로
-                    선택하고, 나머지를 일괄 삭제합니다.
-                  </p>
-                </div>
+              <div className="max-w-lg mx-auto pt-6">
+                <p className="text-neutral-600 dark:text-neutral-400 mb-6 transition-opacity duration-500">
+                  {taglines[taglineIndex]}
+                </p>
               </div>
             )}
 
