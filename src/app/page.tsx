@@ -63,6 +63,18 @@ export default function Home() {
               </div>
             </header>
 
+            {/* 제품 설명 */}
+            {state.step === 'auth' && (
+              <div className="max-w-4xl mx-auto px-6 pt-6">
+                <div className="text-center mb-6">
+                  <p className="text-neutral-600 dark:text-neutral-400">
+                    오래된 트윗을 한 번에 정리하세요. 보존할 트윗을 필터로
+                    선택하고, 나머지를 일괄 삭제합니다.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 스텝 인디케이터 */}
             <div className="max-w-4xl mx-auto px-6 py-4">
               <div className="flex items-center gap-2 mb-8">
