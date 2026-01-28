@@ -1,7 +1,7 @@
 'use client';
 
 import { RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getDeletionCandidates } from '@/lib/filters/engine';
@@ -25,6 +25,8 @@ export default function TweetManager() {
   const [loadError, setLoadError] = useState('');
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
+  const lastFetchTime = useRef(0);
+  const MIN_FETCH_INTERVAL = 500; // 최소 500ms 간격
 
   // 필터 상태 (삭제 조건)
   const [likesEnabled, setLikesEnabled] = useState(false);
@@ -97,6 +99,20 @@ export default function TweetManager() {
   // 데이터 로드 함수들
   const handleApiLoad = async (cursor?: string) => {
     if (!isElectron()) return;
+
+    // 이미 로딩 중이면 무시 (중복 요청 방지)
+    if (apiLoading) return;
+
+    // 최소 간격 체크 (Rate limit 방지)
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, MIN_FETCH_INTERVAL - timeSinceLastFetch),
+      );
+    }
+    lastFetchTime.current = Date.now();
+
     setApiLoading(true);
     setLoadError('');
 
@@ -138,9 +154,9 @@ export default function TweetManager() {
   };
 
   const handleLoadMore = () => {
-    if (nextCursor && hasMore) {
-      handleApiLoad(nextCursor);
-    }
+    // 이미 로딩 중이거나 더 불러올 데이터가 없으면 무시
+    if (apiLoading || !nextCursor || !hasMore) return;
+    handleApiLoad(nextCursor);
   };
 
   // 트윗 선택/해제 토글
