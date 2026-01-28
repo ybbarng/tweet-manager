@@ -2,7 +2,9 @@
 
 import { RefreshCw, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getDeletionCandidates, getTweetsToDelete } from '@/lib/filters/engine';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { getDeletionCandidates } from '@/lib/filters/engine';
 import { createLikesFilter } from '@/lib/filters/likes';
 import { createRetweetsFilter } from '@/lib/filters/retweets';
 import { createThreadFilter } from '@/lib/filters/thread';
@@ -10,14 +12,12 @@ import { fetchTweets, isElectron, onDeleteProgress } from '@/lib/ipc';
 import { useDeleteBatch, useParseArchive, useSaveBackup } from '@/lib/queries';
 import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
 import type { DeletionProgress as DeletionProgressType, Tweet } from '@/types';
-import LikesFilter from '../filters/LikesFilter';
-import RetweetsFilter from '../filters/RetweetsFilter';
-import ThreadFilter from '../filters/ThreadFilter';
+import QueryBuilder from '../filters/QueryBuilder';
 import TweetList from '../tweets/TweetList';
 import TweetStats from '../tweets/TweetStats';
 
 export default function TweetManager() {
-  const { user, tweets, excludedTweetIds, deletionProgress } = useAppState();
+  const { user, tweets, deletionProgress } = useAppState();
   const dispatch = useAppDispatch();
 
   // 데이터 로드 상태
@@ -27,26 +27,34 @@ export default function TweetManager() {
   const [showAdvancedUpload, setShowAdvancedUpload] = useState(false);
   const archiveMutation = useParseArchive();
 
-  // 필터 상태
+  // 필터 상태 (삭제 조건)
   const [likesEnabled, setLikesEnabled] = useState(false);
   const [minLikes, setMinLikes] = useState(5);
   const [retweetsEnabled, setRetweetsEnabled] = useState(false);
   const [minRetweets, setMinRetweets] = useState(3);
   const [threadEnabled, setThreadEnabled] = useState(false);
-  const [threadIds, setThreadIds] = useState<string[]>([]);
+  const [excludedThreadIds, setExcludedThreadIds] = useState<string[]>([]);
+
+  // 표시 제한
+  const [displayLimit, setDisplayLimit] = useState<number | null>(100);
+
+  // 사용자가 체크한 트윗 ID (삭제 선택)
+  const [selectedForDeletion, setSelectedForDeletion] = useState<Set<string>>(
+    new Set(),
+  );
 
   // 삭제 상태
   const [confirmed, setConfirmed] = useState(false);
   const deleteMutation = useDeleteBatch();
   const backupMutation = useSaveBackup();
 
-  // 필터 계산
+  // 필터 계산 (내부적으로는 "보존" 로직 사용)
   const filters = useMemo(() => {
     const f = [];
     if (likesEnabled) f.push(createLikesFilter(minLikes));
     if (retweetsEnabled) f.push(createRetweetsFilter(minRetweets));
-    if (threadEnabled && threadIds.length > 0)
-      f.push(createThreadFilter(threadIds));
+    if (threadEnabled && excludedThreadIds.length > 0)
+      f.push(createThreadFilter(excludedThreadIds));
     return f;
   }, [
     likesEnabled,
@@ -54,27 +62,38 @@ export default function TweetManager() {
     retweetsEnabled,
     minRetweets,
     threadEnabled,
-    threadIds,
+    excludedThreadIds,
   ]);
 
-  // 삭제 후보 (수동 제외 전)
+  // 조건이 활성화되어 있는지 확인
+  const hasActiveConditions = likesEnabled || retweetsEnabled;
+
+  // 삭제 후보 (쿼리 결과)
   const deletionCandidates = useMemo(
     () => getDeletionCandidates(tweets, filters),
     [tweets, filters],
   );
 
-  // 수동 선택 모드 여부 (필터가 없을 때)
-  const isManualMode = filters.length === 0;
-
-  // 실제 삭제 대상
-  const toDelete = useMemo(() => {
-    if (isManualMode) {
-      // 필터 없음: excludedTweetIds에 있는 트윗이 삭제 대상
-      return tweets.filter((t) => excludedTweetIds.has(t.id));
+  // 표시할 트윗 (limit 적용)
+  const displayedTweets = useMemo(() => {
+    if (displayLimit) {
+      return deletionCandidates.slice(0, displayLimit);
     }
-    // 필터 있음: 기존 로직 (삭제 후보 - 수동 제외)
-    return getTweetsToDelete(tweets, filters, excludedTweetIds);
-  }, [tweets, filters, excludedTweetIds, isManualMode]);
+    return deletionCandidates;
+  }, [deletionCandidates, displayLimit]);
+
+  // 실제 삭제 대상 = 사용자가 체크한 것만
+  const toDelete = useMemo(
+    () => displayedTweets.filter((t) => selectedForDeletion.has(t.id)),
+    [displayedTweets, selectedForDeletion],
+  );
+
+  // 필터/표시 목록 변경 시 선택 초기화
+  const displayedTweetsKey = displayedTweets.map((t) => t.id).join(',');
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 의도적으로 displayedTweetsKey 변경 시 선택 초기화
+  useEffect(() => {
+    setSelectedForDeletion(new Set());
+  }, [displayedTweetsKey]);
 
   // 데이터 로드 함수들
   const handleApiLoad = async () => {
@@ -157,13 +176,28 @@ export default function TweetManager() {
     });
   };
 
-  // 삭제 관련 함수들
-  const handleToggleExclude = useCallback(
-    (id: string) => {
-      dispatch({ type: 'TOGGLE_EXCLUDE', payload: id });
-    },
-    [dispatch],
-  );
+  // 트윗 선택/해제 토글
+  const handleToggleSelection = useCallback((id: string) => {
+    setSelectedForDeletion((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // 전체 선택
+  const handleSelectAll = useCallback(() => {
+    setSelectedForDeletion(new Set(displayedTweets.map((t) => t.id)));
+  }, [displayedTweets]);
+
+  // 전체 해제
+  const handleDeselectAll = useCallback(() => {
+    setSelectedForDeletion(new Set());
+  }, []);
 
   const handleBackup = () => {
     if (!isElectron()) return;
@@ -192,6 +226,7 @@ export default function TweetManager() {
         });
         dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: tweetIds });
         setConfirmed(false);
+        setSelectedForDeletion(new Set());
       },
     });
   };
@@ -364,54 +399,30 @@ export default function TweetManager() {
 
       {!isRunning && !isDone && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 왼쪽: 필터 설정 */}
+          {/* 왼쪽: SQL 스타일 쿼리 빌더 */}
           <div className="lg:col-span-1">
-            <h3 className="font-bold mb-4">필터 설정</h3>
+            <h3 className="font-bold mb-4">삭제 조건</h3>
             <p className="text-sm text-neutral-500 mb-4">
-              조건에 맞는 트윗을 보존합니다
+              조건에 맞는 트윗을 삭제 후보로 선정합니다
             </p>
 
-            <div className="space-y-3">
-              <LikesFilter
-                minLikes={minLikes}
-                onChange={setMinLikes}
-                enabled={likesEnabled}
-                onToggle={() => setLikesEnabled((v) => !v)}
-              />
-              <RetweetsFilter
-                minRetweets={minRetweets}
-                onChange={setMinRetweets}
-                enabled={retweetsEnabled}
-                onToggle={() => setRetweetsEnabled((v) => !v)}
-              />
-              <ThreadFilter
-                preservedIds={threadIds}
-                onChange={setThreadIds}
-                enabled={threadEnabled}
-                onToggle={() => setThreadEnabled((v) => !v)}
-              />
-            </div>
-
-            {/* 선택 목록 표시 */}
-            {excludedTweetIds.size > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {excludedTweetIds.size}개 트윗을 수동으로{' '}
-                  {isManualMode ? '삭제 선택' : '보존 처리'}했습니다
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    for (const id of excludedTweetIds) {
-                      dispatch({ type: 'TOGGLE_EXCLUDE', payload: id });
-                    }
-                  }}
-                  className="text-xs text-blue-500 hover:underline mt-1"
-                >
-                  모두 초기화
-                </button>
-              </div>
-            )}
+            <QueryBuilder
+              likesEnabled={likesEnabled}
+              minLikes={minLikes}
+              retweetsEnabled={retweetsEnabled}
+              minRetweets={minRetweets}
+              threadEnabled={threadEnabled}
+              excludedThreadIds={excludedThreadIds}
+              limit={displayLimit}
+              onLikesEnabledChange={setLikesEnabled}
+              onMinLikesChange={setMinLikes}
+              onRetweetsEnabledChange={setRetweetsEnabled}
+              onMinRetweetsChange={setMinRetweets}
+              onThreadEnabledChange={setThreadEnabled}
+              onExcludedThreadIdsChange={setExcludedThreadIds}
+              onLimitChange={setDisplayLimit}
+              resultCount={deletionCandidates.length}
+            />
           </div>
 
           {/* 오른쪽: 트윗 목록 + 삭제 */}
@@ -422,29 +433,65 @@ export default function TweetManager() {
               preserved={tweets.length - toDelete.length}
             />
 
-            <h4 className="font-medium text-sm text-red-500 mb-2">
-              {isManualMode
-                ? `전체 트윗 (${tweets.length.toLocaleString()}개)`
-                : `삭제 후보 (${deletionCandidates.length.toLocaleString()}개)`}
-              {excludedTweetIds.size > 0 && (
-                <span className="text-neutral-400 font-normal ml-2">
-                  ({isManualMode ? '삭제 선택' : '체크 해제'}:{' '}
-                  {excludedTweetIds.size}개)
-                </span>
+            {/* 헤더 및 전체 선택/해제 버튼 */}
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h4 className="font-medium text-sm text-red-500">
+                  {hasActiveConditions
+                    ? `삭제 후보 (${displayedTweets.length.toLocaleString()}개${displayLimit && deletionCandidates.length > displayLimit ? ` / 전체 ${deletionCandidates.length.toLocaleString()}개` : ''})`
+                    : '조건을 선택하세요'}
+                </h4>
+                {selectedForDeletion.size > 0 && (
+                  <span className="text-xs text-neutral-500">
+                    {selectedForDeletion.size}개 선택됨
+                  </span>
+                )}
+              </div>
+              {hasActiveConditions && displayedTweets.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    disabled={
+                      selectedForDeletion.size === displayedTweets.length
+                    }
+                  >
+                    전체 선택
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeselectAll}
+                    disabled={selectedForDeletion.size === 0}
+                  >
+                    전체 해제
+                  </Button>
+                </div>
               )}
-            </h4>
+            </div>
+
             <p className="text-xs text-neutral-500 mb-2">
-              {isManualMode
-                ? '삭제할 트윗을 체크하세요. 필터를 사용하면 조건에 맞는 트윗을 자동으로 선택합니다.'
-                : '체크를 해제하면 보존됩니다. 흐리게 표시된 트윗은 삭제 대상에서 제외됩니다.'}
+              {hasActiveConditions
+                ? '삭제할 트윗을 체크하세요. 체크한 트윗만 삭제됩니다.'
+                : '왼쪽 패널에서 삭제 조건을 설정하세요.'}
             </p>
-            <TweetList
-              tweets={isManualMode ? tweets : deletionCandidates}
-              showCheckbox
-              checkedIds={excludedTweetIds}
-              onToggle={handleToggleExclude}
-              invertChecked={isManualMode}
-            />
+
+            {hasActiveConditions ? (
+              <TweetList
+                tweets={displayedTweets}
+                showCheckbox
+                checkedIds={selectedForDeletion}
+                onToggle={handleToggleSelection}
+                invertChecked
+              />
+            ) : (
+              <div className="h-[500px] flex items-center justify-center border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-900">
+                <p className="text-neutral-500">
+                  삭제 조건을 선택하면 트윗이 표시됩니다
+                </p>
+              </div>
+            )}
 
             <div className="mt-6 space-y-3">
               <button
@@ -455,21 +502,25 @@ export default function TweetManager() {
               >
                 {backupMutation.isPending
                   ? '저장 중...'
-                  : '삭제 대상 백업 다운로드 (JSON)'}
+                  : '선택한 트윗 백업 다운로드 (JSON)'}
               </button>
 
-              <label className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg cursor-pointer">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                <Checkbox
+                  id="confirm-delete"
                   checked={confirmed}
-                  onChange={(e) => setConfirmed(e.target.checked)}
-                  className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                  onCheckedChange={(checked) => setConfirmed(checked === true)}
+                  disabled={toDelete.length === 0}
+                  className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                 />
-                <span className="text-sm text-red-600">
+                <label
+                  htmlFor="confirm-delete"
+                  className="text-sm text-red-600 cursor-pointer"
+                >
                   {toDelete.length.toLocaleString()}개의 트윗을 영구 삭제하는
                   것에 동의합니다
-                </span>
-              </label>
+                </label>
+              </div>
 
               <button
                 type="button"
