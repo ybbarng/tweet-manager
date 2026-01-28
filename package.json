@@ -11,7 +11,7 @@
     "check": "biome check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "electron:dev": "concurrently -n next,electron -k \"next dev -p 3000\" \"wait-on http://localhost:3000 && pnpm run electron:compile && electron .\"",
+    "electron:dev": "concurrently -n next,electron -k \"next dev\" \"wait-on http://localhost:${PORT:-3000} && pnpm run electron:compile && electron .\"",
     "electron:build": "next build && pnpm run electron:compile && electron-builder",
     "electron:compile": "tsc -p tsconfig.electron.json"
   },
