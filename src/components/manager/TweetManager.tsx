@@ -63,11 +63,18 @@ export default function TweetManager() {
     [tweets, filters],
   );
 
-  // 실제 삭제 대상 (수동 제외 후)
-  const toDelete = useMemo(
-    () => getTweetsToDelete(tweets, filters, excludedTweetIds),
-    [tweets, filters, excludedTweetIds],
-  );
+  // 수동 선택 모드 여부 (필터가 없을 때)
+  const isManualMode = filters.length === 0;
+
+  // 실제 삭제 대상
+  const toDelete = useMemo(() => {
+    if (isManualMode) {
+      // 필터 없음: excludedTweetIds에 있는 트윗이 삭제 대상
+      return tweets.filter((t) => excludedTweetIds.has(t.id));
+    }
+    // 필터 있음: 기존 로직 (삭제 후보 - 수동 제외)
+    return getTweetsToDelete(tweets, filters, excludedTweetIds);
+  }, [tweets, filters, excludedTweetIds, isManualMode]);
 
   // 데이터 로드 함수들
   const handleApiLoad = async () => {
@@ -385,11 +392,12 @@ export default function TweetManager() {
               />
             </div>
 
-            {/* 제외 목록 표시 */}
+            {/* 선택 목록 표시 */}
             {excludedTweetIds.size > 0 && (
               <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                 <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {excludedTweetIds.size}개 트윗을 수동으로 보존 처리했습니다
+                  {excludedTweetIds.size}개 트윗을 수동으로{' '}
+                  {isManualMode ? '삭제 선택' : '보존 처리'}했습니다
                 </p>
                 <button
                   type="button"
@@ -415,23 +423,27 @@ export default function TweetManager() {
             />
 
             <h4 className="font-medium text-sm text-red-500 mb-2">
-              삭제 후보 ({deletionCandidates.length.toLocaleString()}개)
+              {isManualMode
+                ? `전체 트윗 (${tweets.length.toLocaleString()}개)`
+                : `삭제 후보 (${deletionCandidates.length.toLocaleString()}개)`}
               {excludedTweetIds.size > 0 && (
                 <span className="text-neutral-400 font-normal ml-2">
-                  (체크 해제: {excludedTweetIds.size}개)
+                  ({isManualMode ? '삭제 선택' : '체크 해제'}:{' '}
+                  {excludedTweetIds.size}개)
                 </span>
               )}
             </h4>
             <p className="text-xs text-neutral-500 mb-2">
-              {filters.length === 0
-                ? '필터가 없으면 전체 트윗이 삭제 대상입니다. 체크를 해제하여 보존할 트윗을 선택하세요.'
+              {isManualMode
+                ? '삭제할 트윗을 체크하세요. 필터를 사용하면 조건에 맞는 트윗을 자동으로 선택합니다.'
                 : '체크를 해제하면 보존됩니다. 흐리게 표시된 트윗은 삭제 대상에서 제외됩니다.'}
             </p>
             <TweetList
-              tweets={deletionCandidates}
+              tweets={isManualMode ? tweets : deletionCandidates}
               showCheckbox
               checkedIds={excludedTweetIds}
               onToggle={handleToggleExclude}
+              invertChecked={isManualMode}
             />
 
             <div className="mt-6 space-y-3">

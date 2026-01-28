@@ -10,6 +10,8 @@ interface TweetListProps {
   showCheckbox?: boolean;
   checkedIds?: Set<string>;
   onToggle?: (id: string) => void;
+  /** true이면 checkedIds에 있는 트윗이 체크됨 (기본: checkedIds에 있으면 체크 해제) */
+  invertChecked?: boolean;
 }
 
 export default function TweetList({
@@ -17,6 +19,7 @@ export default function TweetList({
   showCheckbox,
   checkedIds,
   onToggle,
+  invertChecked = false,
 }: TweetListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +68,9 @@ export default function TweetList({
               showCheckbox={showCheckbox}
               checked={
                 checkedIds
-                  ? !checkedIds.has(tweets[virtualRow.index].id)
+                  ? invertChecked
+                    ? checkedIds.has(tweets[virtualRow.index].id)
+                    : !checkedIds.has(tweets[virtualRow.index].id)
                   : undefined
               }
               onToggle={onToggle}

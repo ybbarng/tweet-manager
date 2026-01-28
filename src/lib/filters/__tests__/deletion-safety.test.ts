@@ -151,20 +151,20 @@ describe('수동 제외(excludedIds)된 트윗은 절대 삭제되지 않는다'
 });
 
 // ============================================================
-// 3. 필터 없음 = 전체 삭제 후보 (수동 선택 모드)
+// 3. 필터 없음 = 전체 보존 (안전 기본값)
 // ============================================================
-describe('필터가 없으면 전체 삭제 후보 (수동 선택 모드)', () => {
-  it('필터 배열이 비어있으면 모든 트윗이 삭제 후보가 된다', () => {
+describe('필터가 없으면 전체 보존 (안전 기본값)', () => {
+  it('필터 배열이 비어있으면 모든 트윗이 보존된다', () => {
     const tweets = Array.from({ length: 100 }, (_, i) =>
       makeTweet({ id: String(i), likes: 0, retweets: 0 }),
     );
 
     const toDelete = getTweetsToDelete(tweets, [], new Set());
 
-    expect(toDelete).toHaveLength(100);
+    expect(toDelete).toHaveLength(0);
   });
 
-  it('모든 필터가 비활성이면 모든 트윗이 삭제 후보가 된다', () => {
+  it('모든 필터가 비활성이면 모든 트윗이 보존된다', () => {
     const tweets = [
       makeTweet({ id: '1', likes: 0 }),
       makeTweet({ id: '2', likes: 0 }),
@@ -177,7 +177,7 @@ describe('필터가 없으면 전체 삭제 후보 (수동 선택 모드)', () =
 
     const toDelete = getTweetsToDelete(tweets, [f1, f2], new Set());
 
-    expect(toDelete).toHaveLength(2);
+    expect(toDelete).toHaveLength(0);
   });
 });
 
