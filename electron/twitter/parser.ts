@@ -1,4 +1,8 @@
-import type { UserTweetsResponse, TweetResult, VerifyCredentialsResponse } from './types';
+import type {
+  TweetResult,
+  UserTweetsResponse,
+  VerifyCredentialsResponse,
+} from './types';
 
 export interface ParsedTweet {
   id: string;
@@ -26,7 +30,9 @@ export interface ParsedUser {
 }
 
 /** verify_credentials 응답에서 사용자 정보 추출 */
-export function parseVerifyCredentials(data: VerifyCredentialsResponse): ParsedUser {
+export function parseVerifyCredentials(
+  data: VerifyCredentialsResponse,
+): ParsedUser {
   return {
     id: data.id_str,
     name: data.name,
@@ -36,7 +42,9 @@ export function parseVerifyCredentials(data: VerifyCredentialsResponse): ParsedU
 }
 
 /** UserTweets GraphQL 응답에서 트윗 목록과 다음 커서 추출 */
-export function parseTimelineResponse(data: UserTweetsResponse): FetchTweetsResult {
+export function parseTimelineResponse(
+  data: UserTweetsResponse,
+): FetchTweetsResult {
   const tweets: ParsedTweet[] = [];
   let nextCursor: string | undefined;
 
@@ -78,7 +86,7 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
       inReplyToId: legacy.in_reply_to_status_id_str,
       conversationId: legacy.conversation_id_str,
       isRetweet: !!legacy.retweeted_status_result,
-      media: legacy.entities?.media?.map(m => ({
+      media: legacy.entities?.media?.map((m) => ({
         type: m.type,
         url: m.media_url_https,
       })),

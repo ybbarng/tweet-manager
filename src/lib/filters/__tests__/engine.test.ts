@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { Tweet } from '@/types';
 import { getPreservedTweets, getTweetsToDelete } from '../engine';
 import { createLikesFilter } from '../likes';
 import { createRetweetsFilter } from '../retweets';
 import { createThreadFilter } from '../thread';
-import type { Tweet } from '@/types';
 
 function makeTweet(overrides: Partial<Tweet> = {}): Tweet {
   return {
@@ -69,7 +69,7 @@ describe('필터 엔진', () => {
   it('getTweetsToDelete: 보존되지 않은 트윗 반환', () => {
     const filters = [createLikesFilter(5)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
-    const ids = toDelete.map(t => t.id);
+    const ids = toDelete.map((t) => t.id);
     expect(ids).toContain('2');
     expect(ids).toContain('3');
     expect(ids).toContain('4');
@@ -81,7 +81,7 @@ describe('필터 엔진', () => {
     const filters = [createLikesFilter(5)];
     const excluded = new Set(['2']); // id=2를 수동으로 보존
     const toDelete = getTweetsToDelete(tweets, filters, excluded);
-    const ids = toDelete.map(t => t.id);
+    const ids = toDelete.map((t) => t.id);
     expect(ids).not.toContain('1'); // 필터로 보존
     expect(ids).not.toContain('2'); // 수동 제외
     expect(ids).toContain('3');

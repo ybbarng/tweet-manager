@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from 'react';
 import type { Tweet } from '@/types';
 import TweetCard from './TweetCard';
 
@@ -12,7 +12,12 @@ interface TweetListProps {
   onToggle?: (id: string) => void;
 }
 
-export default function TweetList({ tweets, showCheckbox, checkedIds, onToggle }: TweetListProps) {
+export default function TweetList({
+  tweets,
+  showCheckbox,
+  checkedIds,
+  onToggle,
+}: TweetListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
@@ -31,11 +36,18 @@ export default function TweetList({ tweets, showCheckbox, checkedIds, onToggle }
   }
 
   return (
-    <div ref={parentRef} className="h-[500px] overflow-auto border border-neutral-200 dark:border-neutral-700 rounded-lg">
+    <div
+      ref={parentRef}
+      className="h-[500px] overflow-auto border border-neutral-200 dark:border-neutral-700 rounded-lg"
+    >
       <div
-        style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
       >
-        {virtualizer.getVirtualItems().map(virtualRow => (
+        {virtualizer.getVirtualItems().map((virtualRow) => (
           <div
             key={virtualRow.key}
             data-index={virtualRow.index}
@@ -51,7 +63,11 @@ export default function TweetList({ tweets, showCheckbox, checkedIds, onToggle }
             <TweetCard
               tweet={tweets[virtualRow.index]}
               showCheckbox={showCheckbox}
-              checked={checkedIds ? !checkedIds.has(tweets[virtualRow.index].id) : undefined}
+              checked={
+                checkedIds
+                  ? !checkedIds.has(tweets[virtualRow.index].id)
+                  : undefined
+              }
               onToggle={onToggle}
             />
           </div>

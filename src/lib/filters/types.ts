@@ -17,7 +17,10 @@ export interface ThreadFilterConfig {
   preservedIds: string[];
 }
 
-export type FilterConfig = LikesFilterConfig | RetweetsFilterConfig | ThreadFilterConfig;
+export type FilterConfig =
+  | LikesFilterConfig
+  | RetweetsFilterConfig
+  | ThreadFilterConfig;
 
 /** 필터 함수 시그니처 */
 export type FilterFn = (tweets: Tweet[]) => Tweet[];

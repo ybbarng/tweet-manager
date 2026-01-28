@@ -1,5 +1,5 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import * as path from 'path';
+import * as path from 'node:path';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
@@ -55,20 +55,26 @@ app.on('activate', () => {
 
 // --- IPC 핸들러 ---
 
-ipcMain.handle('twitter:verify', async (_event, auth: {
-  authToken: string;
-  csrfToken: string;
-  bearerToken: string;
-}) => {
-  try {
-    twitterClient = new TwitterApiClient(auth);
-    const user = await twitterClient.verifyCredentials();
-    return { success: true, data: user };
-  } catch (error) {
-    twitterClient = null;
-    return { success: false, error: (error as Error).message };
-  }
-});
+ipcMain.handle(
+  'twitter:verify',
+  async (
+    _event,
+    auth: {
+      authToken: string;
+      csrfToken: string;
+      bearerToken: string;
+    },
+  ) => {
+    try {
+      twitterClient = new TwitterApiClient(auth);
+      const user = await twitterClient.verifyCredentials();
+      return { success: true, data: user };
+    } catch (error) {
+      twitterClient = null;
+      return { success: false, error: (error as Error).message };
+    }
+  },
+);
 
 ipcMain.handle('twitter:fetch-tweets', async (_event, cursor?: string) => {
   if (!twitterClient) {
@@ -94,7 +100,7 @@ ipcMain.handle('twitter:delete-tweet', async (_event, tweetId: string) => {
   }
 });
 
-ipcMain.handle('twitter:delete-batch', async (event, tweetIds: string[]) => {
+ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
   if (!twitterClient) {
     return { success: false, error: '인증되지 않았습니다.' };
   }
@@ -117,8 +123,8 @@ ipcMain.handle('twitter:delete-batch', async (event, tweetIds: string[]) => {
     });
 
     // Rate limit 대응: 200~500ms 랜덤 딜레이
-    await new Promise(resolve =>
-      setTimeout(resolve, 200 + Math.random() * 300)
+    await new Promise((resolve) =>
+      setTimeout(resolve, 200 + Math.random() * 300),
     );
   }
 
@@ -128,9 +134,7 @@ ipcMain.handle('twitter:delete-batch', async (event, tweetIds: string[]) => {
 ipcMain.handle('twitter:parse-archive', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     properties: ['openFile'],
-    filters: [
-      { name: 'ZIP 또는 JS 파일', extensions: ['zip', 'js'] },
-    ],
+    filters: [{ name: 'ZIP 또는 JS 파일', extensions: ['zip', 'js'] }],
   });
 
   if (result.canceled || result.filePaths.length === 0) {
@@ -156,7 +160,7 @@ ipcMain.handle('twitter:save-backup', async (_event, data: string) => {
   }
 
   try {
-    const fs = await import('fs/promises');
+    const fs = await import('node:fs/promises');
     await fs.writeFile(result.filePath, data, 'utf-8');
     return { success: true };
   } catch (error) {

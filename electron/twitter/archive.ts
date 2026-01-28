@@ -1,5 +1,5 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 interface ArchiveTweet {
   id: string;
@@ -27,7 +27,9 @@ export async function parseArchive(filePath: string): Promise<ArchiveTweet[]> {
     return parseJsFile(filePath);
   }
 
-  throw new Error('지원하지 않는 파일 형식입니다. .zip 또는 .js 파일을 선택해주세요.');
+  throw new Error(
+    '지원하지 않는 파일 형식입니다. .zip 또는 .js 파일을 선택해주세요.',
+  );
 }
 
 async function parseJsFile(filePath: string): Promise<ArchiveTweet[]> {
@@ -43,15 +45,15 @@ async function parseJsFile(filePath: string): Promise<ArchiveTweet[]> {
   return rawTweets.map((item: { tweet: Record<string, unknown> }) => {
     const t = item.tweet;
     return {
-      id: t.id_str as string || t.id as string,
-      text: t.full_text as string || t.text as string || '',
+      id: (t.id_str as string) || (t.id as string),
+      text: (t.full_text as string) || (t.text as string) || '',
       createdAt: t.created_at as string,
       likes: Number(t.favorite_count) || 0,
       retweets: Number(t.retweet_count) || 0,
       replies: Number(t.reply_count) || 0,
       inReplyToId: t.in_reply_to_status_id_str as string | undefined,
       conversationId: undefined,
-      isRetweet: (t.full_text as string || '').startsWith('RT @'),
+      isRetweet: ((t.full_text as string) || '').startsWith('RT @'),
       media: undefined,
     };
   });
@@ -60,8 +62,8 @@ async function parseJsFile(filePath: string): Promise<ArchiveTweet[]> {
 async function parseZipArchive(filePath: string): Promise<ArchiveTweet[]> {
   // ZIP 파일 내에서 tweets.js 또는 tweet.js를 찾아 파싱
   // Node.js 내장 모듈로 ZIP 처리가 제한적이므로, 사용자에게 JS 파일 직접 업로드를 안내
-  const { createReadStream } = await import('fs');
-  const { createUnzip } = await import('zlib');
+  const { createReadStream } = await import('node:fs');
+  const { createUnzip } = await import('node:zlib');
 
   // 간단한 ZIP 처리: 파일을 읽어서 tweets.js 패턴을 찾음
   const buffer = await fs.readFile(filePath);
@@ -79,6 +81,6 @@ async function parseZipArchive(filePath: string): Promise<ArchiveTweet[]> {
 
   throw new Error(
     'ZIP 파일 내 tweets.js 파일을 직접 추출하여 업로드해주세요.\n' +
-    '아카이브 ZIP > data > tweets.js 파일을 찾아 선택해주세요.'
+      '아카이브 ZIP > data > tweets.js 파일을 찾아 선택해주세요.',
   );
 }

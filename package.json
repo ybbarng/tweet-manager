@@ -42,7 +42,9 @@
     "wait-on": "^9.0.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["electron"]
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
   },
   "build": {
     "appId": "com.x-manager.app",

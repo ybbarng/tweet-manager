@@ -6,6 +6,6 @@ export function createLikesFilter(minLikes: number): TweetFilter {
     id: 'likes',
     type: 'likes',
     enabled: true,
-    apply: (tweets: Tweet[]) => tweets.filter(t => t.likes >= minLikes),
+    apply: (tweets: Tweet[]) => tweets.filter((t) => t.likes >= minLikes),
   };
 }

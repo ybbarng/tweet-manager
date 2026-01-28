@@ -3,7 +3,8 @@
 export const ENDPOINTS = {
   VERIFY_CREDENTIALS: 'https://api.x.com/1.1/account/verify_credentials.json',
   USER_TWEETS: 'https://x.com/i/api/graphql/E3opETHurmVJflFsUBVuUQ/UserTweets',
-  DELETE_TWEET: 'https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet',
+  DELETE_TWEET:
+    'https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet',
 } as const;
 
 export function getUserTweetsVariables(userId: string, cursor?: string) {

@@ -6,6 +6,6 @@ export function createRetweetsFilter(minRetweets: number): TweetFilter {
     id: 'retweets',
     type: 'retweets',
     enabled: true,
-    apply: (tweets: Tweet[]) => tweets.filter(t => t.retweets >= minRetweets),
+    apply: (tweets: Tweet[]) => tweets.filter((t) => t.retweets >= minRetweets),
   };
 }

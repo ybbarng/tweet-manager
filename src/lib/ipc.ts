@@ -1,15 +1,29 @@
-import type { TwitterAuth, TwitterUser, Tweet, DeletionProgress, IpcResponse } from '@/types';
+import type {
+  DeletionProgress,
+  IpcResponse,
+  Tweet,
+  TwitterAuth,
+  TwitterUser,
+} from '@/types';
 
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
   twitter: {
     verify: (auth: TwitterAuth) => Promise<IpcResponse<TwitterUser>>;
-    fetchTweets: (cursor?: string) => Promise<IpcResponse<{ tweets: Tweet[]; nextCursor?: string }>>;
+    fetchTweets: (
+      cursor?: string,
+    ) => Promise<IpcResponse<{ tweets: Tweet[]; nextCursor?: string }>>;
     deleteTweet: (tweetId: string) => Promise<IpcResponse<void>>;
-    deleteBatch: (tweetIds: string[]) => Promise<IpcResponse<{ total: number; completed: number; failed: number }>>;
+    deleteBatch: (
+      tweetIds: string[],
+    ) => Promise<
+      IpcResponse<{ total: number; completed: number; failed: number }>
+    >;
     parseArchive: () => Promise<IpcResponse<Tweet[]>>;
     saveBackup: (data: string) => Promise<IpcResponse<void>>;
-    onDeleteProgress: (callback: (progress: DeletionProgress) => void) => () => void;
+    onDeleteProgress: (
+      callback: (progress: DeletionProgress) => void,
+    ) => () => void;
   };
 }
 
@@ -21,7 +35,9 @@ declare global {
 
 function getAPI(): ElectronAPI {
   if (typeof window === 'undefined' || !window.electronAPI) {
-    throw new Error('Electron API를 사용할 수 없습니다. Electron 환경에서 실행해주세요.');
+    throw new Error(
+      'Electron API를 사용할 수 없습니다. Electron 환경에서 실행해주세요.',
+    );
   }
   return window.electronAPI;
 }
@@ -32,7 +48,9 @@ export function isElectron(): boolean {
 }
 
 /** 인증 정보 검증 */
-export async function verifyAuth(auth: TwitterAuth): Promise<IpcResponse<TwitterUser>> {
+export async function verifyAuth(
+  auth: TwitterAuth,
+): Promise<IpcResponse<TwitterUser>> {
   return getAPI().twitter.verify(auth);
 }
 
@@ -62,6 +80,8 @@ export async function saveBackup(data: string) {
 }
 
 /** 삭제 진행 상태 구독 */
-export function onDeleteProgress(callback: (progress: DeletionProgress) => void): () => void {
+export function onDeleteProgress(
+  callback: (progress: DeletionProgress) => void,
+): () => void {
   return getAPI().twitter.onDeleteProgress(callback);
 }

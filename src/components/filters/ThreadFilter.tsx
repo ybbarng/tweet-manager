@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 
 interface ThreadFilterProps {
   preservedIds: string[];
@@ -18,7 +18,12 @@ function extractTweetId(input: string): string | null {
   return null;
 }
 
-export default function ThreadFilter({ preservedIds, onChange, enabled, onToggle }: ThreadFilterProps) {
+export default function ThreadFilter({
+  preservedIds,
+  onChange,
+  enabled,
+  onToggle,
+}: ThreadFilterProps) {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
 
@@ -38,7 +43,7 @@ export default function ThreadFilter({ preservedIds, onChange, enabled, onToggle
   };
 
   const handleRemove = (id: string) => {
-    onChange(preservedIds.filter(pid => pid !== id));
+    onChange(preservedIds.filter((pid) => pid !== id));
   };
 
   return (
@@ -60,12 +65,21 @@ export default function ThreadFilter({ preservedIds, onChange, enabled, onToggle
             <input
               type="text"
               value={input}
-              onChange={e => { setInput(e.target.value); setError(''); }}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd(); } }}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAdd();
+                }
+              }}
               placeholder="트윗 URL 또는 ID 입력"
               className="flex-1 px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded bg-white dark:bg-neutral-900 text-sm"
             />
             <button
+              type="button"
               onClick={handleAdd}
               className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
             >
@@ -75,13 +89,17 @@ export default function ThreadFilter({ preservedIds, onChange, enabled, onToggle
           {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
           {preservedIds.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {preservedIds.map(id => (
+              {preservedIds.map((id) => (
                 <span
                   key={id}
                   className="flex items-center gap-1 px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded text-xs"
                 >
                   {id}
-                  <button onClick={() => handleRemove(id)} className="hover:text-red-500">
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(id)}
+                    className="hover:text-red-500"
+                  >
                     <X className="w-3 h-3" />
                   </button>
                 </span>

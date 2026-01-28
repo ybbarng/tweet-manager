@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAppState, useAppDispatch } from '@/lib/store/tweet-store';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getTweetsToDelete } from '@/lib/filters/engine';
+import { isElectron, onDeleteProgress } from '@/lib/ipc';
 import { useDeleteBatch, useSaveBackup } from '@/lib/queries';
-import { onDeleteProgress, isElectron } from '@/lib/ipc';
-import TweetStats from '../tweets/TweetStats';
-import TweetList from '../tweets/TweetList';
+import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
 import type { DeletionProgress as DeletionProgressType } from '@/types';
+import TweetList from '../tweets/TweetList';
+import TweetStats from '../tweets/TweetStats';
 
 export default function DeletionProgress() {
   const { tweets, filters, excludedTweetIds, deletionProgress } = useAppState();
@@ -21,9 +21,12 @@ export default function DeletionProgress() {
     [tweets, filters, excludedTweetIds],
   );
 
-  const handleToggleExclude = useCallback((id: string) => {
-    dispatch({ type: 'TOGGLE_EXCLUDE', payload: id });
-  }, [dispatch]);
+  const handleToggleExclude = useCallback(
+    (id: string) => {
+      dispatch({ type: 'TOGGLE_EXCLUDE', payload: id });
+    },
+    [dispatch],
+  );
 
   const handleBackup = () => {
     if (!isElectron()) return;
@@ -35,13 +38,21 @@ export default function DeletionProgress() {
 
     dispatch({
       type: 'SET_DELETION_PROGRESS',
-      payload: { total: toDelete.length, completed: 0, failed: 0, status: 'running' },
+      payload: {
+        total: toDelete.length,
+        completed: 0,
+        failed: 0,
+        status: 'running',
+      },
     });
 
-    const tweetIds = toDelete.map(t => t.id);
+    const tweetIds = toDelete.map((t) => t.id);
     deleteMutation.mutate(tweetIds, {
       onSuccess: () => {
-        dispatch({ type: 'SET_DELETION_PROGRESS', payload: { status: 'done' } });
+        dispatch({
+          type: 'SET_DELETION_PROGRESS',
+          payload: { status: 'done' },
+        });
         dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: tweetIds });
       },
     });
@@ -57,9 +68,10 @@ export default function DeletionProgress() {
 
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
-  const progress = deletionProgress.total > 0
-    ? Math.round((deletionProgress.completed / deletionProgress.total) * 100)
-    : 0;
+  const progress =
+    deletionProgress.total > 0
+      ? Math.round((deletionProgress.completed / deletionProgress.total) * 100)
+      : 0;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -79,7 +91,8 @@ export default function DeletionProgress() {
           <p className="text-lg font-bold text-green-600">삭제 완료</p>
           <p className="text-sm text-green-500 mt-1">
             {deletionProgress.completed}개 삭제 완료
-            {deletionProgress.failed > 0 && ` / ${deletionProgress.failed}개 실패`}
+            {deletionProgress.failed > 0 &&
+              ` / ${deletionProgress.failed}개 실패`}
           </p>
         </div>
       ) : isRunning ? (
@@ -96,7 +109,8 @@ export default function DeletionProgress() {
           </div>
           <p className="text-xs text-neutral-500 mt-2">
             {deletionProgress.completed} / {deletionProgress.total} 완료
-            {deletionProgress.failed > 0 && ` (${deletionProgress.failed}개 실패)`}
+            {deletionProgress.failed > 0 &&
+              ` (${deletionProgress.failed}개 실패)`}
           </p>
         </div>
       ) : (
@@ -110,26 +124,31 @@ export default function DeletionProgress() {
 
           <div className="mt-6 space-y-3">
             <button
+              type="button"
               onClick={handleBackup}
               disabled={backupMutation.isPending}
               className="w-full py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
-              {backupMutation.isPending ? '저장 중...' : '삭제 대상 백업 다운로드 (JSON)'}
+              {backupMutation.isPending
+                ? '저장 중...'
+                : '삭제 대상 백업 다운로드 (JSON)'}
             </button>
 
             <label className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
               <input
                 type="checkbox"
                 checked={confirmed}
-                onChange={e => setConfirmed(e.target.checked)}
+                onChange={(e) => setConfirmed(e.target.checked)}
                 className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
               />
               <span className="text-sm text-red-600">
-                {toDelete.length.toLocaleString()}개의 트윗을 영구 삭제하는 것에 동의합니다
+                {toDelete.length.toLocaleString()}개의 트윗을 영구 삭제하는 것에
+                동의합니다
               </span>
             </label>
 
             <button
+              type="button"
               onClick={handleDelete}
               disabled={!confirmed}
               className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 disabled:bg-neutral-400 text-white rounded-lg font-medium transition-colors"
@@ -138,6 +157,7 @@ export default function DeletionProgress() {
             </button>
 
             <button
+              type="button"
               onClick={() => dispatch({ type: 'SET_STEP', payload: 'filter' })}
               className="w-full py-2 px-4 text-neutral-500 hover:text-neutral-700 transition-colors text-sm"
             >

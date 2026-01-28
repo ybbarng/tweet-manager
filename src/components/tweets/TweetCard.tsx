@@ -1,7 +1,7 @@
 'use client';
 
+import { Heart, MessageCircle, Repeat2 } from 'lucide-react';
 import type { Tweet } from '@/types';
-import { Heart, Repeat2, MessageCircle } from 'lucide-react';
 
 interface TweetCardProps {
   tweet: Tweet;
@@ -10,10 +10,16 @@ interface TweetCardProps {
   onToggle?: (id: string) => void;
 }
 
-export default function TweetCard({ tweet, showCheckbox, checked, onToggle }: TweetCardProps) {
-  const date = tweet.createdAt instanceof Date
-    ? tweet.createdAt
-    : new Date(tweet.createdAt);
+export default function TweetCard({
+  tweet,
+  showCheckbox,
+  checked,
+  onToggle,
+}: TweetCardProps) {
+  const date =
+    tweet.createdAt instanceof Date
+      ? tweet.createdAt
+      : new Date(tweet.createdAt);
 
   return (
     <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
@@ -32,11 +38,17 @@ export default function TweetCard({ tweet, showCheckbox, checked, onToggle }: Tw
               <span className="text-xs text-green-500 font-medium">RT</span>
             )}
             <span className="text-xs text-neutral-500">
-              {date.toLocaleDateString('ko-KR')} {date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              {date.toLocaleDateString('ko-KR')}{' '}
+              {date.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </span>
           </div>
 
-          <p className="text-sm whitespace-pre-wrap break-words">{tweet.text}</p>
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {tweet.text}
+          </p>
 
           <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
             <span className="flex items-center gap-1">

@@ -1,17 +1,17 @@
 import wretch, { type WretchError } from 'wretch';
 import {
   ENDPOINTS,
+  getDeleteTweetVariables,
   getUserTweetsVariables,
   USER_TWEETS_FEATURES,
-  getDeleteTweetVariables,
 } from './endpoints';
-import type { UserTweetsResponse, VerifyCredentialsResponse } from './types';
 import {
-  parseVerifyCredentials,
-  parseTimelineResponse,
-  type ParsedUser,
   type FetchTweetsResult,
+  type ParsedUser,
+  parseTimelineResponse,
+  parseVerifyCredentials,
 } from './parser';
+import type { UserTweetsResponse, VerifyCredentialsResponse } from './types';
 
 interface TwitterAuth {
   authToken: string;
@@ -19,26 +19,25 @@ interface TwitterAuth {
   bearerToken: string;
 }
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class TwitterApiClient {
-  private auth: TwitterAuth;
   private userId: string | null = null;
   private api;
 
   constructor(auth: TwitterAuth) {
     this.auth = auth;
-    this.api = wretch()
-      .headers({
-        'Authorization': `Bearer ${auth.bearerToken}`,
-        'Cookie': `auth_token=${auth.authToken}; ct0=${auth.csrfToken}`,
-        'X-Csrf-Token': auth.csrfToken,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'X-Twitter-Active-User': 'yes',
-        'X-Twitter-Auth-Type': 'OAuth2Session',
-        'X-Twitter-Client-Language': 'ko',
-      });
+    this.api = wretch().headers({
+      Authorization: `Bearer ${auth.bearerToken}`,
+      Cookie: `auth_token=${auth.authToken}; ct0=${auth.csrfToken}`,
+      'X-Csrf-Token': auth.csrfToken,
+      'Content-Type': 'application/json',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'X-Twitter-Active-User': 'yes',
+      'X-Twitter-Auth-Type': 'OAuth2Session',
+      'X-Twitter-Client-Language': 'ko',
+    });
   }
 
   async verifyCredentials(): Promise<ParsedUser> {
@@ -73,8 +72,11 @@ export class TwitterApiClient {
     } catch (err) {
       const error = err as WretchError;
       if (error.status === 429) {
-        const retryAfter = parseInt(error.response?.headers?.get('x-rate-limit-reset') || '60', 10);
-        const waitMs = (retryAfter * 1000) - Date.now();
+        const retryAfter = parseInt(
+          error.response?.headers?.get('x-rate-limit-reset') || '60',
+          10,
+        );
+        const waitMs = retryAfter * 1000 - Date.now();
         if (waitMs > 0) {
           await delay(Math.min(waitMs, 60000));
         }

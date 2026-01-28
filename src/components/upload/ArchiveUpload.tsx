@@ -1,11 +1,11 @@
 'use client';
 
+import { Download, Upload } from 'lucide-react';
 import { useState } from 'react';
-import { useAppState, useAppDispatch } from '@/lib/store/tweet-store';
-import { useParseArchive } from '@/lib/queries';
 import { fetchTweets, isElectron } from '@/lib/ipc';
+import { useParseArchive } from '@/lib/queries';
+import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
 import type { Tweet } from '@/types';
-import { Upload, Download } from 'lucide-react';
 
 export default function ArchiveUpload() {
   const { user } = useAppState();
@@ -65,7 +65,9 @@ export default function ArchiveUpload() {
           createdAt: new Date(t.createdAt),
         }));
         allTweets.push(...tweets);
-        setLoadingMessage(`트윗을 불러오고 있습니다... (${allTweets.length}개)`);
+        setLoadingMessage(
+          `트윗을 불러오고 있습니다... (${allTweets.length}개)`,
+        );
 
         cursor = result.data.nextCursor;
         if (!cursor || tweets.length === 0) break;
@@ -89,11 +91,14 @@ export default function ArchiveUpload() {
     <div className="max-w-lg mx-auto">
       <h2 className="text-2xl font-bold mb-2">트윗 불러오기</h2>
       {user && (
-        <p className="text-neutral-500 mb-6">@{user.screenName} 계정의 트윗을 불러옵니다.</p>
+        <p className="text-neutral-500 mb-6">
+          @{user.screenName} 계정의 트윗을 불러옵니다.
+        </p>
       )}
 
       <div className="space-y-4">
         <button
+          type="button"
           onClick={handleArchiveUpload}
           disabled={loading}
           className="w-full flex items-center gap-3 p-4 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors disabled:opacity-50"
@@ -108,6 +113,7 @@ export default function ArchiveUpload() {
         </button>
 
         <button
+          type="button"
           onClick={handleApiLoad}
           disabled={loading}
           className="w-full flex items-center gap-3 p-4 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors disabled:opacity-50"
@@ -124,13 +130,13 @@ export default function ArchiveUpload() {
 
       {loading && (
         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-          <p className="text-sm text-blue-600 dark:text-blue-400">{loadingMessage}</p>
+          <p className="text-sm text-blue-600 dark:text-blue-400">
+            {loadingMessage}
+          </p>
         </div>
       )}
 
-      {error && (
-        <p className="mt-4 text-red-500 text-sm">{error}</p>
-      )}
+      {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
     </div>
   );
 }

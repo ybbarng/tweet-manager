@@ -1,18 +1,26 @@
-import { describe, it, expect } from 'vitest';
-import { parseVerifyCredentials, parseTimelineResponse, parseTweetResult } from '../parser';
-import type { UserTweetsResponse, TweetResult, VerifyCredentialsResponse } from '../types';
+import { describe, expect, it } from 'vitest';
 import {
-  MOCK_VERIFY_CREDENTIALS,
+  parseTimelineResponse,
+  parseTweetResult,
+  parseVerifyCredentials,
+} from '../parser';
+import type {
+  TweetResult,
+  UserTweetsResponse,
+  VerifyCredentialsResponse,
+} from '../types';
+import {
+  createMockUserTweetsResponse,
+  MOCK_BROKEN_RESPONSE_MISSING_LEGACY,
+  MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS,
+  MOCK_TWEET_HIGH_LIKES,
   MOCK_TWEET_NORMAL,
   MOCK_TWEET_REPLY,
   MOCK_TWEET_RETWEET,
-  MOCK_TWEET_WITH_MEDIA,
-  MOCK_TWEET_HIGH_LIKES,
-  MOCK_TWEET_THREAD_HEAD,
   MOCK_TWEET_THREAD_CONT,
-  MOCK_BROKEN_RESPONSE_MISSING_LEGACY,
-  MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS,
-  createMockUserTweetsResponse,
+  MOCK_TWEET_THREAD_HEAD,
+  MOCK_TWEET_WITH_MEDIA,
+  MOCK_VERIFY_CREDENTIALS,
 } from './fixtures';
 
 // ============================================================
@@ -25,11 +33,14 @@ describe('parseVerifyCredentials - API 스펙 검증', () => {
     expect(user.id).toBe('123456789');
     expect(user.name).toBe('테스트 사용자');
     expect(user.screenName).toBe('testuser');
-    expect(user.profileImageUrl).toBe('https://pbs.twimg.com/profile_images/test/photo.jpg');
+    expect(user.profileImageUrl).toBe(
+      'https://pbs.twimg.com/profile_images/test/photo.jpg',
+    );
   });
 
   it('응답에 id_str이 없으면 id가 undefined가 된다 (스펙 변경 감지)', () => {
-    const broken = MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS as unknown as VerifyCredentialsResponse;
+    const broken =
+      MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS as unknown as VerifyCredentialsResponse;
     const user = parseVerifyCredentials(broken);
 
     // id_str이 없어서 undefined — 이 테스트가 통과하면 "스펙이 바뀌었다"를 의미
@@ -112,7 +123,8 @@ describe('parseTweetResult - 트윗 필드 매핑 스펙', () => {
   });
 
   it('legacy 필드가 없는 깨진 응답에서는 null을 반환한다 (스펙 변경 감지)', () => {
-    const broken = MOCK_BROKEN_RESPONSE_MISSING_LEGACY as unknown as TweetResult;
+    const broken =
+      MOCK_BROKEN_RESPONSE_MISSING_LEGACY as unknown as TweetResult;
     const tweet = parseTweetResult(broken);
 
     expect(tweet).toBeNull();
@@ -233,17 +245,27 @@ describe('API 응답 필드명 스냅샷', () => {
     expect(MOCK_TWEET_RETWEET.legacy).toHaveProperty('retweeted_status_result');
     expect(MOCK_TWEET_WITH_MEDIA.legacy).toHaveProperty('entities');
     expect(MOCK_TWEET_WITH_MEDIA.legacy.entities).toHaveProperty('media');
-    expect(MOCK_TWEET_WITH_MEDIA.legacy.entities!.media![0]).toHaveProperty('type');
-    expect(MOCK_TWEET_WITH_MEDIA.legacy.entities!.media![0]).toHaveProperty('media_url_https');
+    expect(MOCK_TWEET_WITH_MEDIA.legacy.entities!.media![0]).toHaveProperty(
+      'type',
+    );
+    expect(MOCK_TWEET_WITH_MEDIA.legacy.entities!.media![0]).toHaveProperty(
+      'media_url_https',
+    );
   });
 
   it('UserTweetsResponse는 data.user.result.timeline_v2.timeline.instructions 경로를 사용한다', () => {
     const response = createMockUserTweetsResponse([MOCK_TWEET_NORMAL]);
 
-    expect(response).toHaveProperty('data.user.result.timeline_v2.timeline.instructions');
-    expect(response.data.user.result.timeline_v2.timeline.instructions[0]).toHaveProperty('entries');
+    expect(response).toHaveProperty(
+      'data.user.result.timeline_v2.timeline.instructions',
+    );
+    expect(
+      response.data.user.result.timeline_v2.timeline.instructions[0],
+    ).toHaveProperty('entries');
 
-    const entry = response.data.user.result.timeline_v2.timeline.instructions[0].entries![0];
+    const entry =
+      response.data.user.result.timeline_v2.timeline.instructions[0]
+        .entries![0];
     expect(entry).toHaveProperty('content.itemContent.tweet_results.result');
   });
 

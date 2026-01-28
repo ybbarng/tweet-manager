@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useAppDispatch } from '@/lib/store/tweet-store';
-import { useVerifyAuth } from '@/lib/queries';
 import { isElectron } from '@/lib/ipc';
+import { useVerifyAuth } from '@/lib/queries';
+import { useAppDispatch } from '@/lib/store/tweet-store';
 import type { TwitterAuth } from '@/types';
 
 export default function AuthForm() {
@@ -26,7 +26,9 @@ export default function AuthForm() {
     }
 
     if (!isElectron()) {
-      setError('Electron 환경에서만 사용할 수 있습니다. 데스크톱 앱으로 실행해주세요.');
+      setError(
+        'Electron 환경에서만 사용할 수 있습니다. 데스크톱 앱으로 실행해주세요.',
+      );
       return;
     }
 
@@ -54,48 +56,72 @@ export default function AuthForm() {
           <li>X.com에 로그인합니다</li>
           <li>DevTools를 엽니다 (F12 또는 Cmd+Option+I)</li>
           <li>Network 탭에서 아무 API 요청을 선택합니다</li>
-          <li>Request Headers에서 <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">authorization</code> 값을 복사합니다 (Bearer 토큰)</li>
-          <li>Cookies에서 <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">auth_token</code>과 <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">ct0</code> 값을 복사합니다</li>
+          <li>
+            Request Headers에서{' '}
+            <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">
+              authorization
+            </code>{' '}
+            값을 복사합니다 (Bearer 토큰)
+          </li>
+          <li>
+            Cookies에서{' '}
+            <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">
+              auth_token
+            </code>
+            과{' '}
+            <code className="bg-neutral-200 dark:bg-neutral-700 px-1 rounded">
+              ct0
+            </code>{' '}
+            값을 복사합니다
+          </li>
         </ol>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">auth_token (쿠키)</label>
+        <label className="block">
+          <span className="block text-sm font-medium mb-1">
+            auth_token (쿠키)
+          </span>
           <input
             type="password"
             value={auth.authToken}
-            onChange={e => setAuth(prev => ({ ...prev, authToken: e.target.value }))}
+            onChange={(e) =>
+              setAuth((prev) => ({ ...prev, authToken: e.target.value }))
+            }
             className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="auth_token 값을 붙여넣으세요"
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">ct0 (CSRF 토큰)</label>
+        <label className="block">
+          <span className="block text-sm font-medium mb-1">
+            ct0 (CSRF 토큰)
+          </span>
           <input
             type="password"
             value={auth.csrfToken}
-            onChange={e => setAuth(prev => ({ ...prev, csrfToken: e.target.value }))}
+            onChange={(e) =>
+              setAuth((prev) => ({ ...prev, csrfToken: e.target.value }))
+            }
             className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="ct0 값을 붙여넣으세요"
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Bearer 토큰</label>
+        <label className="block">
+          <span className="block text-sm font-medium mb-1">Bearer 토큰</span>
           <input
             type="password"
             value={auth.bearerToken}
-            onChange={e => setAuth(prev => ({ ...prev, bearerToken: e.target.value }))}
+            onChange={(e) =>
+              setAuth((prev) => ({ ...prev, bearerToken: e.target.value }))
+            }
             className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAA... 형태"
           />
-        </div>
+        </label>
 
-        {error && (
-          <p className="text-red-500 text-sm">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <button
           type="submit"

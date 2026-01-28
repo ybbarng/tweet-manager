@@ -7,7 +7,12 @@ interface RetweetsFilterProps {
   onToggle: () => void;
 }
 
-export default function RetweetsFilter({ minRetweets, onChange, enabled, onToggle }: RetweetsFilterProps) {
+export default function RetweetsFilter({
+  minRetweets,
+  onChange,
+  enabled,
+  onToggle,
+}: RetweetsFilterProps) {
   return (
     <div className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg">
       <div className="flex items-center justify-between mb-3">
@@ -27,10 +32,14 @@ export default function RetweetsFilter({ minRetweets, onChange, enabled, onToggl
             type="number"
             min={0}
             value={minRetweets}
-            onChange={e => onChange(Math.max(0, parseInt(e.target.value) || 0))}
+            onChange={(e) =>
+              onChange(Math.max(0, parseInt(e.target.value, 10) || 0))
+            }
             className="w-24 px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded bg-white dark:bg-neutral-900 text-sm"
           />
-          <span className="text-sm text-neutral-500">회 이상 리트윗된 트윗 보존</span>
+          <span className="text-sm text-neutral-500">
+            회 이상 리트윗된 트윗 보존
+          </span>
         </div>
       )}
     </div>

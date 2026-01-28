@@ -1,7 +1,14 @@
 'use client';
 
-import { createContext, useContext, useReducer, type Dispatch } from 'react';
-import type { AppState, Tweet, TwitterAuth, TwitterUser, DeletionProgress, TweetFilter } from '@/types';
+import { createContext, type Dispatch, useContext } from 'react';
+import type {
+  AppState,
+  DeletionProgress,
+  Tweet,
+  TweetFilter,
+  TwitterAuth,
+  TwitterUser,
+} from '@/types';
 
 const initialState: AppState = {
   auth: null,
@@ -34,7 +41,12 @@ type Action =
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_AUTH':
-      return { ...state, auth: action.payload.auth, user: action.payload.user, step: 'load' };
+      return {
+        ...state,
+        auth: action.payload.auth,
+        user: action.payload.user,
+        step: 'load',
+      };
     case 'LOGOUT':
       return { ...initialState };
     case 'SET_TWEETS':
@@ -53,7 +65,10 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, excludedTweetIds: next };
     }
     case 'SET_DELETION_PROGRESS':
-      return { ...state, deletionProgress: { ...state.deletionProgress, ...action.payload } };
+      return {
+        ...state,
+        deletionProgress: { ...state.deletionProgress, ...action.payload },
+      };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_STEP':
@@ -61,7 +76,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'REMOVE_DELETED_TWEETS':
       return {
         ...state,
-        tweets: state.tweets.filter(t => !action.payload.includes(t.id)),
+        tweets: state.tweets.filter((t) => !action.payload.includes(t.id)),
       };
     default:
       return state;

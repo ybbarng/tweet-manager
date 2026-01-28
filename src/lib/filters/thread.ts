@@ -9,9 +9,9 @@ export function createThreadFilter(preservedIds: string[]): TweetFilter {
     type: 'thread',
     enabled: true,
     apply: (tweets: Tweet[]) =>
-      tweets.filter(t =>
-        idSet.has(t.id) ||
-        (t.conversationId && idSet.has(t.conversationId))
+      tweets.filter(
+        (t) =>
+          idSet.has(t.id) || (t.conversationId && idSet.has(t.conversationId)),
       ),
   };
 }

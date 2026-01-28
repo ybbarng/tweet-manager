@@ -3,7 +3,11 @@
  * 실제 API 응답 구조를 그대로 재현하여, 스펙 변경 시 파싱 실패로 감지한다.
  */
 
-import type { UserTweetsResponse, TweetResult, VerifyCredentialsResponse } from '../types';
+import type {
+  TweetResult,
+  UserTweetsResponse,
+  VerifyCredentialsResponse,
+} from '../types';
 
 // --- verify_credentials ---
 
@@ -11,7 +15,8 @@ export const MOCK_VERIFY_CREDENTIALS: VerifyCredentialsResponse = {
   id_str: '123456789',
   name: '테스트 사용자',
   screen_name: 'testuser',
-  profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+  profile_image_url_https:
+    'https://pbs.twimg.com/profile_images/test/photo.jpg',
 };
 
 // --- 개별 TweetResult ---
@@ -26,7 +31,8 @@ export const MOCK_TWEET_NORMAL: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -52,7 +58,8 @@ export const MOCK_TWEET_REPLY: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -79,7 +86,8 @@ export const MOCK_TWEET_RETWEET: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -106,7 +114,8 @@ export const MOCK_TWEET_WITH_MEDIA: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -120,8 +129,14 @@ export const MOCK_TWEET_WITH_MEDIA: TweetResult = {
     conversation_id_str: '1004',
     entities: {
       media: [
-        { type: 'photo', media_url_https: 'https://pbs.twimg.com/media/test1.jpg' },
-        { type: 'video', media_url_https: 'https://pbs.twimg.com/media/test2.mp4' },
+        {
+          type: 'photo',
+          media_url_https: 'https://pbs.twimg.com/media/test1.jpg',
+        },
+        {
+          type: 'video',
+          media_url_https: 'https://pbs.twimg.com/media/test2.mp4',
+        },
       ],
     },
   },
@@ -137,7 +152,8 @@ export const MOCK_TWEET_HIGH_LIKES: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -163,7 +179,8 @@ export const MOCK_TWEET_THREAD_HEAD: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },
@@ -189,7 +206,8 @@ export const MOCK_TWEET_THREAD_CONT: TweetResult = {
         legacy: {
           screen_name: 'testuser',
           name: '테스트 사용자',
-          profile_image_url_https: 'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
         },
       },
     },

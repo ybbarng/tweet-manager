@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [".next", "dist-electron", "release", "node_modules"]
+    "includes": [
+      "**",
+      "!.next",
+      "!dist-electron",
+      "!release",
+      "!node_modules",
+      "!**/*.css"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -17,12 +24,23 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "off"
+      }
     }
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "single"
+    }
+  },
+  "css": {
+    "linter": {
+      "enabled": false
+    },
+    "formatter": {
+      "enabled": false
     }
   },
   "assist": {
