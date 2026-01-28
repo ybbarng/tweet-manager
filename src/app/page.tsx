@@ -1,8 +1,9 @@
 'use client';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useReducer } from 'react';
+import { useReducer, useState } from 'react';
 import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
+import SecurityWarningModal from '@/components/auth/SecurityWarningModal';
 import TweetManager from '@/components/manager/TweetManager';
 import { getQueryClient } from '@/lib/query-client';
 import {
@@ -14,8 +15,14 @@ import {
 
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [showWarning, setShowWarning] = useState(false);
 
   const isAuthenticated = !!state.auth;
+
+  const handleShowWarning = () => {
+    resetWarningDismissed();
+    setShowWarning(true);
+  };
 
   return (
     <QueryClientProvider client={getQueryClient()}>
@@ -33,10 +40,7 @@ export default function Home() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        resetWarningDismissed();
-                        alert('보안 경고 메시지가 다시 표시됩니다.');
-                      }}
+                      onClick={handleShowWarning}
                       className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 text-xs"
                     >
                       보안 경고 보기
@@ -70,6 +74,12 @@ export default function Home() {
               {!isAuthenticated ? <AuthForm /> : <TweetManager />}
             </div>
           </div>
+
+          {/* 보안 경고 모달 */}
+          <SecurityWarningModal
+            open={showWarning}
+            onClose={() => setShowWarning(false)}
+          />
         </AppDispatchContext.Provider>
       </AppStateContext.Provider>
     </QueryClientProvider>

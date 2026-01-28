@@ -60,8 +60,6 @@ export interface AppState {
   /** 삭제 대상에서 수동으로 제외한 트윗 ID */
   excludedTweetIds: Set<string>;
   deletionProgress: DeletionProgress;
-  loading: boolean;
-  step: 'auth' | 'load' | 'filter' | 'preview' | 'delete';
 }
 
 /** IPC 응답 래퍼 */

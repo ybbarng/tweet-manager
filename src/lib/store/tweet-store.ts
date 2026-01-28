@@ -22,20 +22,15 @@ const initialState: AppState = {
     failed: 0,
     status: 'idle',
   },
-  loading: false,
-  step: 'auth',
 };
 
 type Action =
   | { type: 'SET_AUTH'; payload: { auth: TwitterAuth; user: TwitterUser } }
   | { type: 'LOGOUT' }
   | { type: 'SET_TWEETS'; payload: Tweet[] }
-  | { type: 'APPEND_TWEETS'; payload: Tweet[] }
   | { type: 'SET_FILTERS'; payload: TweetFilter[] }
   | { type: 'TOGGLE_EXCLUDE'; payload: string }
   | { type: 'SET_DELETION_PROGRESS'; payload: Partial<DeletionProgress> }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_STEP'; payload: AppState['step'] }
   | { type: 'REMOVE_DELETED_TWEETS'; payload: string[] };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -50,8 +45,6 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...initialState };
     case 'SET_TWEETS':
       return { ...state, tweets: action.payload };
-    case 'APPEND_TWEETS':
-      return { ...state, tweets: [...state.tweets, ...action.payload] };
     case 'SET_FILTERS':
       return { ...state, filters: action.payload };
     case 'TOGGLE_EXCLUDE': {
@@ -68,10 +61,6 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         deletionProgress: { ...state.deletionProgress, ...action.payload },
       };
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_STEP':
-      return { ...state, step: action.payload };
     case 'REMOVE_DELETED_TWEETS':
       return {
         ...state,
