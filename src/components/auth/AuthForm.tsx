@@ -121,7 +121,17 @@ export default function AuthForm() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Twitter(X) 인증</h2>
+      <h2 className="text-2xl font-bold mb-4">Twitter(X) 인증</h2>
+
+      {/* 경고 문구 보기 링크 */}
+      <button
+        type="button"
+        onClick={() => setShowWarningModal(true)}
+        className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 mb-4 flex items-center gap-1"
+      >
+        <span>&#9888;</span>
+        <span>로그인 전 보안 경고 확인하기</span>
+      </button>
 
       {/* Twitter 로그인 버튼 */}
       <button
