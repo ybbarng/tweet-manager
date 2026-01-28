@@ -121,7 +121,7 @@ export default function AuthForm() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Twitter(X) 인증</h2>
+      <h2 className="text-2xl font-bold mb-4">시작하기</h2>
 
       {/* 경고 문구 보기 링크 */}
       <button
