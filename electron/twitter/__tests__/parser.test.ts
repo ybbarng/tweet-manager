@@ -2,17 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   parseTimelineResponse,
   parseTweetResult,
-  parseVerifyCredentials,
+  parseViewer,
 } from '../parser';
-import type {
-  TweetResult,
-  UserTweetsResponse,
-  VerifyCredentialsResponse,
-} from '../types';
+import type { TweetResult, UserTweetsResponse, ViewerResponse } from '../types';
 import {
   createMockUserTweetsResponse,
   MOCK_BROKEN_RESPONSE_MISSING_LEGACY,
-  MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS,
+  MOCK_BROKEN_VIEWER_MISSING_FIELDS,
   MOCK_TWEET_HIGH_LIKES,
   MOCK_TWEET_NORMAL,
   MOCK_TWEET_REPLY,
@@ -20,15 +16,15 @@ import {
   MOCK_TWEET_THREAD_CONT,
   MOCK_TWEET_THREAD_HEAD,
   MOCK_TWEET_WITH_MEDIA,
-  MOCK_VERIFY_CREDENTIALS,
+  MOCK_VIEWER_RESPONSE,
 } from './fixtures';
 
 // ============================================================
-// 1. verify_credentials 응답 파싱 스펙
+// 1. GraphQL Viewer 응답 파싱 스펙
 // ============================================================
-describe('parseVerifyCredentials - API 스펙 검증', () => {
-  it('필수 필드(id_str, name, screen_name, profile_image_url_https)를 올바르게 매핑한다', () => {
-    const user = parseVerifyCredentials(MOCK_VERIFY_CREDENTIALS);
+describe('parseViewer - API 스펙 검증', () => {
+  it('필수 필드(rest_id, name, screen_name, profile_image_url_https)를 올바르게 매핑한다', () => {
+    const user = parseViewer(MOCK_VIEWER_RESPONSE);
 
     expect(user.id).toBe('123456789');
     expect(user.name).toBe('테스트 사용자');
@@ -38,13 +34,11 @@ describe('parseVerifyCredentials - API 스펙 검증', () => {
     );
   });
 
-  it('응답에 id_str이 없으면 id가 undefined가 된다 (스펙 변경 감지)', () => {
+  it('응답에 result가 없으면 에러가 발생한다 (스펙 변경 감지)', () => {
     const broken =
-      MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS as unknown as VerifyCredentialsResponse;
-    const user = parseVerifyCredentials(broken);
+      MOCK_BROKEN_VIEWER_MISSING_FIELDS as unknown as ViewerResponse;
 
-    // id_str이 없어서 undefined — 이 테스트가 통과하면 "스펙이 바뀌었다"를 의미
-    expect(user.id).toBeUndefined();
+    expect(() => parseViewer(broken)).toThrow();
   });
 });
 
@@ -269,10 +263,18 @@ describe('API 응답 필드명 스냅샷', () => {
     expect(entry).toHaveProperty('content.itemContent.tweet_results.result');
   });
 
-  it('VerifyCredentialsResponse는 id_str, name, screen_name, profile_image_url_https를 사용한다', () => {
-    expect(MOCK_VERIFY_CREDENTIALS).toHaveProperty('id_str');
-    expect(MOCK_VERIFY_CREDENTIALS).toHaveProperty('name');
-    expect(MOCK_VERIFY_CREDENTIALS).toHaveProperty('screen_name');
-    expect(MOCK_VERIFY_CREDENTIALS).toHaveProperty('profile_image_url_https');
+  it('ViewerResponse는 data.viewer.user_results.result.rest_id 경로를 사용한다', () => {
+    expect(MOCK_VIEWER_RESPONSE).toHaveProperty(
+      'data.viewer.user_results.result.rest_id',
+    );
+    expect(MOCK_VIEWER_RESPONSE).toHaveProperty(
+      'data.viewer.user_results.result.legacy.name',
+    );
+    expect(MOCK_VIEWER_RESPONSE).toHaveProperty(
+      'data.viewer.user_results.result.legacy.screen_name',
+    );
+    expect(MOCK_VIEWER_RESPONSE).toHaveProperty(
+      'data.viewer.user_results.result.legacy.profile_image_url_https',
+    );
   });
 });

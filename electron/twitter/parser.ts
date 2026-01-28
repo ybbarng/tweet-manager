@@ -1,8 +1,4 @@
-import type {
-  TweetResult,
-  UserTweetsResponse,
-  VerifyCredentialsResponse,
-} from './types';
+import type { TweetResult, UserTweetsResponse, ViewerResponse } from './types';
 
 export interface ParsedTweet {
   id: string;
@@ -29,15 +25,14 @@ export interface ParsedUser {
   profileImageUrl: string;
 }
 
-/** verify_credentials 응답에서 사용자 정보 추출 */
-export function parseVerifyCredentials(
-  data: VerifyCredentialsResponse,
-): ParsedUser {
+/** GraphQL Viewer 응답에서 사용자 정보 추출 */
+export function parseViewer(data: ViewerResponse): ParsedUser {
+  const user = data.data.viewer.user_results.result;
   return {
-    id: data.id_str,
-    name: data.name,
-    screenName: data.screen_name,
-    profileImageUrl: data.profile_image_url_https,
+    id: user.rest_id,
+    name: user.legacy.name,
+    screenName: user.legacy.screen_name,
+    profileImageUrl: user.legacy.profile_image_url_https,
   };
 }
 

@@ -1,11 +1,19 @@
 /** Twitter GraphQL 엔드포인트 및 쿼리 파라미터 */
 
 export const ENDPOINTS = {
-  VERIFY_CREDENTIALS: 'https://api.x.com/1.1/account/verify_credentials.json',
+  VIEWER: 'https://x.com/i/api/graphql/uYkrgBYgRGvnmsaLOBDhnA/Viewer',
   USER_TWEETS: 'https://x.com/i/api/graphql/E3opETHurmVJflFsUBVuUQ/UserTweets',
   DELETE_TWEET:
     'https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet',
 } as const;
+
+export const VIEWER_FEATURES = {
+  rweb_tipjar_consumption_enabled: true,
+  responsive_web_graphql_exclude_directive_enabled: true,
+  verified_phone_label_enabled: false,
+  responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+  responsive_web_graphql_timeline_navigation_enabled: true,
+};
 
 export function getUserTweetsVariables(userId: string, cursor?: string) {
   const variables: Record<string, unknown> = {

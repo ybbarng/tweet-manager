@@ -62,10 +62,22 @@ export interface UserTweetsResponse {
   };
 }
 
-/** verify_credentials 응답 */
-export interface VerifyCredentialsResponse {
-  id_str: string;
-  name: string;
-  screen_name: string;
-  profile_image_url_https: string;
+/** GraphQL Viewer 응답 */
+export interface ViewerResponse {
+  data: {
+    viewer: {
+      user_results: {
+        result: {
+          __typename: string;
+          id: string;
+          rest_id: string;
+          legacy: {
+            name: string;
+            screen_name: string;
+            profile_image_url_https: string;
+          };
+        };
+      };
+    };
+  };
 }

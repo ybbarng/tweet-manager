@@ -3,20 +3,28 @@
  * 실제 API 응답 구조를 그대로 재현하여, 스펙 변경 시 파싱 실패로 감지한다.
  */
 
-import type {
-  TweetResult,
-  UserTweetsResponse,
-  VerifyCredentialsResponse,
-} from '../types';
+import type { TweetResult, UserTweetsResponse, ViewerResponse } from '../types';
 
-// --- verify_credentials ---
+// --- GraphQL Viewer 응답 ---
 
-export const MOCK_VERIFY_CREDENTIALS: VerifyCredentialsResponse = {
-  id_str: '123456789',
-  name: '테스트 사용자',
-  screen_name: 'testuser',
-  profile_image_url_https:
-    'https://pbs.twimg.com/profile_images/test/photo.jpg',
+export const MOCK_VIEWER_RESPONSE: ViewerResponse = {
+  data: {
+    viewer: {
+      user_results: {
+        result: {
+          __typename: 'User',
+          id: 'VXNlcjoxMjM0NTY3ODk=',
+          rest_id: '123456789',
+          legacy: {
+            name: '테스트 사용자',
+            screen_name: 'testuser',
+            profile_image_url_https:
+              'https://pbs.twimg.com/profile_images/test/photo.jpg',
+          },
+        },
+      },
+    },
+  },
 };
 
 // --- 개별 TweetResult ---
@@ -301,8 +309,12 @@ export const MOCK_BROKEN_RESPONSE_MISSING_LEGACY = {
   // legacy 필드가 없음
 };
 
-export const MOCK_BROKEN_VERIFY_CREDENTIALS_MISSING_FIELDS = {
-  // id_str가 없음
-  name: '테스트',
-  screen_name: 'test',
+export const MOCK_BROKEN_VIEWER_MISSING_FIELDS = {
+  data: {
+    viewer: {
+      user_results: {
+        // result가 없음
+      },
+    },
+  },
 };

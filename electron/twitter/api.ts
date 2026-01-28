@@ -4,14 +4,15 @@ import {
   getDeleteTweetVariables,
   getUserTweetsVariables,
   USER_TWEETS_FEATURES,
+  VIEWER_FEATURES,
 } from './endpoints';
 import {
   type FetchTweetsResult,
   type ParsedUser,
   parseTimelineResponse,
-  parseVerifyCredentials,
+  parseViewer,
 } from './parser';
-import type { UserTweetsResponse, VerifyCredentialsResponse } from './types';
+import type { UserTweetsResponse, ViewerResponse } from './types';
 
 interface TwitterAuth {
   authToken: string;
@@ -40,12 +41,19 @@ export class TwitterApiClient {
   }
 
   async verifyCredentials(): Promise<ParsedUser> {
-    const data = await this.api
-      .url(ENDPOINTS.VERIFY_CREDENTIALS)
-      .get()
-      .json<VerifyCredentialsResponse>();
+    const params = new URLSearchParams({
+      variables: JSON.stringify({
+        withCommunitiesMemberships: false,
+      }),
+      features: JSON.stringify(VIEWER_FEATURES),
+    });
 
-    const user = parseVerifyCredentials(data);
+    const data = await this.api
+      .url(`${ENDPOINTS.VIEWER}?${params}`)
+      .get()
+      .json<ViewerResponse>();
+
+    const user = parseViewer(data);
     this.userId = user.id;
     return user;
   }
