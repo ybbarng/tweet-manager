@@ -2,7 +2,7 @@
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useReducer } from 'react';
-import AuthForm from '@/components/auth/AuthForm';
+import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
 import DeletionProgress from '@/components/deletion/DeletionProgress';
 import FilterPanel from '@/components/filters/FilterPanel';
 import ArchiveUpload from '@/components/upload/ArchiveUpload';
@@ -37,8 +37,20 @@ export default function Home() {
               <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                 <h1 className="text-xl font-bold">X Manager</h1>
                 {state.user && (
-                  <div className="flex items-center gap-2 text-sm text-neutral-500">
-                    <span>@{state.user.screenName}</span>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-neutral-500">
+                      @{state.user.screenName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetWarningDismissed();
+                        alert('보안 경고 메시지가 다시 표시됩니다.');
+                      }}
+                      className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 text-xs"
+                    >
+                      보안 경고 보기
+                    </button>
                     <button
                       type="button"
                       onClick={() => dispatch({ type: 'LOGOUT' })}

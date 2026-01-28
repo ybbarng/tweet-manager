@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isElectron, login } from '@/lib/ipc';
 import { useVerifyAuth } from '@/lib/queries';
 import { useAppDispatch } from '@/lib/store/tweet-store';
 import type { TwitterAuth } from '@/types';
+
+const STORAGE_KEY = 'x-manager-warning-dismissed';
 
 export default function AuthForm() {
   const dispatch = useAppDispatch();
@@ -17,8 +19,33 @@ export default function AuthForm() {
   const [error, setError] = useState('');
   const [showManualForm, setShowManualForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleTwitterLogin = async () => {
+  useEffect(() => {
+    const dismissed = localStorage.getItem(STORAGE_KEY) === 'true';
+    setWarningDismissed(dismissed);
+  }, []);
+
+  const handleLoginClick = () => {
+    if (warningDismissed) {
+      proceedWithLogin();
+    } else {
+      setShowWarningModal(true);
+    }
+  };
+
+  const handleWarningConfirm = () => {
+    if (dontShowAgain) {
+      localStorage.setItem(STORAGE_KEY, 'true');
+      setWarningDismissed(true);
+    }
+    setShowWarningModal(false);
+    proceedWithLogin();
+  };
+
+  const proceedWithLogin = async () => {
     setError('');
 
     if (!isElectron()) {
@@ -39,26 +66,13 @@ export default function AuthForm() {
         return;
       }
 
-      const authData = loginResult.data;
+      const { auth: authData, user: userData } = loginResult.data;
 
-      // 인증 정보 검증
-      verifyMutation.mutate(authData, {
-        onSuccess: (result) => {
-          if (result.success && result.data) {
-            dispatch({
-              type: 'SET_AUTH',
-              payload: { auth: authData, user: result.data },
-            });
-          } else {
-            setError(result.error || '인증에 실패했습니다.');
-          }
-          setIsLoggingIn(false);
-        },
-        onError: (err) => {
-          setError(err.message);
-          setIsLoggingIn(false);
-        },
+      dispatch({
+        type: 'SET_AUTH',
+        payload: { auth: authData, user: userData },
       });
+      setIsLoggingIn(false);
     } catch (err) {
       setError((err as Error).message);
       setIsLoggingIn(false);
@@ -101,35 +115,10 @@ export default function AuthForm() {
     <div className="max-w-lg mx-auto">
       <h2 className="text-2xl font-bold mb-6">Twitter(X) 인증</h2>
 
-      {/* 보안 경고 */}
-      <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-        <div className="flex items-start gap-3">
-          <span className="text-amber-600 dark:text-amber-400 text-xl flex-shrink-0">
-            !
-          </span>
-          <div>
-            <h3 className="font-semibold text-amber-800 dark:text-amber-200 mb-2">
-              보안 경고
-            </h3>
-            <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
-              이 앱은 Twitter 계정에 대한 전체 접근 권한을 요청합니다. 트윗
-              삭제를 포함한 모든 작업이 가능합니다.
-            </p>
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              <strong>
-                이 프로그램의 개발자를 신뢰하는 경우에만 로그인하세요.
-              </strong>
-              <br />
-              인증 정보는 로컬에만 저장되며 외부로 전송되지 않습니다.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Twitter 로그인 버튼 */}
       <button
         type="button"
-        onClick={handleTwitterLogin}
+        onClick={handleLoginClick}
         disabled={isLoading}
         className="w-full py-3 px-4 bg-black hover:bg-neutral-800 disabled:bg-neutral-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
@@ -265,6 +254,67 @@ export default function AuthForm() {
           </div>
         )}
       </div>
+
+      {/* 보안 경고 모달 */}
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-amber-500 text-2xl flex-shrink-0">
+                &#9888;
+              </span>
+              <div>
+                <h3 className="font-bold text-lg mb-2">보안 경고</h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+                  이 앱은 Twitter 계정에 대한 전체 접근 권한을 요청합니다. 트윗
+                  삭제를 포함한 모든 작업이 가능합니다.
+                </p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                  <strong className="text-foreground">
+                    이 프로그램의 개발자를 신뢰하는 경우에만 로그인하세요.
+                  </strong>
+                  <br />
+                  인증 정보는 로컬에만 저장되며 외부로 전송되지 않습니다.
+                </p>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                className="w-4 h-4 rounded border-neutral-300"
+              />
+              <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                다시 보지 않기
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowWarningModal(false)}
+                className="flex-1 py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleWarningConfirm}
+                className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                동의하고 계속
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+/** 경고 메시지 재활성화 함수 (외부에서 호출) */
+export function resetWarningDismissed() {
+  localStorage.removeItem(STORAGE_KEY);
 }
