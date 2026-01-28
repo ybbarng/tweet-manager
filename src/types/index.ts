@@ -47,8 +47,11 @@ export interface DeletionProgress {
   completed: number;
   failed: number;
   currentTweetId?: string;
-  status: 'idle' | 'running' | 'paused' | 'done' | 'error';
+  status: 'idle' | 'running' | 'paused' | 'done' | 'error' | 'stopped';
   error?: string;
+  stopReason?: string;
+  /** 실패한 트윗 목록 */
+  failedTweetIds?: { id: string; error: string }[];
 }
 
 /** 앱 전체 상태 */

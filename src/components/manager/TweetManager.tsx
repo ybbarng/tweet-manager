@@ -46,6 +46,7 @@ export default function TweetManager() {
 
   // 삭제 상태
   const [confirmed, setConfirmed] = useState(false);
+  const [backupBeforeDelete, setBackupBeforeDelete] = useState(true);
   const deleteMutation = useDeleteBatch();
   const backupMutation = useSaveBackup();
 
@@ -187,8 +188,23 @@ export default function TweetManager() {
     backupMutation.mutate(toDelete);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!isElectron() || !confirmed) return;
+
+    // 백업 옵션이 켜져 있으면 먼저 백업
+    if (backupBeforeDelete) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          backupMutation.mutate(toDelete, {
+            onSuccess: () => resolve(),
+            onError: (err) => reject(err),
+          });
+        });
+      } catch {
+        setLoadError('백업 저장에 실패했습니다. 삭제가 취소되었습니다.');
+        return;
+      }
+    }
 
     dispatch({
       type: 'SET_DELETION_PROGRESS',
@@ -197,17 +213,38 @@ export default function TweetManager() {
         completed: 0,
         failed: 0,
         status: 'running',
+        failedTweetIds: [],
       },
     });
 
     const tweetIds = toDelete.map((t) => t.id);
     deleteMutation.mutate(tweetIds, {
-      onSuccess: () => {
-        dispatch({
-          type: 'SET_DELETION_PROGRESS',
-          payload: { status: 'done' },
-        });
-        dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: tweetIds });
+      onSuccess: (result) => {
+        // 연속 실패로 중단된 경우
+        if (!result.success && result.data) {
+          dispatch({
+            type: 'SET_DELETION_PROGRESS',
+            payload: {
+              status: 'stopped',
+              stopReason: result.error,
+              failedTweetIds: result.data.failedTweetIds,
+            },
+          });
+          // 성공적으로 삭제된 트윗만 목록에서 제거
+          const deletedIds = tweetIds.filter(
+            (id) =>
+              !result.data?.failedTweetIds?.some(
+                (f: { id: string }) => f.id === id,
+              ),
+          );
+          dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: deletedIds });
+        } else {
+          dispatch({
+            type: 'SET_DELETION_PROGRESS',
+            payload: { status: 'done' },
+          });
+          dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: tweetIds });
+        }
         setConfirmed(false);
         setSelectedForDeletion(new Set());
       },
@@ -293,6 +330,37 @@ export default function TweetManager() {
             {deletionProgress.failed > 0 &&
               ` / ${deletionProgress.failed}개 실패`}
           </p>
+        </div>
+      )}
+
+      {/* 중단됨 상태 (연속 실패 등) */}
+      {deletionProgress.status === 'stopped' && (
+        <div className="p-6 bg-amber-50 dark:bg-amber-950 rounded-lg mb-6">
+          <p className="text-lg font-bold text-amber-600">삭제 중단됨</p>
+          <p className="text-sm text-amber-500 mt-1">
+            {deletionProgress.completed}개 삭제 완료 / {deletionProgress.failed}
+            개 실패
+          </p>
+          {deletionProgress.stopReason && (
+            <p className="text-sm text-amber-600 mt-2">
+              {deletionProgress.stopReason}
+            </p>
+          )}
+          {deletionProgress.failedTweetIds &&
+            deletionProgress.failedTweetIds.length > 0 && (
+              <div className="mt-4 text-left">
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">
+                  실패한 트윗:
+                </p>
+                <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                  {deletionProgress.failedTweetIds.map((f) => (
+                    <li key={f.id} className="text-amber-600">
+                      • ID: {f.id} - {f.error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
         </div>
       )}
 
@@ -424,6 +492,24 @@ export default function TweetManager() {
                   ? '저장 중...'
                   : '선택한 트윗 백업 다운로드 (JSON)'}
               </button>
+
+              {/* 삭제 전 백업 옵션 */}
+              <div className="flex items-center gap-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+                <Checkbox
+                  id="backup-before-delete"
+                  checked={backupBeforeDelete}
+                  onCheckedChange={(checked) =>
+                    setBackupBeforeDelete(checked === true)
+                  }
+                  disabled={toDelete.length === 0}
+                />
+                <label
+                  htmlFor="backup-before-delete"
+                  className="text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer"
+                >
+                  삭제 전 백업 저장 (권장)
+                </label>
+              </div>
 
               <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                 <Checkbox
