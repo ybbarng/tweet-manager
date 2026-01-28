@@ -25,6 +25,7 @@ pnpm run test:watch       # vitest watch 모드
 - **Electron tsconfig 분리**: `tsconfig.electron.json`으로 `electron/` 디렉토리를 CommonJS 타겟으로 별도 컴파일. 출력 디렉토리는 `dist-electron/`.
 - **HTTP 클라이언트**: Electron 메인 프로세스에서 wretch 사용 (fetch 래퍼). `electron/twitter/api.ts` 참고.
 - **서버 상태 관리**: 렌더러에서 @tanstack/react-query 사용. mutation 훅은 `src/lib/queries.ts`에 정의.
+- **electron-builder 패키징**: `files` 설정에서 `node_modules`를 제외하고 `wretch`만 포함. Next.js, React 등은 정적 빌드(`out/`) 후 런타임에 불필요. `sharp`는 아이콘 생성 스크립트용(devDependency).
 
 ## 코딩 컨벤션
 

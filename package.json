@@ -55,7 +55,9 @@
     },
     "files": [
       "dist-electron/**/*",
-      "out/**/*"
+      "out/**/*",
+      "!node_modules",
+      "node_modules/wretch/**/*"
     ],
     "mac": {
       "target": "dmg",
