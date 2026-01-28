@@ -270,6 +270,21 @@ export default function TweetManager() {
   const loading = apiLoading;
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
+
+  // 트윗 날짜 범위 계산
+  const dateRange = useMemo(() => {
+    if (tweets.length === 0) return null;
+    const dates = tweets.map((t) => t.createdAt.getTime());
+    const oldest = new Date(Math.min(...dates));
+    const newest = new Date(Math.max(...dates));
+    const formatDate = (d: Date) =>
+      d.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    return { oldest: formatDate(oldest), newest: formatDate(newest) };
+  }, [tweets]);
   const progress =
     deletionProgress.total > 0
       ? Math.round((deletionProgress.completed / deletionProgress.total) * 100)
@@ -280,22 +295,29 @@ export default function TweetManager() {
     <div className="max-w-4xl mx-auto">
       {/* 데이터 상태 바 */}
       <div className="flex items-center justify-between mb-6 p-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
-        <div className="flex items-center gap-2">
-          {loading && (
-            <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
-          )}
-          <span className="font-semibold">
-            {tweets.length.toLocaleString()}
-          </span>
-          <span className="text-neutral-500">개의 트윗</span>
-          {user && (
-            <span className="text-neutral-400 ml-2">@{user.screenName}</span>
-          )}
-          {loading && (
-            <span className="text-blue-500 text-sm">불러오는 중...</span>
-          )}
-          {loadError && (
-            <span className="text-red-500 text-sm">{loadError}</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            {loading && (
+              <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+            )}
+            <span className="font-semibold">
+              {tweets.length.toLocaleString()}
+            </span>
+            <span className="text-neutral-500">개의 트윗</span>
+            {user && (
+              <span className="text-neutral-400 ml-2">@{user.screenName}</span>
+            )}
+            {loading && (
+              <span className="text-blue-500 text-sm">불러오는 중...</span>
+            )}
+            {loadError && (
+              <span className="text-red-500 text-sm">{loadError}</span>
+            )}
+          </div>
+          {dateRange && (
+            <div className="text-xs text-neutral-500">
+              {dateRange.oldest} ~ {dateRange.newest}
+            </div>
           )}
         </div>
         <div className="flex items-center gap-2">
