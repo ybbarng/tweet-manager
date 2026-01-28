@@ -67,13 +67,37 @@ ipcMain.handle(
       authToken: string;
       csrfToken: string;
       bearerToken: string;
+      userId?: string;
     },
   ) => {
     try {
+      console.log('[twitter:verify] 인증 시도:', {
+        authToken: auth.authToken?.slice(0, 10) + '...',
+        csrfToken: auth.csrfToken?.slice(0, 10) + '...',
+        userId: auth.userId,
+      });
       twitterClient = new TwitterApiClient(auth);
+
+      // userId가 있으면 API 호출 없이 인증 성공으로 처리
+      if (auth.userId) {
+        console.log('[twitter:verify] userId 있음, 인증 완료');
+        return {
+          success: true,
+          data: {
+            id: auth.userId,
+            name: '',
+            screenName: '',
+            profileImageUrl: '',
+          },
+        };
+      }
+
+      // userId 없으면 (수동 입력) verifyCredentials 호출
       const user = await twitterClient.verifyCredentials();
+      console.log('[twitter:verify] 성공:', user);
       return { success: true, data: user };
     } catch (error) {
+      console.error('[twitter:verify] 실패:', error);
       twitterClient = null;
       return { success: false, error: (error as Error).message };
     }
@@ -192,6 +216,7 @@ ipcMain.handle('twitter:login', async () => {
 
     let authToken = '';
     let csrfToken = '';
+    let userId = '';
     let resolved = false;
 
     const cleanup = () => {
@@ -220,11 +245,51 @@ ipcMain.handle('twitter:login', async () => {
             authToken = cookie.value;
           } else if (cookie.name === 'ct0') {
             csrfToken = cookie.value;
+          } else if (cookie.name === 'twid') {
+            // twid 쿠키 형식: u%3D{userId} (URL 인코딩된 u={userId})
+            const match = decodeURIComponent(cookie.value).match(/u=(\d+)/);
+            if (match) {
+              userId = match[1];
+            }
           }
         }
-        return authToken && csrfToken;
+        return authToken && csrfToken && userId;
       } catch {
         return false;
+      }
+    };
+
+    // 페이지에서 사용자 정보 추출
+    const extractUserInfo = async () => {
+      try {
+        const userInfo = await loginWindow.webContents.executeJavaScript(`
+          (function() {
+            try {
+              // React Fiber에서 사용자 정보 추출 시도
+              const appElement = document.querySelector('[data-testid="primaryColumn"]');
+              if (!appElement) return null;
+
+              // __reactFiber 또는 __reactInternalInstance에서 상태 탐색
+              const fiberKey = Object.keys(appElement).find(key => key.startsWith('__reactFiber'));
+              if (!fiberKey) return null;
+
+              // 프로필 링크에서 screen_name 추출
+              const profileLink = document.querySelector('[data-testid="AppTabBar_Profile_Link"]');
+              const screenName = profileLink ? profileLink.getAttribute('href')?.replace('/', '') : null;
+
+              // 프로필 이미지 추출
+              const profileImg = document.querySelector('[data-testid="DashButton_ProfileIcon_Link"] img');
+              const profileImageUrl = profileImg ? profileImg.getAttribute('src') : null;
+
+              return { screenName, profileImageUrl };
+            } catch (e) {
+              return null;
+            }
+          })()
+        `);
+        return userInfo;
+      } catch {
+        return null;
       }
     };
 
@@ -238,14 +303,39 @@ ipcMain.handle('twitter:login', async () => {
       ) {
         const hasTokens = await extractCookies();
         if (hasTokens) {
-          resolveOnce({
-            success: true,
-            data: {
+          // 페이지 로드 완료 대기 후 사용자 정보 추출
+          setTimeout(async () => {
+            const userInfo = await extractUserInfo();
+            console.log('[twitter:login] 로그인 성공:', {
+              userId,
+              screenName: userInfo?.screenName,
+            });
+
+            // twitterClient 초기화
+            twitterClient = new TwitterApiClient({
               authToken,
               csrfToken,
               bearerToken: TWITTER_BEARER_TOKEN,
-            },
-          });
+              userId,
+            });
+
+            resolveOnce({
+              success: true,
+              data: {
+                auth: {
+                  authToken,
+                  csrfToken,
+                  bearerToken: TWITTER_BEARER_TOKEN,
+                },
+                user: {
+                  id: userId,
+                  name: userInfo?.screenName || userId,
+                  screenName: userInfo?.screenName || '',
+                  profileImageUrl: userInfo?.profileImageUrl || '',
+                },
+              },
+            });
+          }, 1000);
         }
       }
     };

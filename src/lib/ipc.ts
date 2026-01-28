@@ -6,10 +6,16 @@ import type {
   TwitterUser,
 } from '@/types';
 
+/** 로그인 결과 (인증 정보 + 사용자 정보) */
+export interface LoginResult {
+  auth: TwitterAuth;
+  user: TwitterUser;
+}
+
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
   twitter: {
-    login: () => Promise<IpcResponse<TwitterAuth>>;
+    login: () => Promise<IpcResponse<LoginResult>>;
     verify: (auth: TwitterAuth) => Promise<IpcResponse<TwitterUser>>;
     fetchTweets: (
       cursor?: string,
@@ -49,7 +55,7 @@ export function isElectron(): boolean {
 }
 
 /** Twitter 자동 로그인 */
-export async function login(): Promise<IpcResponse<TwitterAuth>> {
+export async function login(): Promise<IpcResponse<LoginResult>> {
   return getAPI().twitter.login();
 }
 

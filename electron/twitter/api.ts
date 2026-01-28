@@ -18,6 +18,7 @@ interface TwitterAuth {
   authToken: string;
   csrfToken: string;
   bearerToken: string;
+  userId?: string;
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +28,7 @@ export class TwitterApiClient {
   private api;
 
   constructor(auth: TwitterAuth) {
+    this.userId = auth.userId || null;
     this.api = wretch().headers({
       Authorization: `Bearer ${auth.bearerToken}`,
       Cookie: `auth_token=${auth.authToken}; ct0=${auth.csrfToken}`,
