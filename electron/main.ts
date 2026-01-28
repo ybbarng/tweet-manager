@@ -3,14 +3,23 @@ import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+// 개발 모드에서 파일 변경 시 자동 재시작
+if (isDev) {
+  try {
+    require('electron-reloader')(module, {
+      watchRenderer: false, // 렌더러는 Next.js HMR 사용
+    });
+  } catch {}
+}
+
 let mainWindow: BrowserWindow | null = null;
 let twitterClient: TwitterApiClient | null = null;
 
 // Twitter 웹 클라이언트용 공개 Bearer 토큰
 const TWITTER_BEARER_TOKEN =
   'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
-
-const isDev = process.env.NODE_ENV !== 'production';
 
 function createWindow() {
   mainWindow = new BrowserWindow({

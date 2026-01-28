@@ -11,7 +11,7 @@
     "check": "biome check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "electron:dev": "concurrently -n next,electron -k \"next dev\" \"wait-on http://localhost:${PORT:-3000} && pnpm run electron:compile && electron .\"",
+    "electron:dev": "concurrently -n next,tsc,electron -k \"next dev\" \"tsc -p tsconfig.electron.json --watch\" \"wait-on http://localhost:${PORT:-3000} && pnpm run electron:compile && electron .\"",
     "electron:build": "next build && pnpm run electron:compile && electron-builder",
     "electron:compile": "tsc -p tsconfig.electron.json"
   },
@@ -36,6 +36,7 @@
     "concurrently": "^9.2.1",
     "electron": "^40.0.0",
     "electron-builder": "^26.4.0",
+    "electron-reloader": "^1.2.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18",
