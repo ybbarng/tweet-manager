@@ -8,7 +8,7 @@
   </g>
 
   <!-- 지우개 (오른쪽 하단, 45도 기울임) -->
-  <g transform="translate(48, 48) rotate(-45)">
+  <g transform="translate(55, 58) rotate(-45)">
     <!-- 지우개 몸통 (검은색) -->
     <rect x="5" y="8" width="35" height="18" rx="3" fill="#1a1a1a"/>
     <!-- 지우개 금속 밴드 -->
