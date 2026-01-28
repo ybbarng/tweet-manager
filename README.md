@@ -24,7 +24,7 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 |------|------|
 | Desktop | Electron + electron-builder |
 | Frontend | Next.js 16 (App Router) + TypeScript |
-| UI | Tailwind CSS + lucide-react |
+| UI | Tailwind CSS + shadcn/ui + lucide-react |
 | 상태 관리 | React Context + useReducer |
 | 서버 상태 | @tanstack/react-query |
 | 가상 스크롤 | @tanstack/react-virtual |
@@ -147,9 +147,10 @@ src/
   components/
     auth/              인증 폼
     upload/            아카이브 업로드 / API 로드
-    filters/           필터 패널 (좋아요, 리트윗, 타래)
+    filters/           SQL 스타일 쿼리 빌더 UI
     tweets/            트윗 카드, 목록 (가상 스크롤), 통계
-    deletion/          삭제 미리보기 및 진행률
+    manager/           트윗 관리 메인 화면
+    ui/                shadcn/ui 컴포넌트
   lib/
     ipc.ts             Electron IPC 호출 래퍼
     filters/           필터 엔진 및 개별 필터 로직
