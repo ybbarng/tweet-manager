@@ -64,7 +64,12 @@ export class TwitterApiClient {
     return user;
   }
 
-  async fetchUserTweets(cursor?: string): Promise<FetchTweetsResult> {
+  async fetchUserTweets(
+    cursor?: string,
+    retryCount = 0,
+  ): Promise<FetchTweetsResult> {
+    const MAX_RETRIES = 3;
+
     if (!this.userId) {
       await this.verifyCredentials();
     }
@@ -101,6 +106,9 @@ export class TwitterApiClient {
     } catch (err) {
       const error = err as WretchError;
       if (error.status === 429) {
+        if (retryCount >= MAX_RETRIES) {
+          throw new Error('Rate limit 초과: 최대 재시도 횟수 도달');
+        }
         const retryAfter = parseInt(
           error.response?.headers?.get('x-rate-limit-reset') || '60',
           10,
@@ -109,13 +117,14 @@ export class TwitterApiClient {
         if (waitMs > 0) {
           await delay(Math.min(waitMs, 60000));
         }
-        return this.fetchUserTweets(cursor);
+        return this.fetchUserTweets(cursor, retryCount + 1);
       }
       throw new Error(`트윗 조회 실패: ${error.status || error.message}`);
     }
   }
 
-  async deleteTweet(tweetId: string): Promise<void> {
+  async deleteTweet(tweetId: string, retryCount = 0): Promise<void> {
+    const MAX_RETRIES = 3;
     const variables = getDeleteTweetVariables(tweetId);
 
     try {
@@ -126,8 +135,12 @@ export class TwitterApiClient {
     } catch (err) {
       const error = err as WretchError;
       if (error.status === 429) {
-        await delay(5000);
-        return this.deleteTweet(tweetId);
+        if (retryCount >= MAX_RETRIES) {
+          throw new Error('Rate limit 초과: 최대 재시도 횟수 도달');
+        }
+        // 재시도 시 대기 시간을 점점 늘림 (5초, 10초, 15초)
+        await delay(5000 * (retryCount + 1));
+        return this.deleteTweet(tweetId, retryCount + 1);
       }
       throw new Error(`트윗 삭제 실패: ${error.status || error.message}`);
     }

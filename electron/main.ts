@@ -187,14 +187,42 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
     return { success: false, error: '인증되지 않았습니다.' };
   }
 
-  const results = { total: tweetIds.length, completed: 0, failed: 0 };
+  const results = {
+    total: tweetIds.length,
+    completed: 0,
+    failed: 0,
+    failedTweetIds: [] as { id: string; error: string }[],
+  };
+  let consecutiveFailures = 0;
+  const MAX_CONSECUTIVE_FAILURES = 5;
 
   for (const tweetId of tweetIds) {
     try {
       await twitterClient.deleteTweet(tweetId);
       results.completed++;
-    } catch {
+      consecutiveFailures = 0; // 성공 시 연속 실패 카운터 리셋
+    } catch (error) {
       results.failed++;
+      consecutiveFailures++;
+      results.failedTweetIds.push({
+        id: tweetId,
+        error: (error as Error).message,
+      });
+
+      // 연속 실패 5회 시 중단
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        mainWindow?.webContents.send('twitter:delete-progress', {
+          ...results,
+          currentTweetId: tweetId,
+          status: 'stopped',
+          stopReason: `연속 ${MAX_CONSECUTIVE_FAILURES}회 실패로 중단됨`,
+        });
+        return {
+          success: false,
+          error: `연속 ${MAX_CONSECUTIVE_FAILURES}회 실패로 삭제가 중단되었습니다.`,
+          data: results,
+        };
+      }
     }
 
     // 진행 상태를 렌더러에 전송
@@ -204,9 +232,9 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
       status: 'running',
     });
 
-    // Rate limit 대응: 200~500ms 랜덤 딜레이
+    // Rate limit 대응: 1~2초 랜덤 딜레이 (계정 보호)
     await new Promise((resolve) =>
-      setTimeout(resolve, 200 + Math.random() * 300),
+      setTimeout(resolve, 1000 + Math.random() * 1000),
     );
   }
 
