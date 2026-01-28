@@ -21,8 +21,12 @@ export default function TweetCard({
       ? tweet.createdAt
       : new Date(tweet.createdAt);
 
+  const isExcluded = showCheckbox && checked === false;
+
   return (
-    <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+    <div
+      className={`p-4 border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${isExcluded ? 'opacity-50' : ''}`}
+    >
       <div className="flex gap-3">
         {showCheckbox && (
           <input

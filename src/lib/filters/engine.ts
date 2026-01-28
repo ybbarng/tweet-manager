@@ -39,3 +39,12 @@ export function getTweetsToDelete(
 
   return tweets.filter((t) => !preserved.has(t.id) && !excludedIds.has(t.id));
 }
+
+/** 삭제 후보 트윗 반환 (수동 제외 적용 전) */
+export function getDeletionCandidates(
+  tweets: Tweet[],
+  filters: TweetFilter[],
+): Tweet[] {
+  const preserved = getPreservedTweets(tweets, filters);
+  return tweets.filter((t) => !preserved.has(t.id));
+}

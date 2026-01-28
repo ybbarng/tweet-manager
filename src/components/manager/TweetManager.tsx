@@ -2,7 +2,7 @@
 
 import { RefreshCw, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getTweetsToDelete } from '@/lib/filters/engine';
+import { getDeletionCandidates, getTweetsToDelete } from '@/lib/filters/engine';
 import { createLikesFilter } from '@/lib/filters/likes';
 import { createRetweetsFilter } from '@/lib/filters/retweets';
 import { createThreadFilter } from '@/lib/filters/thread';
@@ -57,6 +57,13 @@ export default function TweetManager() {
     threadIds,
   ]);
 
+  // 삭제 후보 (수동 제외 전)
+  const deletionCandidates = useMemo(
+    () => getDeletionCandidates(tweets, filters),
+    [tweets, filters],
+  );
+
+  // 실제 삭제 대상 (수동 제외 후)
   const toDelete = useMemo(
     () => getTweetsToDelete(tweets, filters, excludedTweetIds),
     [tweets, filters, excludedTweetIds],
@@ -404,10 +411,19 @@ export default function TweetManager() {
             ) : (
               <>
                 <h4 className="font-medium text-sm text-red-500 mb-2">
-                  삭제 대상 ({toDelete.length.toLocaleString()}개)
+                  삭제 후보 ({deletionCandidates.length.toLocaleString()}개)
+                  {excludedTweetIds.size > 0 && (
+                    <span className="text-neutral-400 font-normal ml-2">
+                      (체크 해제: {excludedTweetIds.size}개)
+                    </span>
+                  )}
                 </h4>
+                <p className="text-xs text-neutral-500 mb-2">
+                  체크를 해제하면 보존됩니다. 흐리게 표시된 트윗은 삭제 대상에서
+                  제외됩니다.
+                </p>
                 <TweetList
-                  tweets={toDelete}
+                  tweets={deletionCandidates}
                   showCheckbox
                   checkedIds={excludedTweetIds}
                   onToggle={handleToggleExclude}
