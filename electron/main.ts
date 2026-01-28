@@ -212,7 +212,10 @@ ipcMain.handle('twitter:login', async () => {
       width: 500,
       height: 700,
       parent: mainWindow!,
-      modal: true,
+      modal: false,
+      closable: true,
+      minimizable: false,
+      maximizable: false,
       webPreferences: {
         session: loginSession,
         nodeIntegration: false,
