@@ -1,26 +1,66 @@
 {
-  "name": "x-manager-temp",
+  "name": "x-manager",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "biome check --write",
+    "check": "biome check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "electron:dev": "concurrently -n next,electron -k \"next dev -p 3000\" \"wait-on http://localhost:3000 && pnpm run electron:compile && electron .\"",
+    "electron:build": "next build && pnpm run electron:compile && electron-builder",
+    "electron:compile": "tsc -p tsconfig.electron.json"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-virtual": "^3.13.18",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "wretch": "^3.0.6"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "concurrently": "^9.2.1",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["electron"]
+  },
+  "build": {
+    "appId": "com.x-manager.app",
+    "productName": "X Manager",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "out/**/*"
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.png"
+    }
   }
 }
