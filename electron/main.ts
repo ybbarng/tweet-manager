@@ -117,8 +117,13 @@ ipcMain.handle(
     },
   ) => {
     try {
-      // Electron의 실제 User-Agent 사용 (Chromium 기반)
-      const userAgent = session.defaultSession.getUserAgent();
+      // Electron User-Agent에서 Electron/앱 이름 제거하여 순수 Chrome처럼 보이게 함
+      const rawUserAgent = session.defaultSession.getUserAgent();
+      const userAgent = rawUserAgent
+        .replace(/\s*Electron\/[\d.]+\s*/g, ' ')
+        .replace(/\s*twit-manager\/[\d.]+\s*/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
       console.log('[twitter:verify] 인증 시도:', {
         authToken: auth.authToken?.slice(0, 10) + '...',
         csrfToken: auth.csrfToken?.slice(0, 10) + '...',
