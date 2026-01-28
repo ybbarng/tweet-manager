@@ -5,15 +5,6 @@ import { parseArchive } from './twitter/archive';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-// 개발 모드에서 파일 변경 시 자동 재시작
-if (isDev) {
-  try {
-    require('electron-reloader')(module, {
-      watchRenderer: false, // 렌더러는 Next.js HMR 사용
-    });
-  } catch {}
-}
-
 let mainWindow: BrowserWindow | null = null;
 let twitterClient: TwitterApiClient | null = null;
 
