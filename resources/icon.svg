@@ -7,29 +7,29 @@
     <path d="M76 31.5c-2.1.9-4.4 1.6-6.8 1.9 2.4-1.5 4.3-3.8 5.2-6.5-2.3 1.4-4.8 2.3-7.5 2.9-2.2-2.3-5.2-3.8-8.6-3.8-6.5 0-11.8 5.3-11.8 11.8 0 .9.1 1.8.3 2.7-9.8-.5-18.5-5.2-24.3-12.3-1 1.7-1.6 3.8-1.6 6 0 4.1 2.1 7.7 5.2 9.8-1.9-.1-3.7-.6-5.3-1.5v.2c0 5.7 4.1 10.5 9.5 11.6-1 .3-2 .4-3.1.4-.8 0-1.5-.1-2.2-.2 1.5 4.7 5.9 8.2 11.1 8.3-4.1 3.2-9.2 5.1-14.8 5.1-1 0-1.9-.1-2.8-.2 5.3 3.4 11.5 5.4 18.2 5.4 21.9 0 33.9-18.1 33.9-33.9 0-.5 0-1-.1-1.5 2.4-1.7 4.4-3.8 6-6.2z" fill="white"/>
   </g>
 
-  <!-- 지우개 달린 연필 (\ 방향, 오른쪽 아래로) -->
-  <g transform="translate(42, 42) rotate(45)">
+  <!-- 지우개 달린 연필 (\ 방향, 중심 정렬) -->
+  <g transform="translate(50, 50) rotate(235)">
     <!-- 연필 몸통 (노란색) -->
-    <rect x="0" y="5" width="45" height="12" fill="#FFD700"/>
+    <rect x="-22" y="-6" width="45" height="12" fill="#FFD700"/>
     <!-- 연필 몸통 그림자 -->
-    <rect x="0" y="13" width="45" height="4" fill="#DAA520"/>
+    <rect x="-22" y="2" width="45" height="4" fill="#DAA520"/>
     <!-- 연필 끝 (뾰족한 부분) -->
-    <polygon points="45,5 45,17 55,11" fill="#F5DEB3"/>
+    <polygon points="23,-6 23,6 33,0" fill="#F5DEB3"/>
     <!-- 연필 심 -->
-    <polygon points="52,9 52,13 55,11" fill="#333"/>
+    <polygon points="30,-2 30,2 33,0" fill="#333"/>
     <!-- 금속 밴드 -->
-    <rect x="-2" y="5" width="6" height="12" fill="#C0C0C0"/>
-    <rect x="-1" y="5" width="2" height="12" fill="#A0A0A0"/>
+    <rect x="-24" y="-6" width="6" height="12" fill="#C0C0C0"/>
+    <rect x="-23" y="-6" width="2" height="12" fill="#A0A0A0"/>
     <!-- 지우개 (분홍색) -->
-    <rect x="-12" y="5" width="10" height="12" rx="2" fill="#FF69B4"/>
+    <rect x="-34" y="-6" width="10" height="12" rx="2" fill="#FF69B4"/>
     <!-- 지우개 하이라이트 -->
-    <rect x="-11" y="6" width="6" height="3" rx="1" fill="#FFB6C1" opacity="0.6"/>
+    <rect x="-33" y="-5" width="6" height="3" rx="1" fill="#FFB6C1" opacity="0.6"/>
   </g>
 
   <!-- 지우개 자국 (가로선들) -->
   <g opacity="0.5">
-    <line x1="58" y1="82" x2="72" y2="82" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <line x1="62" y1="86" x2="78" y2="86" stroke="white" stroke-width="2" stroke-linecap="round"/>
-    <line x1="66" y1="90" x2="82" y2="90" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <line x1="72" y1="80" x2="88" y2="80" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <line x1="75" y1="85" x2="91" y2="85" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <line x1="78" y1="90" x2="94" y2="90" stroke="white" stroke-width="2" stroke-linecap="round"/>
   </g>
 </svg>
