@@ -138,7 +138,7 @@ export default function AuthForm() {
         type="button"
         onClick={handleLoginClick}
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-black hover:bg-neutral-800 disabled:bg-neutral-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:bg-neutral-500 dark:disabled:bg-neutral-400 text-white dark:text-black rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
         {isLoading ? (
           '로그인 중...'
