@@ -117,12 +117,15 @@ ipcMain.handle(
     },
   ) => {
     try {
+      // Electron의 실제 User-Agent 사용 (Chromium 기반)
+      const userAgent = session.defaultSession.getUserAgent();
       console.log('[twitter:verify] 인증 시도:', {
         authToken: auth.authToken?.slice(0, 10) + '...',
         csrfToken: auth.csrfToken?.slice(0, 10) + '...',
         userId: auth.userId,
+        userAgent: userAgent.slice(0, 50) + '...',
       });
-      twitterClient = new TwitterApiClient(auth);
+      twitterClient = new TwitterApiClient({ ...auth, userAgent });
 
       // userId가 있으면 API 호출 없이 인증 성공으로 처리
       if (auth.userId) {

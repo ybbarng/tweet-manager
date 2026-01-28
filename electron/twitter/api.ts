@@ -19,6 +19,7 @@ interface TwitterAuth {
   csrfToken: string;
   bearerToken: string;
   userId?: string;
+  userAgent?: string;
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,13 +30,16 @@ export class TwitterApiClient {
 
   constructor(auth: TwitterAuth) {
     this.userId = auth.userId || null;
+    // Electron의 실제 User-Agent 사용, 없으면 최신 Chrome 버전 사용
+    const userAgent =
+      auth.userAgent ||
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
     this.api = wretch().headers({
       Authorization: `Bearer ${auth.bearerToken}`,
       Cookie: `auth_token=${auth.authToken}; ct0=${auth.csrfToken}`,
       'X-Csrf-Token': auth.csrfToken,
       'Content-Type': 'application/json',
-      'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'User-Agent': userAgent,
       'X-Twitter-Active-User': 'yes',
       'X-Twitter-Auth-Type': 'OAuth2Session',
       'X-Twitter-Client-Language': 'ko',
