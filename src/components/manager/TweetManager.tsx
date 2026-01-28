@@ -407,6 +407,7 @@ export default function TweetManager() {
             </p>
 
             <QueryBuilder
+              tweets={tweets}
               likesEnabled={likesEnabled}
               minLikes={minLikes}
               retweetsEnabled={retweetsEnabled}
