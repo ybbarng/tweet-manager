@@ -54,7 +54,7 @@
   },
   "build": {
     "appId": "com.twit-manager.app",
-    "productName": "Twit Manager",
+    "productName": "Twit Eraser",
     "directories": {
       "output": "release"
     },

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'X Manager',
-  description: 'Twitter(X) 트윗 관리 도구',
+  title: 'Twit Eraser',
+  description: 'Twitter(X) 트윗 삭제 도구',
 };
 
 // 시스템 다크 모드 감지 스크립트 (FOUC 방지를 위해 인라인으로 실행)
