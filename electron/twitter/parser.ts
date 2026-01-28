@@ -49,17 +49,35 @@ export function parseTimelineResponse(
     if (!instruction.entries) continue;
 
     for (const entry of instruction.entries) {
+      // 커서 처리
       if (entry.content.cursorType === 'Bottom') {
         nextCursor = entry.content.value;
         continue;
       }
 
-      const tweetResult = entry.content.itemContent?.tweet_results?.result;
-      if (!tweetResult) continue;
+      // 일반 트윗 (TimelineTimelineItem)
+      if (entry.content.itemContent?.tweet_results?.result) {
+        const tweetResult = entry.content.itemContent.tweet_results.result;
+        const parsed = parseTweetResultWithWrapper(tweetResult);
+        if (parsed) {
+          tweets.push(parsed);
+        }
+        continue;
+      }
 
-      const parsed = parseTweetResult(tweetResult);
-      if (parsed) {
-        tweets.push(parsed);
+      // 쓰레드 모듈 (TimelineTimelineModule) - items 배열 안에 여러 트윗
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const items = (entry.content as any).items;
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          const tweetResult = item.item?.itemContent?.tweet_results?.result;
+          if (tweetResult) {
+            const parsed = parseTweetResultWithWrapper(tweetResult);
+            if (parsed) {
+              tweets.push(parsed);
+            }
+          }
+        }
       }
     }
   }
@@ -67,10 +85,39 @@ export function parseTimelineResponse(
   return { tweets, nextCursor };
 }
 
+/** TweetWithVisibilityResults 등 래퍼 타입 처리 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseTweetResultWithWrapper(result: any): ParsedTweet | null {
+  // TweetWithVisibilityResults 래퍼 처리
+  if (result.__typename === 'TweetWithVisibilityResults' && result.tweet) {
+    return parseTweetResult(result.tweet);
+  }
+
+  // TweetUnavailable 처리 (삭제됨, 비공개 등)
+  if (result.__typename === 'TweetUnavailable') {
+    console.log('[parser] TweetUnavailable 스킵:', result.reason);
+    return null;
+  }
+
+  // TweetTombstone 처리 (규칙 위반 등으로 숨겨진 트윗)
+  if (result.__typename === 'TweetTombstone') {
+    console.log('[parser] TweetTombstone 스킵');
+    return null;
+  }
+
+  // 일반 Tweet
+  return parseTweetResult(result as TweetResult);
+}
+
 /** 개별 TweetResult에서 필요한 필드 추출 */
 export function parseTweetResult(result: TweetResult): ParsedTweet | null {
   try {
     const legacy = result.legacy;
+    if (!legacy) {
+      console.log('[parser] legacy 필드 없음:', result);
+      return null;
+    }
+
     return {
       id: result.rest_id,
       text: legacy.full_text,
@@ -86,7 +133,8 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
         url: m.media_url_https,
       })),
     };
-  } catch {
+  } catch (err) {
+    console.error('[parser] parseTweetResult 에러:', err, result);
     return null;
   }
 }

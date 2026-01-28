@@ -77,6 +77,22 @@ export class TwitterApiClient {
         .get()
         .json<UserTweetsResponse>();
 
+      // 디버깅: 응답 구조 로깅
+      const instructions =
+        data?.data?.user?.result?.timeline_v2?.timeline?.instructions;
+      if (instructions) {
+        for (const inst of instructions) {
+          if (inst.entries) {
+            console.log(
+              `[twitter:fetch] ${inst.entries.length}개 엔트리, types:`,
+              inst.entries
+                .map((e) => e.content.entryType || 'unknown')
+                .slice(0, 5),
+            );
+          }
+        }
+      }
+
       return parseTimelineResponse(data);
     } catch (err) {
       const error = err as WretchError;
