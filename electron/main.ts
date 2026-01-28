@@ -355,6 +355,11 @@ ipcMain.handle('twitter:login', async () => {
       checkLoginComplete(url);
     });
 
+    // 브라우저가 닫기를 막으려고 할 때 무시
+    loginWindow.webContents.on('will-prevent-unload', (event) => {
+      event.preventDefault();
+    });
+
     // 창이 닫히면 취소로 처리
     loginWindow.on('closed', () => {
       resolveOnce({ success: false, error: '로그인이 취소되었습니다.' });
