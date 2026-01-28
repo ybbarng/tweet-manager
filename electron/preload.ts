@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   twitter: {
+    login: () => ipcRenderer.invoke('twitter:login'),
+
     verify: (auth: {
       authToken: string;
       csrfToken: string;

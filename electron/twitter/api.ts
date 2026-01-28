@@ -26,7 +26,6 @@ export class TwitterApiClient {
   private api;
 
   constructor(auth: TwitterAuth) {
-    this.auth = auth;
     this.api = wretch().headers({
       Authorization: `Bearer ${auth.bearerToken}`,
       Cookie: `auth_token=${auth.authToken}; ct0=${auth.csrfToken}`,

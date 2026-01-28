@@ -1,10 +1,14 @@
 import * as path from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
 let mainWindow: BrowserWindow | null = null;
 let twitterClient: TwitterApiClient | null = null;
+
+// Twitter 웹 클라이언트용 공개 Bearer 토큰
+const TWITTER_BEARER_TOKEN =
+  'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -166,4 +170,104 @@ ipcMain.handle('twitter:save-backup', async (_event, data: string) => {
   } catch (error) {
     return { success: false, error: (error as Error).message };
   }
+});
+
+ipcMain.handle('twitter:login', async () => {
+  return new Promise((resolve) => {
+    // 로그인 전용 세션 생성 (기존 세션과 분리)
+    const loginSession = session.fromPartition('twitter-login');
+
+    const loginWindow = new BrowserWindow({
+      width: 500,
+      height: 700,
+      parent: mainWindow!,
+      modal: true,
+      webPreferences: {
+        session: loginSession,
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+      show: false,
+    });
+
+    let authToken = '';
+    let csrfToken = '';
+    let resolved = false;
+
+    const cleanup = () => {
+      if (!loginWindow.isDestroyed()) {
+        loginWindow.close();
+      }
+    };
+
+    const resolveOnce = (result: {
+      success: boolean;
+      data?: unknown;
+      error?: string;
+    }) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      resolve(result);
+    };
+
+    // 쿠키 추출 함수
+    const extractCookies = async () => {
+      try {
+        const cookies = await loginSession.cookies.get({ domain: '.x.com' });
+        for (const cookie of cookies) {
+          if (cookie.name === 'auth_token') {
+            authToken = cookie.value;
+          } else if (cookie.name === 'ct0') {
+            csrfToken = cookie.value;
+          }
+        }
+        return authToken && csrfToken;
+      } catch {
+        return false;
+      }
+    };
+
+    // 로그인 완료 감지
+    const checkLoginComplete = async (url: string) => {
+      // 로그인 성공 후 홈이나 메인 페이지로 리다이렉트
+      if (
+        url.includes('x.com/home') ||
+        url === 'https://x.com/' ||
+        url === 'https://x.com'
+      ) {
+        const hasTokens = await extractCookies();
+        if (hasTokens) {
+          resolveOnce({
+            success: true,
+            data: {
+              authToken,
+              csrfToken,
+              bearerToken: TWITTER_BEARER_TOKEN,
+            },
+          });
+        }
+      }
+    };
+
+    loginWindow.webContents.on('did-navigate', (_event, url) => {
+      checkLoginComplete(url);
+    });
+
+    loginWindow.webContents.on('did-navigate-in-page', (_event, url) => {
+      checkLoginComplete(url);
+    });
+
+    // 창이 닫히면 취소로 처리
+    loginWindow.on('closed', () => {
+      resolveOnce({ success: false, error: '로그인이 취소되었습니다.' });
+    });
+
+    loginWindow.once('ready-to-show', () => {
+      loginWindow.show();
+    });
+
+    // 로그인 페이지 로드
+    loginWindow.loadURL('https://x.com/i/flow/login');
+  });
 });
