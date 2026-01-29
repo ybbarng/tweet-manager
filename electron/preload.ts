@@ -1,6 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // 업데이트 관련
+  onUpdateAvailable: (callback: (version: string) => void) => {
+    const handler = (_event: unknown, version: string) => callback(version);
+    ipcRenderer.on('update:available', handler);
+    return () => ipcRenderer.removeListener('update:available', handler);
+  },
+
   twitter: {
     login: () => ipcRenderer.invoke('twitter:login'),
 

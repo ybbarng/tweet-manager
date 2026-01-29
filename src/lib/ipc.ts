@@ -14,6 +14,7 @@ export interface LoginResult {
 
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
+  onUpdateAvailable: (callback: (version: string) => void) => () => void;
   twitter: {
     login: () => Promise<IpcResponse<LoginResult>>;
     verify: (auth: TwitterAuth) => Promise<IpcResponse<TwitterUser>>;
@@ -99,4 +100,14 @@ export function onDeleteProgress(
   callback: (progress: DeletionProgress) => void,
 ): () => void {
   return getAPI().twitter.onDeleteProgress(callback);
+}
+
+/** 업데이트 가능 알림 구독 */
+export function onUpdateAvailable(
+  callback: (version: string) => void,
+): () => void {
+  if (typeof window === 'undefined' || !window.electronAPI) {
+    return () => {};
+  }
+  return window.electronAPI.onUpdateAvailable(callback);
 }

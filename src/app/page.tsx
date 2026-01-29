@@ -5,6 +5,7 @@ import { useEffect, useReducer, useState } from 'react';
 import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
 import SecurityWarningModal from '@/components/auth/SecurityWarningModal';
 import TweetManager from '@/components/manager/TweetManager';
+import { onUpdateAvailable } from '@/lib/ipc';
 import { getQueryClient } from '@/lib/query-client';
 import {
   AppDispatchContext,
@@ -27,6 +28,7 @@ export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [showWarning, setShowWarning] = useState(false);
   const [taglineIndex, setTaglineIndex] = useState(0);
+  const [newVersion, setNewVersion] = useState<string | null>(null);
 
   const isAuthenticated = !!state.auth;
 
@@ -35,6 +37,14 @@ export default function Home() {
       setTaglineIndex((prev) => (prev + 1) % taglines.length);
     }, 10000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 업데이트 가능 알림 구독
+  useEffect(() => {
+    const unsubscribe = onUpdateAvailable((version) => {
+      setNewVersion(version);
+    });
+    return unsubscribe;
   }, []);
 
   const handleShowWarning = () => {
@@ -103,12 +113,21 @@ export default function Home() {
           {/* Footer */}
           <footer className="fixed bottom-0 left-0 right-0 py-2 text-center text-xs text-neutral-400">
             <a
-              href={`https://github.com/ybbarng/tweet-manager/releases/tag/v${process.env.APP_VERSION}`}
+              href={
+                newVersion
+                  ? `https://github.com/ybbarng/tweet-manager/releases/tag/v${newVersion}`
+                  : `https://github.com/ybbarng/tweet-manager/releases/tag/v${process.env.APP_VERSION}`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-neutral-600 dark:hover:text-neutral-300"
             >
               v{process.env.APP_VERSION}
+              {newVersion && (
+                <span className="ml-2 text-orange-500">
+                  (새 버전 {newVersion} 있음)
+                </span>
+              )}
             </a>
           </footer>
         </AppDispatchContext.Provider>

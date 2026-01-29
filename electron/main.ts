@@ -122,6 +122,9 @@ autoUpdater.on('checking-for-update', () => {
 autoUpdater.on('update-available', (info) => {
   console.log('[AutoUpdater] 업데이트 발견:', info.version);
 
+  // 렌더러에 업데이트 가능 알림
+  mainWindow?.webContents.send('update:available', info.version);
+
   // macOS: 코드 서명 없이는 자동 설치 불가, 수동 다운로드 안내
   if (isMac && mainWindow) {
     dialog
