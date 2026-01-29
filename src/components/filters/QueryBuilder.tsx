@@ -473,14 +473,14 @@ export default function QueryBuilder({
                 type="date"
                 value={startDate || ''}
                 onChange={(e) => onStartDateChange(e.target.value || null)}
-                className={`w-36 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
+                className={`w-40 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
               />
               <span className={sqlKeyword}>AND</span>
               <Input
                 type="date"
                 value={endDate || ''}
                 onChange={(e) => onEndDateChange(e.target.value || null)}
-                className={`w-36 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
+                className={`w-40 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
               />
             </div>
           )}
