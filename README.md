@@ -120,9 +120,31 @@ pnpm run electron:build
 
 완료되면 `release/Tweet Eraser-x.x.x.dmg` 파일이 생성됩니다.
 
-### 배포
+### 릴리즈 배포
 
-생성된 설치 파일을 GitHub Releases 또는 원하는 방식으로 배포합니다.
+GitHub Releases에 자동으로 빌드 파일을 업로드합니다.
+
+```bash
+pnpm run release patch   # 버그 수정: 0.1.0 → 0.1.1
+pnpm run release minor   # 기능 추가: 0.1.0 → 0.2.0
+pnpm run release major   # 대규모 변경: 0.1.0 → 1.0.0
+```
+
+스크립트가 자동으로 처리하는 작업:
+1. `package.json` 버전 업데이트
+2. Git commit + tag 생성 및 push
+3. macOS (arm64) + Windows (x64) 빌드
+4. GitHub Releases에 업로드 (Draft 상태)
+
+완료 후 출력되는 GitHub 링크에서 "Publish release" 버튼을 클릭하면 배포가 완료됩니다.
+
+> **참고**: `.env.local` 파일에 `GH_TOKEN` 환경변수가 필요합니다. `.env.local.example` 참고.
+
+### 자동 업데이트
+
+배포된 앱은 시작 시 GitHub Releases에서 새 버전을 자동으로 확인합니다. 새 버전이 있으면 백그라운드에서 다운로드 후 재시작 안내가 표시됩니다.
+
+### 설치 방법 (사용자용)
 
 - **Windows 사용자**: `.exe` 파일 다운로드 → 실행 → 설치 완료
 - **macOS 사용자**: `.dmg` 파일 다운로드 → 열기 → Applications로 드래그

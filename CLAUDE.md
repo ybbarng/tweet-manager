@@ -10,7 +10,8 @@ pnpm run dev              # Next.js 개발 서버만 실행
 pnpm run electron:dev     # Electron + Next.js 동시 실행 (개발 모드)
 pnpm run electron:compile # Electron TypeScript만 컴파일
 pnpm run electron:build   # 프로덕션 빌드 + 패키징 (아이콘 빌드 포함)
-pnpm run electron:publish # 빌드 + GitHub Releases에 자동 업로드
+pnpm run electron:publish # 빌드 + GitHub Releases에 자동 업로드 (단일 플랫폼)
+pnpm run release <type>   # 버전 bump + macOS/Windows 빌드 + 배포 (patch|minor|major)
 pnpm run icon:build       # 앱 아이콘 생성 (src/app/icon.svg → resources/icon.png)
 pnpm run build            # Next.js 빌드만
 pnpm run lint             # biome check --write (포맷 + 린트 자동 수정)
