@@ -21,9 +21,7 @@ interface ElectronAPI {
       cursor?: string,
     ) => Promise<IpcResponse<{ tweets: Tweet[]; nextCursor?: string }>>;
     deleteTweet: (tweetId: string) => Promise<IpcResponse<void>>;
-    deleteBatch: (
-      tweetIds: string[],
-    ) => Promise<
+    deleteBatch: (tweetIds: string[]) => Promise<
       IpcResponse<{
         total: number;
         completed: number;

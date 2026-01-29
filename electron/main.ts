@@ -9,10 +9,15 @@ import {
   protocol,
   session,
 } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
 const isDev = !app.isPackaged;
+
+// 자동 업데이트 설정
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
 
 // 프로덕션 빌드에서 정적 파일 서빙을 위한 커스텀 프로토콜
 if (!isDev) {
@@ -89,6 +94,41 @@ app.whenReady().then(() => {
     app.dock.setIcon(path.join(__dirname, '../resources/icon.png'));
   }
   createWindow();
+
+  // 프로덕션에서 자동 업데이트 체크
+  if (!isDev) {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
+});
+
+// 자동 업데이트 이벤트 핸들러
+autoUpdater.on('update-available', (info) => {
+  console.log('[AutoUpdater] 업데이트 발견:', info.version);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[AutoUpdater] 업데이트 다운로드 완료:', info.version);
+  // 사용자에게 알림
+  if (mainWindow) {
+    dialog
+      .showMessageBox(mainWindow, {
+        type: 'info',
+        title: '업데이트 준비 완료',
+        message: `새 버전 ${info.version}이 다운로드되었습니다.`,
+        detail: '앱을 재시작하면 업데이트가 적용됩니다.',
+        buttons: ['지금 재시작', '나중에'],
+        defaultId: 0,
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          autoUpdater.quitAndInstall();
+        }
+      });
+  }
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('[AutoUpdater] 에러:', err);
 });
 
 app.on('window-all-closed', () => {
