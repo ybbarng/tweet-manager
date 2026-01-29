@@ -43,6 +43,8 @@ pnpm run test:watch       # vitest watch 모드
   - **Windows**: 자동 다운로드 → 재시작 시 자동 설치
   - **macOS**: 알림만 표시 → GitHub Release 페이지에서 수동 다운로드 (코드 서명 없이는 자동 설치 불가)
   - 배포: `pnpm run release <patch|minor|major>`
+- **다크모드**: `useTheme` 훅으로 상태 관리. system/light/dark 순환. localStorage에 저장. CSS는 `.dark` 클래스만 사용 (미디어 쿼리 제거하여 수동 전환과 충돌 방지).
+- **삭제 히스토리**: `app.getPath('userData')/deletion-history.json`에 저장. IPC 채널: `history:load`, `history:save`. 최근 100개 유지.
 
 ## 코딩 컨벤션
 
@@ -52,7 +54,7 @@ pnpm run test:watch       # vitest watch 모드
 - **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
-- 필터 추가 시: `TweetFilter` 인터페이스 구현 → `src/lib/filters/`에 파일 추가 → `FilterPanel.tsx`에 UI 연결
+- 필터 추가 시: `TweetFilter` 인터페이스 구현 → `src/lib/filters/`에 파일 추가 → `QueryBuilder.tsx`에 UI 연결
 - IPC 채널 추가 시: `electron/main.ts`에 핸들러 → `electron/preload.ts`에 노출 → `src/lib/ipc.ts`에 래퍼 함수 → `src/lib/queries.ts`에 query/mutation 훅
 
 ## 작업 완료 체크리스트
