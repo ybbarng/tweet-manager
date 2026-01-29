@@ -13,21 +13,12 @@ import {
   initialState,
   reducer,
 } from '@/lib/store/tweet-store';
-
-const taglines = [
-  '흑역사, 깔끔하게 정리하세요.',
-  '과거의 트윗, 새 출발의 시작.',
-  '트윗 정리, 클릭 몇 번이면 끝.',
-  '디지털 발자국, 내 손으로 관리하세요.',
-  '타임라인을 가볍게, 마음도 가볍게.',
-  '묵혀둔 트윗, 이제 보내줄 시간.',
-  '깨끗한 타임라인, 새로운 시작.',
-];
+import { getRandomTaglineIndex, taglines } from '@/lib/taglines';
 
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [showWarning, setShowWarning] = useState(false);
-  const [taglineIndex, setTaglineIndex] = useState(0);
+  const [taglineIndex, setTaglineIndex] = useState(getRandomTaglineIndex);
   const [newVersion, setNewVersion] = useState<string | null>(null);
 
   const isAuthenticated = !!state.auth;
