@@ -8,16 +8,20 @@ import {
   net,
   protocol,
   session,
+  shell,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 
 const isDev = !app.isPackaged;
+const isMac = process.platform === 'darwin';
 
 // 자동 업데이트 설정
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+// macOS: 코드 서명 없이는 자동 설치 불가, 알림만 표시
+// Windows: 자동 다운로드 및 설치 가능
+autoUpdater.autoDownload = !isMac;
+autoUpdater.autoInstallOnAppQuit = !isMac;
 
 // 프로덕션 빌드에서 정적 파일 서빙을 위한 커스텀 프로토콜
 if (!isDev) {
@@ -108,6 +112,26 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('[AutoUpdater] 업데이트 발견:', info.version);
+
+  // macOS: 코드 서명 없이는 자동 설치 불가, 수동 다운로드 안내
+  if (isMac && mainWindow) {
+    dialog
+      .showMessageBox(mainWindow, {
+        type: 'info',
+        title: '새 버전 발견',
+        message: `새 버전 ${info.version}이 있습니다.`,
+        detail: 'GitHub에서 새 버전을 다운로드해주세요.',
+        buttons: ['다운로드 페이지 열기', '나중에'],
+        defaultId: 0,
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          shell.openExternal(
+            `https://github.com/ybbarng/tweet-manager/releases/tag/v${info.version}`,
+          );
+        }
+      });
+  }
 });
 
 autoUpdater.on('update-not-available', (info) => {
