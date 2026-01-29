@@ -13,8 +13,18 @@ export function createDateRangeFilter(
     type: 'dateRange',
     enabled: true,
     apply: (tweets: Tweet[]) => {
+      // 범위가 지정되지 않으면 전체 보존 (삭제 대상 없음)
+      if (!startDate && !endDate) {
+        return tweets;
+      }
+
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
+
+      // 시작일은 해당 일자의 시작(00:00:00.000)으로 설정
+      if (start) {
+        start.setHours(0, 0, 0, 0);
+      }
 
       // 종료일은 해당 일자의 끝(23:59:59.999)으로 설정
       if (end) {

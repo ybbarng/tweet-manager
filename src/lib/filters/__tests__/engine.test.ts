@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Tweet } from '@/types';
+import { createDateRangeFilter } from '../dateRange';
 import { getPreservedTweets, getTweetsToDelete } from '../engine';
 import { createLikesFilter } from '../likes';
 import { createRetweetsFilter } from '../retweets';
@@ -93,5 +94,41 @@ describe('필터 엔진', () => {
     const preserved = getPreservedTweets(tweets, [filter]);
     // 활성 필터가 없으므로 전체 보존
     expect(preserved.size).toBe(tweets.length);
+  });
+
+  it('날짜 범위 필터: 범위 밖 트윗 보존', () => {
+    const tweetsWithDates: Tweet[] = [
+      makeTweet({ id: '1', createdAt: new Date('2024-01-01') }),
+      makeTweet({ id: '2', createdAt: new Date('2024-06-15') }),
+      makeTweet({ id: '3', createdAt: new Date('2024-12-31') }),
+    ];
+    const filters = [createDateRangeFilter('2024-03-01', '2024-09-30')];
+    const preserved = getPreservedTweets(tweetsWithDates, filters);
+
+    // 범위 밖 트윗 보존
+    expect(preserved.has('1')).toBe(true); // 2024-01-01 < 시작일
+    expect(preserved.has('3')).toBe(true); // 2024-12-31 > 종료일
+    // 범위 안 트윗은 삭제 대상
+    expect(preserved.has('2')).toBe(false); // 2024-06-15 범위 안
+  });
+
+  it('날짜 범위 + 좋아요 필터 조합: OR 동작', () => {
+    const tweetsWithDates: Tweet[] = [
+      makeTweet({ id: '1', createdAt: new Date('2024-06-15'), likes: 10 }), // 범위 안, 좋아요 많음
+      makeTweet({ id: '2', createdAt: new Date('2024-06-15'), likes: 0 }), // 범위 안, 좋아요 없음
+      makeTweet({ id: '3', createdAt: new Date('2024-01-01'), likes: 0 }), // 범위 밖, 좋아요 없음
+    ];
+    const filters = [
+      createDateRangeFilter('2024-03-01', '2024-09-30'),
+      createLikesFilter(5),
+    ];
+    const preserved = getPreservedTweets(tweetsWithDates, filters);
+
+    // id=1: 좋아요 >= 5 -> 보존
+    expect(preserved.has('1')).toBe(true);
+    // id=2: 범위 안 + 좋아요 적음 -> 삭제 대상
+    expect(preserved.has('2')).toBe(false);
+    // id=3: 범위 밖 -> 보존
+    expect(preserved.has('3')).toBe(true);
   });
 });
