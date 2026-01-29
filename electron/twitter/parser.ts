@@ -66,7 +66,7 @@ export function parseTimelineResponse(
       }
 
       // 쓰레드 모듈 (TimelineTimelineModule) - items 배열 안에 여러 트윗
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: Twitter API 응답 타입이 복잡하여 any 사용
       const items = (entry.content as any).items;
       if (Array.isArray(items)) {
         for (const item of items) {
@@ -86,7 +86,7 @@ export function parseTimelineResponse(
 }
 
 /** TweetWithVisibilityResults 등 래퍼 타입 처리 */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: Twitter API 응답 타입이 복잡하여 any 사용
 function parseTweetResultWithWrapper(result: any): ParsedTweet | null {
   // TweetWithVisibilityResults 래퍼 처리
   if (result.__typename === 'TweetWithVisibilityResults' && result.tweet) {

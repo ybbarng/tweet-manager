@@ -58,7 +58,9 @@ console.log('');
 // 이전 태그 찾기
 function getPreviousTag() {
   try {
-    const tags = execSync('git tag --sort=-version:refname', { encoding: 'utf-8' })
+    const tags = execSync('git tag --sort=-version:refname', {
+      encoding: 'utf-8',
+    })
       .trim()
       .split('\n')
       .filter(Boolean);
@@ -74,7 +76,9 @@ function generateReleaseNotes(previousTag) {
 
   let commits;
   try {
-    commits = execSync(`git log ${range} --pretty=format:"%s"`, { encoding: 'utf-8' })
+    commits = execSync(`git log ${range} --pretty=format:"%s"`, {
+      encoding: 'utf-8',
+    })
       .trim()
       .split('\n')
       .filter(Boolean);
@@ -99,7 +103,11 @@ function generateReleaseNotes(previousTag) {
       features.push(commit.replace(/^feat(\([^)]+\))?:\s*/, ''));
     } else if (commit.startsWith('fix:') || commit.startsWith('fix(')) {
       fixes.push(commit.replace(/^fix(\([^)]+\))?:\s*/, ''));
-    } else if (commit.startsWith('docs:') || commit.startsWith('chore:') || commit.startsWith('style:')) {
+    } else if (
+      commit.startsWith('docs:') ||
+      commit.startsWith('chore:') ||
+      commit.startsWith('style:')
+    ) {
       // docs, chore, style은 릴리즈 노트에서 제외
     } else {
       others.push(commit);
@@ -109,15 +117,19 @@ function generateReleaseNotes(previousTag) {
   const sections = [];
 
   if (features.length > 0) {
-    sections.push('### ✨ 새로운 기능\n' + features.map(f => `- ${f}`).join('\n'));
+    sections.push(
+      `### ✨ 새로운 기능\n${features.map((f) => `- ${f}`).join('\n')}`,
+    );
   }
 
   if (fixes.length > 0) {
-    sections.push('### 🐛 버그 수정\n' + fixes.map(f => `- ${f}`).join('\n'));
+    sections.push(`### 🐛 버그 수정\n${fixes.map((f) => `- ${f}`).join('\n')}`);
   }
 
   if (others.length > 0) {
-    sections.push('### 📦 기타 변경사항\n' + others.map(o => `- ${o}`).join('\n'));
+    sections.push(
+      `### 📦 기타 변경사항\n${others.map((o) => `- ${o}`).join('\n')}`,
+    );
   }
 
   if (sections.length === 0) {
@@ -138,7 +150,7 @@ console.log('');
 
 // 1. package.json 버전 업데이트
 packageJson.version = newVersion;
-fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 console.log('✓ package.json 버전 업데이트');
 
 // 2. Git commit + tag
@@ -146,16 +158,16 @@ const run = (cmd, description) => {
   console.log(`  ${cmd}`);
   try {
     execSync(cmd, { stdio: 'inherit' });
-  } catch (error) {
+  } catch (_error) {
     console.error(`✗ ${description} 실패`);
     process.exit(1);
   }
 };
 
-const runSilent = (cmd) => {
+const _runSilent = (cmd) => {
   try {
     return execSync(cmd, { encoding: 'utf-8' }).trim();
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };
@@ -184,7 +196,7 @@ console.log('');
 console.log('macOS arm64 빌드 중...');
 run(
   'pnpm exec dotenv -e .env.local -- electron-builder --mac --arm64 --publish always',
-  'macOS 빌드'
+  'macOS 빌드',
 );
 
 // Windows 빌드
@@ -192,7 +204,7 @@ console.log('');
 console.log('Windows x64 빌드 중...');
 run(
   'pnpm exec dotenv -e .env.local -- electron-builder --win --x64 --publish always',
-  'Windows 빌드'
+  'Windows 빌드',
 );
 
 console.log('');
@@ -216,7 +228,7 @@ async function updateRelease() {
           Authorization: `Bearer ${GH_TOKEN}`,
           Accept: 'application/vnd.github.v3+json',
         },
-      }
+      },
     );
 
     if (!getReleaseRes.ok) {
@@ -240,7 +252,7 @@ async function updateRelease() {
           body: releaseNotes,
           name: `v${newVersion}`,
         }),
-      }
+      },
     );
 
     if (updateRes.ok) {
@@ -262,7 +274,9 @@ updateRelease().then(() => {
   console.log(`릴리즈 v${newVersion} 배포 완료!`);
   console.log('');
   console.log('GitHub Release (Draft) 공개하기:');
-  console.log(`https://github.com/ybbarng/tweet-manager/releases/tag/v${newVersion}`);
+  console.log(
+    `https://github.com/ybbarng/tweet-manager/releases/tag/v${newVersion}`,
+  );
   console.log('');
   console.log('위 링크에서 "Publish release" 클릭');
   console.log('========================================');

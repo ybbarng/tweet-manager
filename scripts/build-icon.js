@@ -1,5 +1,5 @@
 const sharp = require('sharp');
-const path = require('path');
+const path = require('node:path');
 
 const src = path.join(__dirname, '..', 'src', 'app', 'icon.svg');
 const dest = path.join(__dirname, '..', 'resources', 'icon.png');

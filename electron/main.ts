@@ -165,10 +165,10 @@ ipcMain.handle(
         .replace(/\s+/g, ' ')
         .trim();
       console.log('[twitter:verify] 인증 시도:', {
-        authToken: auth.authToken?.slice(0, 10) + '...',
-        csrfToken: auth.csrfToken?.slice(0, 10) + '...',
+        authToken: `${auth.authToken?.slice(0, 10)}...`,
+        csrfToken: `${auth.csrfToken?.slice(0, 10)}...`,
         userId: auth.userId,
-        userAgent: userAgent.slice(0, 50) + '...',
+        userAgent: `${userAgent.slice(0, 50)}...`,
       });
       twitterClient = new TwitterApiClient({ ...auth, userAgent });
 

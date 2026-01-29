@@ -51,6 +51,7 @@ export default function Home() {
             <header className="border-b border-neutral-200 dark:border-neutral-800">
               <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  {/* biome-ignore lint/performance/noImgElement: Electron 앱에서 next/image 불필요 */}
                   <img src="/icon.svg" alt="Tweet Eraser" className="w-8 h-8" />
                   <h1 className="text-xl font-bold">Tweet Eraser</h1>
                 </div>
@@ -98,6 +99,18 @@ export default function Home() {
             open={showWarning}
             onClose={() => setShowWarning(false)}
           />
+
+          {/* Footer */}
+          <footer className="fixed bottom-0 left-0 right-0 py-2 text-center text-xs text-neutral-400">
+            <a
+              href={`https://github.com/ybbarng/tweet-manager/releases/tag/v${process.env.APP_VERSION}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-neutral-600 dark:hover:text-neutral-300"
+            >
+              v{process.env.APP_VERSION}
+            </a>
+          </footer>
         </AppDispatchContext.Provider>
       </AppStateContext.Provider>
     </QueryClientProvider>
