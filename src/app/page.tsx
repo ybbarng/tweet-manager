@@ -71,9 +71,14 @@ export default function Home() {
                 </div>
                 {state.user && (
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-neutral-500">
+                    <a
+                      href={`https://x.com/${state.user.screenName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:underline"
+                    >
                       @{state.user.screenName}
-                    </span>
+                    </a>
                     <button
                       type="button"
                       onClick={() => setShowHistory(true)}
