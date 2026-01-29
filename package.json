@@ -16,7 +16,7 @@
     "electron:dev": "concurrently -n next,electron -k \"next dev\" \"wait-on http://localhost:${PORT:-3000} && pnpm run electron:compile && electron .\"",
     "icon:build": "node scripts/build-icon.js",
     "electron:build": "pnpm run icon:build && next build && pnpm run electron:compile && electron-builder",
-    "electron:publish": "pnpm run icon:build && next build && pnpm run electron:compile && electron-builder --publish always",
+    "electron:publish": "dotenv -e .env.local -- pnpm run icon:build && next build && pnpm run electron:compile && electron-builder --publish always",
     "electron:compile": "tsc -p tsconfig.electron.json"
   },
   "dependencies": {
@@ -43,6 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "concurrently": "^9.2.1",
+    "dotenv-cli": "^11.0.0",
     "electron": "^40.0.0",
     "electron-builder": "^26.4.0",
     "sharp": "^0.34.5",
