@@ -22,12 +22,14 @@ export default function Home() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [showWarning, setShowWarning] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [taglineIndex, setTaglineIndex] = useState(getRandomTaglineIndex);
+  const [taglineIndex, setTaglineIndex] = useState(0);
   const [newVersion, setNewVersion] = useState<string | null>(null);
 
   const isAuthenticated = !!state.auth;
 
+  // 클라이언트에서만 랜덤 인덱스 설정 (hydration 불일치 방지)
   useEffect(() => {
+    setTaglineIndex(getRandomTaglineIndex());
     const interval = setInterval(() => {
       setTaglineIndex((prev) => (prev + 1) % taglines.length);
     }, 10000);
