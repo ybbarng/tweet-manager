@@ -1,4 +1,5 @@
 import type {
+  DeletionHistoryEntry,
   DeletionProgress,
   IpcResponse,
   Tweet,
@@ -15,6 +16,10 @@ export interface LoginResult {
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
+  history: {
+    load: () => Promise<IpcResponse<DeletionHistoryEntry[]>>;
+    save: (entry: DeletionHistoryEntry) => Promise<IpcResponse<void>>;
+  };
   twitter: {
     login: () => Promise<IpcResponse<LoginResult>>;
     verify: (auth: TwitterAuth) => Promise<IpcResponse<TwitterUser>>;
@@ -110,4 +115,18 @@ export function onUpdateAvailable(
     return () => {};
   }
   return window.electronAPI.onUpdateAvailable(callback);
+}
+
+/** 삭제 히스토리 로드 */
+export async function loadHistory(): Promise<
+  IpcResponse<DeletionHistoryEntry[]>
+> {
+  return getAPI().history.load();
+}
+
+/** 삭제 히스토리 저장 */
+export async function saveHistory(
+  entry: DeletionHistoryEntry,
+): Promise<IpcResponse<void>> {
+  return getAPI().history.save(entry);
 }

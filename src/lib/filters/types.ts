@@ -17,10 +17,19 @@ export interface ThreadFilterConfig {
   preservedIds: string[];
 }
 
+export interface DateRangeFilterConfig {
+  type: 'dateRange';
+  /** 시작일 (ISO 문자열, null이면 제한 없음) */
+  startDate: string | null;
+  /** 종료일 (ISO 문자열, null이면 제한 없음) */
+  endDate: string | null;
+}
+
 export type FilterConfig =
   | LikesFilterConfig
   | RetweetsFilterConfig
-  | ThreadFilterConfig;
+  | ThreadFilterConfig
+  | DateRangeFilterConfig;
 
 /** 필터 함수 시그니처 */
 export type FilterFn = (tweets: Tweet[]) => Tweet[];

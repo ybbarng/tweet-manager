@@ -8,6 +8,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('update:available', handler);
   },
 
+  // 삭제 히스토리
+  history: {
+    load: () => ipcRenderer.invoke('history:load'),
+    save: (entry: {
+      id: string;
+      deletedAt: string;
+      count: number;
+      failedCount: number;
+    }) => ipcRenderer.invoke('history:save', entry),
+  },
+
   twitter: {
     login: () => ipcRenderer.invoke('twitter:login'),
 

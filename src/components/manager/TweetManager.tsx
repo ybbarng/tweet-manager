@@ -4,11 +4,17 @@ import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { createDateRangeFilter } from '@/lib/filters/dateRange';
 import { getDeletionCandidates } from '@/lib/filters/engine';
 import { createLikesFilter } from '@/lib/filters/likes';
 import { createRetweetsFilter } from '@/lib/filters/retweets';
 import { createThreadFilter } from '@/lib/filters/thread';
-import { fetchTweets, isElectron, onDeleteProgress } from '@/lib/ipc';
+import {
+  fetchTweets,
+  isElectron,
+  onDeleteProgress,
+  saveHistory,
+} from '@/lib/ipc';
 import { useDeleteBatch, useSaveBackup } from '@/lib/queries';
 import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
 import type { DeletionProgress as DeletionProgressType, Tweet } from '@/types';
@@ -35,6 +41,9 @@ export default function TweetManager() {
   const [minRetweets, setMinRetweets] = useState(3);
   const [threadEnabled, setThreadEnabled] = useState(false);
   const [excludedThreadIds, setExcludedThreadIds] = useState<string[]>([]);
+  const [dateRangeEnabled, setDateRangeEnabled] = useState(false);
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
 
   // 표시 제한
   const [displayLimit, setDisplayLimit] = useState<number | null>(100);
@@ -57,6 +66,8 @@ export default function TweetManager() {
     if (retweetsEnabled) f.push(createRetweetsFilter(minRetweets));
     if (threadEnabled && excludedThreadIds.length > 0)
       f.push(createThreadFilter(excludedThreadIds));
+    if (dateRangeEnabled && (startDate || endDate))
+      f.push(createDateRangeFilter(startDate, endDate));
     return f;
   }, [
     likesEnabled,
@@ -65,10 +76,14 @@ export default function TweetManager() {
     minRetweets,
     threadEnabled,
     excludedThreadIds,
+    dateRangeEnabled,
+    startDate,
+    endDate,
   ]);
 
   // 조건이 활성화되어 있는지 확인
-  const hasActiveConditions = likesEnabled || retweetsEnabled;
+  const hasActiveConditions =
+    likesEnabled || retweetsEnabled || dateRangeEnabled;
 
   // 삭제 후보 (쿼리 결과)
   const deletionCandidates = useMemo(
@@ -219,7 +234,20 @@ export default function TweetManager() {
 
     const tweetIds = toDelete.map((t) => t.id);
     deleteMutation.mutate(tweetIds, {
-      onSuccess: (result) => {
+      onSuccess: async (result) => {
+        const completedCount = result.data?.completed ?? tweetIds.length;
+        const failedCount = result.data?.failed ?? 0;
+
+        // 히스토리 저장
+        if (completedCount > 0 || failedCount > 0) {
+          await saveHistory({
+            id: crypto.randomUUID(),
+            deletedAt: new Date().toISOString(),
+            count: completedCount,
+            failedCount,
+          });
+        }
+
         // 연속 실패로 중단된 경우
         if (!result.success && result.data) {
           dispatch({
@@ -423,6 +451,9 @@ export default function TweetManager() {
               minRetweets={minRetweets}
               threadEnabled={threadEnabled}
               excludedThreadIds={excludedThreadIds}
+              dateRangeEnabled={dateRangeEnabled}
+              startDate={startDate}
+              endDate={endDate}
               limit={displayLimit}
               onLikesEnabledChange={setLikesEnabled}
               onMinLikesChange={setMinLikes}
@@ -430,6 +461,9 @@ export default function TweetManager() {
               onMinRetweetsChange={setMinRetweets}
               onThreadEnabledChange={setThreadEnabled}
               onExcludedThreadIdsChange={setExcludedThreadIds}
+              onDateRangeEnabledChange={setDateRangeEnabled}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
               onLimitChange={setDisplayLimit}
               resultCount={deletionCandidates.length}
             />

@@ -71,3 +71,14 @@ export interface IpcResponse<T> {
   data?: T;
   error?: string;
 }
+
+/** 테마 모드 */
+export type ThemeMode = 'system' | 'light' | 'dark';
+
+/** 삭제 히스토리 항목 */
+export interface DeletionHistoryEntry {
+  id: string;
+  deletedAt: string;
+  count: number;
+  failedCount: number;
+}

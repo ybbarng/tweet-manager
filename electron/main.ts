@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
 import {
   app,
@@ -538,4 +539,57 @@ ipcMain.handle('twitter:login', async () => {
     // 로그인 페이지 로드
     loginWindow.loadURL('https://x.com/i/flow/login');
   });
+});
+
+// --- 삭제 히스토리 IPC 핸들러 ---
+
+interface DeletionHistoryEntry {
+  id: string;
+  deletedAt: string;
+  count: number;
+  failedCount: number;
+}
+
+function getHistoryFilePath(): string {
+  return path.join(app.getPath('userData'), 'deletion-history.json');
+}
+
+ipcMain.handle('history:load', async () => {
+  try {
+    const filePath = getHistoryFilePath();
+    if (!fs.existsSync(filePath)) {
+      return { success: true, data: [] };
+    }
+    const content = await fsPromises.readFile(filePath, 'utf-8');
+    const history: DeletionHistoryEntry[] = JSON.parse(content);
+    return { success: true, data: history };
+  } catch (error) {
+    console.error('[history:load] 실패:', error);
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('history:save', async (_event, entry: DeletionHistoryEntry) => {
+  try {
+    const filePath = getHistoryFilePath();
+    let history: DeletionHistoryEntry[] = [];
+
+    if (fs.existsSync(filePath)) {
+      const content = await fsPromises.readFile(filePath, 'utf-8');
+      history = JSON.parse(content);
+    }
+
+    history.unshift(entry);
+
+    // 최근 100개만 유지
+    if (history.length > 100) {
+      history = history.slice(0, 100);
+    }
+
+    await fsPromises.writeFile(filePath, JSON.stringify(history, null, 2));
+    return { success: true };
+  } catch (error) {
+    console.error('[history:save] 실패:', error);
+    return { success: false, error: (error as Error).message };
+  }
 });

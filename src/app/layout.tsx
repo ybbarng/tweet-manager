@@ -17,19 +17,28 @@ export const metadata: Metadata = {
   description: 'Twitter(X) 트윗 삭제 도구',
 };
 
-// 시스템 다크 모드 감지 스크립트 (FOUC 방지를 위해 인라인으로 실행)
+// 다크 모드 초기화 스크립트 (FOUC 방지를 위해 인라인으로 실행)
 const darkModeScript = `
   (function() {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    var stored = localStorage.getItem('theme-mode');
+    var isDark = stored === 'dark' ||
+      (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
       document.documentElement.classList.add('dark');
     }
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    });
+    // system 모드일 때 시스템 설정 변경 감지
+    if (!stored || stored === 'system') {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        var currentStored = localStorage.getItem('theme-mode');
+        if (!currentStored || currentStored === 'system') {
+          if (e.matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      });
+    }
   })();
 `;
 

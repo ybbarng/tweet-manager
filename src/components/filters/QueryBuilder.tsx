@@ -28,6 +28,9 @@ export interface QueryBuilderProps {
   minRetweets: number;
   threadEnabled: boolean;
   excludedThreadIds: string[];
+  dateRangeEnabled: boolean;
+  startDate: string | null;
+  endDate: string | null;
   limit: number | null;
   onLikesEnabledChange: (enabled: boolean) => void;
   onMinLikesChange: (value: number) => void;
@@ -35,6 +38,9 @@ export interface QueryBuilderProps {
   onMinRetweetsChange: (value: number) => void;
   onThreadEnabledChange: (enabled: boolean) => void;
   onExcludedThreadIdsChange: (ids: string[]) => void;
+  onDateRangeEnabledChange: (enabled: boolean) => void;
+  onStartDateChange: (date: string | null) => void;
+  onEndDateChange: (date: string | null) => void;
   onLimitChange: (limit: number | null) => void;
   resultCount: number;
 }
@@ -62,6 +68,9 @@ export default function QueryBuilder({
   minRetweets,
   threadEnabled,
   excludedThreadIds,
+  dateRangeEnabled,
+  startDate,
+  endDate,
   limit,
   onLikesEnabledChange,
   onMinLikesChange,
@@ -69,6 +78,9 @@ export default function QueryBuilder({
   onMinRetweetsChange,
   onThreadEnabledChange,
   onExcludedThreadIdsChange,
+  onDateRangeEnabledChange,
+  onStartDateChange,
+  onEndDateChange,
   onLimitChange,
   resultCount,
 }: QueryBuilderProps) {
@@ -158,7 +170,8 @@ export default function QueryBuilder({
   };
 
   // 활성화된 조건이 있는지 확인
-  const hasActiveConditions = likesEnabled || retweetsEnabled || threadEnabled;
+  const hasActiveConditions =
+    likesEnabled || retweetsEnabled || threadEnabled || dateRangeEnabled;
 
   // 현재 limit 값이 프리셋에 있는지 확인
   const isPresetLimit =
@@ -410,6 +423,67 @@ export default function QueryBuilder({
           >
             )
           </span>
+        </div>
+
+        {/* AND */}
+        {(likesEnabled || retweetsEnabled || threadEnabled) &&
+          dateRangeEnabled && (
+            <div className={`ml-4 mt-1 ${sqlKeyword}`}>AND</div>
+          )}
+
+        {/* created_at BETWEEN 조건 */}
+        <div className="ml-4 mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Checkbox
+              checked={dateRangeEnabled}
+              onCheckedChange={(checked) =>
+                onDateRangeEnabledChange(checked === true)
+              }
+              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            />
+            <span
+              className={
+                dateRangeEnabled
+                  ? 'text-neutral-800 dark:text-neutral-200'
+                  : 'text-neutral-400 dark:text-neutral-600'
+              }
+            >
+              created_at
+            </span>
+            <span
+              className={dateRangeEnabled ? sqlKeyword : 'text-neutral-400'}
+            >
+              BETWEEN
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-4 h-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>
+                  지정된 기간 내의 트윗만 삭제 대상이 됩니다. 시작일 또는
+                  종료일을 비워두면 해당 방향으로 제한 없이 적용됩니다.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          {dateRangeEnabled && (
+            <div className="ml-8 mt-2 flex items-center gap-2 flex-wrap">
+              <Input
+                type="date"
+                value={startDate || ''}
+                onChange={(e) => onStartDateChange(e.target.value || null)}
+                className={`w-36 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
+              />
+              <span className={sqlKeyword}>AND</span>
+              <Input
+                type="date"
+                value={endDate || ''}
+                onChange={(e) => onEndDateChange(e.target.value || null)}
+                className={`w-36 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
+              />
+            </div>
+          )}
         </div>
 
         {/* LIMIT */}
