@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/app/icon.svg" alt="Tweet Eraser" width="128" height="128">
+</p>
+
 # Tweet Eraser
 
 Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 삭제할 수 있는 데스크톱 앱.
@@ -142,7 +146,14 @@ pnpm run release major   # 대규모 변경: 0.1.0 → 1.0.0
 
 ### 자동 업데이트
 
-배포된 앱은 시작 시 GitHub Releases에서 새 버전을 자동으로 확인합니다. 새 버전이 있으면 백그라운드에서 다운로드 후 재시작 안내가 표시됩니다.
+배포된 앱은 시작 시 GitHub Releases에서 새 버전을 자동으로 확인합니다.
+
+| OS | 동작 |
+|----|------|
+| Windows | 자동 다운로드 → 재시작 시 자동 설치 |
+| macOS | 알림 표시 → GitHub Release 페이지에서 수동 다운로드 (코드 서명 없음) |
+
+> **참고**: macOS에서 완전 자동 업데이트를 하려면 Apple Developer 인증서로 앱 서명이 필요합니다.
 
 ### 설치 방법 (사용자용)
 

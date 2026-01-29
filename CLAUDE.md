@@ -11,7 +11,7 @@ pnpm run electron:dev     # Electron + Next.js 동시 실행 (개발 모드)
 pnpm run electron:compile # Electron TypeScript만 컴파일
 pnpm run electron:build   # 프로덕션 빌드 + 패키징 (아이콘 빌드 포함)
 pnpm run electron:publish # 빌드 + GitHub Releases에 자동 업로드 (단일 플랫폼)
-pnpm run release <type>   # 버전 bump + macOS/Windows 빌드 + 배포 (patch|minor|major)
+pnpm run release <type>   # 린트/테스트 → 버전 bump → 빌드 → 배포 (patch|minor|major)
 pnpm run icon:build       # 앱 아이콘 생성 (src/app/icon.svg → resources/icon.png)
 pnpm run build            # Next.js 빌드만
 pnpm run lint             # biome check --write (포맷 + 린트 자동 수정)
@@ -39,7 +39,10 @@ pnpm run test:watch       # vitest watch 모드
   - fetch API 호출 최소 500ms 간격 유지
   - 중복 요청 방지 로직
 - **삭제 전 백업**: 기본 활성화된 백업 옵션 제공. 실패한 트윗 ID 및 에러 추적.
-- **자동 업데이트**: electron-updater 사용. 앱 시작 시 GitHub Releases에서 새 버전 확인 → 자동 다운로드 → 재시작 시 적용. `pnpm run electron:publish`로 배포.
+- **자동 업데이트**: electron-updater 사용. 앱 시작 시 GitHub Releases에서 새 버전 확인. 플랫폼별 동작:
+  - **Windows**: 자동 다운로드 → 재시작 시 자동 설치
+  - **macOS**: 알림만 표시 → GitHub Release 페이지에서 수동 다운로드 (코드 서명 없이는 자동 설치 불가)
+  - 배포: `pnpm run release <patch|minor|major>`
 
 ## 코딩 컨벤션
 

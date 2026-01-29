@@ -42,6 +42,30 @@ if (!GH_TOKEN) {
   process.exit(1);
 }
 
+// 린트 및 테스트 실행
+console.log('린트 검사 중...');
+try {
+  execSync('pnpm run check', { stdio: 'inherit' });
+  console.log('✓ 린트 검사 통과');
+} catch (_error) {
+  console.error('');
+  console.error('✗ 린트 검사 실패. 먼저 `pnpm run lint`로 수정해주세요.');
+  process.exit(1);
+}
+
+console.log('');
+console.log('테스트 실행 중...');
+try {
+  execSync('pnpm test', { stdio: 'inherit' });
+  console.log('✓ 테스트 통과');
+} catch (_error) {
+  console.error('');
+  console.error('✗ 테스트 실패. 테스트를 수정한 후 다시 시도해주세요.');
+  process.exit(1);
+}
+
+console.log('');
+
 // 새 버전 계산
 let newVersion;
 if (bumpType === 'patch') {
