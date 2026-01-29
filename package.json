@@ -92,7 +92,7 @@
       "repo": "tweet-manager"
     },
     "mac": {
-      "target": "dmg",
+      "target": ["dmg", "zip"],
       "icon": "resources/icon.png"
     },
     "win": {

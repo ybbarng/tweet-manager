@@ -102,8 +102,20 @@ app.whenReady().then(() => {
 });
 
 // 자동 업데이트 이벤트 핸들러
+autoUpdater.on('checking-for-update', () => {
+  console.log('[AutoUpdater] 업데이트 확인 중...');
+});
+
 autoUpdater.on('update-available', (info) => {
   console.log('[AutoUpdater] 업데이트 발견:', info.version);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('[AutoUpdater] 최신 버전입니다:', info.version);
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  console.log(`[AutoUpdater] 다운로드 중: ${Math.round(progress.percent)}%`);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
