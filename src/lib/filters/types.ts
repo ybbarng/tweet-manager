@@ -1,5 +1,3 @@
-import type { Tweet } from '@/types';
-
 /** 비교 연산자 */
 export type ComparisonOperator = '>=' | '>' | '<=' | '<' | '=';
 
@@ -54,54 +52,6 @@ export interface ReplyFilterConfig {
   /** true: 답글만 보존, false: 답글 아닌 것만 보존 */
   isReply: boolean;
 }
-
-/** 타래 필터 설정 */
-export interface ThreadFilterConfig {
-  type: 'thread';
-  /** 보존할 타래의 conversation ID 또는 트윗 ID 목록 */
-  preservedIds: string[];
-}
-
-/** 시작일 필터 설정 */
-export interface StartDateFilterConfig {
-  type: 'startDate';
-  /** 시작일 (ISO 문자열) */
-  startDate: string;
-}
-
-/** 종료일 필터 설정 */
-export interface EndDateFilterConfig {
-  type: 'endDate';
-  /** 종료일 (ISO 문자열) */
-  endDate: string;
-}
-
-/** 레거시 호환: 좋아요 필터 */
-export interface LikesFilterConfig {
-  type: 'likes';
-  minLikes: number;
-}
-
-/** 레거시 호환: 리트윗 필터 */
-export interface RetweetsFilterConfig {
-  type: 'retweets';
-  minRetweets: number;
-}
-
-export type FilterConfig =
-  | NumericFilterConfig
-  | KeywordFilterConfig
-  | HasPhotoFilterConfig
-  | HasVideoFilterConfig
-  | ReplyFilterConfig
-  | ThreadFilterConfig
-  | StartDateFilterConfig
-  | EndDateFilterConfig
-  | LikesFilterConfig
-  | RetweetsFilterConfig;
-
-/** 필터 함수 시그니처 */
-export type FilterFn = (tweets: Tweet[]) => Tweet[];
 
 /** negate 옵션을 적용하는 헬퍼 */
 export function applyNegate<T>(
