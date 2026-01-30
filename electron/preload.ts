@@ -8,6 +8,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('update:available', handler);
   },
 
+  // 인증 저장소
+  auth: {
+    save: (data: {
+      auth: { authToken: string; csrfToken: string; bearerToken: string };
+      user: {
+        id: string;
+        name: string;
+        screenName: string;
+        profileImageUrl: string;
+      };
+    }) => ipcRenderer.invoke('auth:save', data),
+    load: () => ipcRenderer.invoke('auth:load'),
+    clear: () => ipcRenderer.invoke('auth:clear'),
+  },
+
   // 삭제 히스토리
   history: {
     load: () => ipcRenderer.invoke('history:load'),

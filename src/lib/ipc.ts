@@ -16,6 +16,11 @@ export interface LoginResult {
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
+  auth: {
+    save: (data: LoginResult) => Promise<IpcResponse<void>>;
+    load: () => Promise<IpcResponse<LoginResult | null>>;
+    clear: () => Promise<IpcResponse<void>>;
+  };
   history: {
     load: () => Promise<IpcResponse<DeletionHistoryEntry[]>>;
     save: (entry: DeletionHistoryEntry) => Promise<IpcResponse<void>>;
@@ -60,6 +65,21 @@ function getAPI(): ElectronAPI {
 /** Electron 환경인지 확인 */
 export function isElectron(): boolean {
   return typeof window !== 'undefined' && !!window.electronAPI;
+}
+
+/** 인증 정보 저장 */
+export async function saveAuth(data: LoginResult): Promise<IpcResponse<void>> {
+  return getAPI().auth.save(data);
+}
+
+/** 저장된 인증 정보 로드 */
+export async function loadAuth(): Promise<IpcResponse<LoginResult | null>> {
+  return getAPI().auth.load();
+}
+
+/** 저장된 인증 정보 삭제 */
+export async function clearAuth(): Promise<IpcResponse<void>> {
+  return getAPI().auth.clear();
 }
 
 /** Twitter 자동 로그인 */
