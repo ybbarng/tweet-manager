@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { LogOut, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +22,7 @@ import type {
   FilterCombineMode,
 } from '@/lib/filters/types';
 import {
+  clearAuth,
   fetchTweets,
   isElectron,
   onDeleteProgress,
@@ -424,6 +425,11 @@ export default function TweetManager() {
     }
   }, []);
 
+  const handleLogout = async () => {
+    await clearAuth();
+    dispatch({ type: 'LOGOUT' });
+  };
+
   const loading = apiLoading;
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
@@ -494,6 +500,15 @@ export default function TweetManager() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             새로고침
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loading || isRunning}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 disabled:opacity-50"
+            title="로그아웃"
+          >
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
