@@ -25,120 +25,120 @@ describe('숫자 필터', () => {
   ];
 
   describe('비교 연산자', () => {
-    it('>= 연산자', () => {
+    it('>= 연산자: likes >= 5인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '>=',
         value: 5,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '2']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2']);
     });
 
-    it('> 연산자', () => {
+    it('> 연산자: likes > 5인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '>',
         value: 5,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1']);
     });
 
-    it('<= 연산자', () => {
+    it('<= 연산자: likes <= 3인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '<=',
         value: 3,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['3', '4', '5']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['3', '4', '5']);
     });
 
-    it('< 연산자', () => {
+    it('< 연산자: likes < 3인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '<',
         value: 3,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['3', '5']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['3', '5']);
     });
 
-    it('= 연산자', () => {
+    it('= 연산자: likes = 5인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '=',
         value: 5,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['2']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['2']);
     });
   });
 
   describe('views 필드', () => {
-    it('views가 있는 트윗만 필터링', () => {
+    it('views >= 100인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'views',
         operator: '>=',
         value: 100,
       });
-      const kept = filter.apply(tweets);
+      const toDelete = filter.apply(tweets);
       // id=1 (100), id=3 (200)
-      expect(kept.map((t) => t.id)).toEqual(['1', '3']);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '3']);
     });
 
-    it('views가 undefined인 트윗은 제외', () => {
+    it('views가 undefined인 트윗은 조건 미충족', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'views',
         operator: '>=',
         value: 0,
       });
-      const kept = filter.apply(tweets);
-      // id=4는 views 없음
-      expect(kept.map((t) => t.id)).toEqual(['1', '2', '3', '5']);
+      const toDelete = filter.apply(tweets);
+      // id=4는 views 없음 -> 삭제 대상 아님
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2', '3', '5']);
     });
   });
 
   describe('다양한 필드 테스트', () => {
-    it('likes 필드', () => {
+    it('likes 필드: likes >= 5인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'likes',
         operator: '>=',
         value: 5,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '2']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2']);
     });
 
-    it('retweets 필드', () => {
+    it('retweets 필드: retweets >= 5인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'retweets',
         operator: '>=',
         value: 5,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '3']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '3']);
     });
 
-    it('replies 필드', () => {
+    it('replies 필드: replies >= 3인 트윗 삭제', () => {
       const filter = createNumericFilter({
         type: 'numeric',
         field: 'replies',
         operator: '>=',
         value: 3,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '3', '4']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '3', '4']);
     });
   });
 });

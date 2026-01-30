@@ -46,16 +46,16 @@ describe('사진 포함 여부 필터', () => {
     }),
   ];
 
-  it('hasPhoto=true: 사진 있는 트윗만 보존', () => {
+  it('hasPhoto=true: 사진 있는 트윗 삭제', () => {
     const filter = createHasPhotoFilter({ type: 'hasPhoto', hasPhoto: true });
-    const kept = filter.apply(tweets);
-    expect(kept.map((t) => t.id)).toEqual(['2', '5', '6']);
+    const toDelete = filter.apply(tweets);
+    expect(toDelete.map((t) => t.id)).toEqual(['2', '5', '6']);
   });
 
-  it('hasPhoto=false: 사진 없는 트윗만 보존', () => {
+  it('hasPhoto=false: 사진 없는 트윗 삭제', () => {
     const filter = createHasPhotoFilter({ type: 'hasPhoto', hasPhoto: false });
-    const kept = filter.apply(tweets);
-    expect(kept.map((t) => t.id)).toEqual(['1', '3', '4']);
+    const toDelete = filter.apply(tweets);
+    expect(toDelete.map((t) => t.id)).toEqual(['1', '3', '4']);
   });
 
   it('필터 메타데이터 확인', () => {
@@ -97,16 +97,16 @@ describe('동영상 포함 여부 필터', () => {
     }),
   ];
 
-  it('hasVideo=true: 동영상/GIF 있는 트윗만 보존', () => {
+  it('hasVideo=true: 동영상/GIF 있는 트윗 삭제', () => {
     const filter = createHasVideoFilter({ type: 'hasVideo', hasVideo: true });
-    const kept = filter.apply(tweets);
-    expect(kept.map((t) => t.id)).toEqual(['3', '4', '6']);
+    const toDelete = filter.apply(tweets);
+    expect(toDelete.map((t) => t.id)).toEqual(['3', '4', '6']);
   });
 
-  it('hasVideo=false: 동영상/GIF 없는 트윗만 보존', () => {
+  it('hasVideo=false: 동영상/GIF 없는 트윗 삭제', () => {
     const filter = createHasVideoFilter({ type: 'hasVideo', hasVideo: false });
-    const kept = filter.apply(tweets);
-    expect(kept.map((t) => t.id)).toEqual(['1', '2', '5']);
+    const toDelete = filter.apply(tweets);
+    expect(toDelete.map((t) => t.id)).toEqual(['1', '2', '5']);
   });
 
   it('필터 메타데이터 확인', () => {

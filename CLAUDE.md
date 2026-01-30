@@ -23,12 +23,13 @@ pnpm run test:watch       # vitest watch 모드
 ## 아키텍처 결정
 
 - **Electron 이중 프로세스**: 메인 프로세스(Node.js)에서 Twitter API 호출(CORS 우회), 렌더러(React)에서 UI 담당. IPC로 통신.
-- **필터 시스템**: "보존 조건" 방식. 각 필터는 보존할 트윗을 반환.
-  - **조합 모드**: OR(하나라도 통과) 또는 AND(모두 통과) 선택 가능
+- **필터 시스템**: "삭제 조건" 방식 (DELETE FROM WHERE). 각 필터는 삭제할 트윗을 반환.
+  - **조합 모드**: AND(모든 조건 충족 시 삭제, 기본값) 또는 OR(하나라도 충족 시 삭제) 선택 가능
   - **NOT 조건**: 각 필터에 negate 옵션으로 결과 반전
   - **비교 연산자**: 숫자 필터에 >=, >, <=, <, = 지원
-  - **필터 종류**: numeric(likes/retweets/replies/views), keyword, media, reply, thread, dateRange
-  - 필터가 없으면 전체 트윗이 삭제 후보가 되어 사용자가 수동으로 보존할 트윗을 선택.
+  - **필터 종류**: numeric(likes/retweets/replies/views), keyword, media, reply, dateRange
+  - **thread 필터**: 보존 필터로 특별 처리. 지정된 타래는 다른 조건과 무관하게 삭제에서 제외.
+  - 필터가 없으면 삭제 대상 없음 (안전 장치).
 - **Next.js `output: 'export'`**: 정적 빌드하여 Electron에서 로드. 서버 기능 미사용.
 - **Electron tsconfig 분리**: `tsconfig.electron.json`으로 `electron/` 디렉토리를 CommonJS 타겟으로 별도 컴파일. 출력 디렉토리는 `dist-electron/`.
 - **HTTP 클라이언트**: Electron 메인 프로세스에서 wretch 사용 (fetch 래퍼). `electron/twitter/api.ts` 참고.

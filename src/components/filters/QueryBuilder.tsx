@@ -111,7 +111,7 @@ const sqlString = 'text-orange-500 dark:text-orange-400';
 const sqlNumber = 'text-green-600 dark:text-green-400';
 const filterLabel = 'text-neutral-400 dark:text-neutral-500 text-xs w-16';
 
-const COMPARISON_OPERATORS: ComparisonOperator[] = ['>=', '>', '<=', '<', '='];
+const COMPARISON_OPERATORS: ComparisonOperator[] = ['<=', '<', '>=', '>', '='];
 
 /** NOT 버튼 컴포넌트 */
 function NotButton({

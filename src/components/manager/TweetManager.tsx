@@ -52,18 +52,18 @@ export default function TweetManager() {
 
   // 숫자 필터 상태 (likes)
   const [likesEnabled, setLikesEnabled] = useState(false);
-  const [likesOperator, setLikesOperator] = useState<ComparisonOperator>('>=');
+  const [likesOperator, setLikesOperator] = useState<ComparisonOperator>('<=');
   const [minLikes, setMinLikes] = useState(5);
 
   // 숫자 필터 상태 (retweets)
   const [retweetsEnabled, setRetweetsEnabled] = useState(false);
   const [retweetsOperator, setRetweetsOperator] =
-    useState<ComparisonOperator>('>=');
+    useState<ComparisonOperator>('<=');
   const [minRetweets, setMinRetweets] = useState(3);
 
   // 숫자 필터 상태 (views)
   const [viewsEnabled, setViewsEnabled] = useState(false);
-  const [viewsOperator, setViewsOperator] = useState<ComparisonOperator>('>=');
+  const [viewsOperator, setViewsOperator] = useState<ComparisonOperator>('<=');
   const [minViews, setMinViews] = useState(100);
 
   // 키워드 필터 상태
@@ -76,15 +76,15 @@ export default function TweetManager() {
 
   // 사진 필터 상태
   const [hasPhotoEnabled, setHasPhotoEnabled] = useState(false);
-  const [hasPhotoValue, setHasPhotoValue] = useState(true);
+  const [hasPhotoValue, setHasPhotoValue] = useState(false);
 
   // 동영상 필터 상태
   const [hasVideoEnabled, setHasVideoEnabled] = useState(false);
-  const [hasVideoValue, setHasVideoValue] = useState(true);
+  const [hasVideoValue, setHasVideoValue] = useState(false);
 
   // 답글 필터 상태
   const [replyEnabled, setReplyEnabled] = useState(false);
-  const [replyIsReply, setReplyIsReply] = useState(true);
+  const [replyIsReply, setReplyIsReply] = useState(false);
 
   // 타래 필터 상태
   const [threadEnabled, setThreadEnabled] = useState(false);

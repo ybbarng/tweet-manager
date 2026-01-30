@@ -2,7 +2,7 @@ import type { Tweet, TweetFilter } from '@/types';
 import type { KeywordFilterConfig } from './types';
 import { applyNegate } from './types';
 
-/** 키워드 필터 생성 */
+/** 키워드 필터 생성: 조건에 맞는 트윗을 삭제 대상으로 반환 */
 export function createKeywordFilter(config: KeywordFilterConfig): TweetFilter {
   const { keywords, matchMode, caseSensitive, negate } = config;
 
@@ -12,8 +12,8 @@ export function createKeywordFilter(config: KeywordFilterConfig): TweetFilter {
     enabled: true,
     apply: (tweets: Tweet[]) => {
       if (keywords.length === 0) {
-        // 키워드가 없으면 전체 보존
-        return negate ? [] : tweets;
+        // 키워드가 없으면 삭제 대상 없음
+        return negate ? tweets : [];
       }
 
       const kept = tweets.filter((t) => {

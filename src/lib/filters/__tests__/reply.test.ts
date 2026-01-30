@@ -24,19 +24,19 @@ describe('답글 필터', () => {
     makeTweet({ id: '5', inReplyToId: '300' }), // 답글
   ];
 
-  describe('isReply=true (답글만)', () => {
-    it('답글인 트윗만 필터링', () => {
+  describe('isReply=true (답글만 삭제)', () => {
+    it('답글인 트윗만 삭제 대상', () => {
       const filter = createReplyFilter({ type: 'reply', isReply: true });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['2', '4', '5']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['2', '4', '5']);
     });
   });
 
-  describe('isReply=false (답글 아닌 것만)', () => {
-    it('답글이 아닌 트윗만 필터링', () => {
+  describe('isReply=false (답글 아닌 것만 삭제)', () => {
+    it('답글이 아닌 트윗만 삭제 대상', () => {
       const filter = createReplyFilter({ type: 'reply', isReply: false });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '3']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '3']);
     });
   });
 });

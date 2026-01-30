@@ -1,8 +1,7 @@
 import type { Tweet, TweetFilter } from '@/types';
 
 /**
- * 시작일 필터: 시작일 이후의 트윗만 삭제 대상
- * (시작일 이전 트윗은 보존)
+ * 시작일 필터: 시작일 이후 트윗을 삭제 대상으로 반환
  */
 export function createStartDateFilter(startDate: string): TweetFilter {
   return {
@@ -16,16 +15,14 @@ export function createStartDateFilter(startDate: string): TweetFilter {
 
       return tweets.filter((t) => {
         const tweetDate = new Date(t.createdAt);
-        // 시작일 이전이면 보존 (삭제 대상에서 제외)
-        return tweetDate < start;
+        return tweetDate >= start;
       });
     },
   };
 }
 
 /**
- * 종료일 필터: 종료일 이전의 트윗만 삭제 대상
- * (종료일 이후 트윗은 보존)
+ * 종료일 필터: 종료일 이전 트윗을 삭제 대상으로 반환
  */
 export function createEndDateFilter(endDate: string): TweetFilter {
   return {
@@ -39,8 +36,7 @@ export function createEndDateFilter(endDate: string): TweetFilter {
 
       return tweets.filter((t) => {
         const tweetDate = new Date(t.createdAt);
-        // 종료일 이후면 보존 (삭제 대상에서 제외)
-        return tweetDate > end;
+        return tweetDate <= end;
       });
     },
   };

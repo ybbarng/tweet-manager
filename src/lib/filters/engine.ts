@@ -2,48 +2,65 @@ import type { Tweet, TweetFilter } from '@/types';
 import type { FilterCombineMode } from './types';
 
 /**
- * 필터 엔진: 여러 필터를 조합하여 실행.
- * - OR 모드: 하나라도 보존 조건에 해당하면 보존 (기본값)
- * - AND 모드: 모든 활성 필터 조건을 충족해야 보존
+ * 필터 엔진: 여러 필터를 조합하여 삭제 대상 트윗을 결정.
+ * - AND 모드: 모든 삭제 필터 조건을 충족해야 삭제 (기본값)
+ * - OR 모드: 하나라도 삭제 조건에 해당하면 삭제
+ * - thread 필터: 보존 필터로 특별 처리 (삭제 대상에서 제외)
  */
-export function getPreservedTweets(
+export function getMatchedTweets(
   tweets: Tweet[],
   filters: TweetFilter[],
-  combineMode: FilterCombineMode = 'OR',
+  combineMode: FilterCombineMode = 'AND',
 ): Set<string> {
-  const preserved = new Set<string>();
-  const enabledFilters = filters.filter((f) => f.enabled);
+  const matched = new Set<string>();
 
-  // 활성 필터가 없으면 전체 보존 (수동 선택 모드에서 별도 처리)
-  if (enabledFilters.length === 0) {
-    for (const t of tweets) {
-      preserved.add(t.id);
+  // thread 필터와 삭제 필터 분리
+  const enabledFilters = filters.filter((f) => f.enabled);
+  const deleteFilters = enabledFilters.filter((f) => f.type !== 'thread');
+  const threadFilters = enabledFilters.filter((f) => f.type === 'thread');
+
+  // 삭제 필터가 없으면 삭제 대상 없음 (안전 장치)
+  if (deleteFilters.length === 0) {
+    return matched;
+  }
+
+  // thread 필터로 보존할 트윗 ID 수집
+  const preservedByThread = new Set<string>();
+  for (const filter of threadFilters) {
+    const preserved = filter.apply(tweets);
+    for (const t of preserved) {
+      preservedByThread.add(t.id);
     }
-    return preserved;
   }
 
   if (combineMode === 'AND') {
-    // AND: 모든 필터를 통과해야 보존
+    // AND: 모든 삭제 필터 조건을 충족해야 삭제
     for (const tweet of tweets) {
-      const passesAll = enabledFilters.every((filter) => {
-        const kept = filter.apply([tweet]);
-        return kept.length > 0;
+      // thread 필터로 보존된 트윗은 제외
+      if (preservedByThread.has(tweet.id)) continue;
+
+      const matchesAll = deleteFilters.every((filter) => {
+        const result = filter.apply([tweet]);
+        return result.length > 0;
       });
-      if (passesAll) {
-        preserved.add(tweet.id);
+      if (matchesAll) {
+        matched.add(tweet.id);
       }
     }
   } else {
-    // OR: 하나라도 통과하면 보존
-    for (const filter of enabledFilters) {
-      const kept = filter.apply(tweets);
-      for (const t of kept) {
-        preserved.add(t.id);
+    // OR: 하나라도 삭제 조건에 해당하면 삭제
+    for (const filter of deleteFilters) {
+      const result = filter.apply(tweets);
+      for (const t of result) {
+        // thread 필터로 보존된 트윗은 제외
+        if (!preservedByThread.has(t.id)) {
+          matched.add(t.id);
+        }
       }
     }
   }
 
-  return preserved;
+  return matched;
 }
 
 /** 삭제 대상 트윗 반환 */
@@ -51,19 +68,19 @@ export function getTweetsToDelete(
   tweets: Tweet[],
   filters: TweetFilter[],
   excludedIds: Set<string>,
-  combineMode: FilterCombineMode = 'OR',
+  combineMode: FilterCombineMode = 'AND',
 ): Tweet[] {
-  const preserved = getPreservedTweets(tweets, filters, combineMode);
+  const matched = getMatchedTweets(tweets, filters, combineMode);
 
-  return tweets.filter((t) => !preserved.has(t.id) && !excludedIds.has(t.id));
+  return tweets.filter((t) => matched.has(t.id) && !excludedIds.has(t.id));
 }
 
 /** 삭제 후보 트윗 반환 (수동 제외 적용 전) */
 export function getDeletionCandidates(
   tweets: Tweet[],
   filters: TweetFilter[],
-  combineMode: FilterCombineMode = 'OR',
+  combineMode: FilterCombineMode = 'AND',
 ): Tweet[] {
-  const preserved = getPreservedTweets(tweets, filters, combineMode);
-  return tweets.filter((t) => !preserved.has(t.id));
+  const matched = getMatchedTweets(tweets, filters, combineMode);
+  return tweets.filter((t) => matched.has(t.id));
 }

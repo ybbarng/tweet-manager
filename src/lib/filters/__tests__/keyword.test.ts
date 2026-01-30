@@ -25,15 +25,15 @@ describe('키워드 필터', () => {
   ];
 
   describe('any 모드 (하나라도 포함)', () => {
-    it('하나의 키워드가 포함된 트윗 필터링', () => {
+    it('하나의 키워드가 포함된 트윗 삭제', () => {
       const filter = createKeywordFilter({
         type: 'keyword',
         keywords: ['hello'],
         matchMode: 'any',
       });
-      const kept = filter.apply(tweets);
-      // 대소문자 구분 안 함이 기본 -> id=1,2,3
-      expect(kept.map((t) => t.id)).toEqual(['1', '2', '3']);
+      const toDelete = filter.apply(tweets);
+      // 대소문자 구분 안 함이 기본 -> id=1,2,3 삭제 대상
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2', '3']);
     });
 
     it('여러 키워드 중 하나라도 포함', () => {
@@ -42,30 +42,30 @@ describe('키워드 필터', () => {
         keywords: ['hello', 'goodbye'],
         matchMode: 'any',
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '2', '3', '4']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2', '3', '4']);
     });
   });
 
   describe('all 모드 (모두 포함)', () => {
-    it('모든 키워드가 포함된 트윗만 필터링', () => {
+    it('모든 키워드가 포함된 트윗만 삭제', () => {
       const filter = createKeywordFilter({
         type: 'keyword',
         keywords: ['hello', 'world'],
         matchMode: 'all',
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1']);
     });
 
-    it('하나라도 없으면 제외', () => {
+    it('하나라도 없으면 삭제 안 됨', () => {
       const filter = createKeywordFilter({
         type: 'keyword',
         keywords: ['hello', 'missing'],
         matchMode: 'all',
       });
-      const kept = filter.apply(tweets);
-      expect(kept).toEqual([]);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete).toEqual([]);
     });
   });
 
@@ -77,8 +77,8 @@ describe('키워드 필터', () => {
         matchMode: 'any',
         caseSensitive: false,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '2', '3']);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.map((t) => t.id)).toEqual(['1', '2', '3']);
     });
 
     it('caseSensitive=true: 대소문자 구분', () => {
@@ -88,35 +88,35 @@ describe('키워드 필터', () => {
         matchMode: 'any',
         caseSensitive: true,
       });
-      const kept = filter.apply(tweets);
+      const toDelete = filter.apply(tweets);
       // 정확히 'HELLO'가 있는 것만: id=3
-      expect(kept.map((t) => t.id)).toEqual(['3']);
+      expect(toDelete.map((t) => t.id)).toEqual(['3']);
     });
   });
 
   describe('NOT 조건', () => {
-    it('negate=true: 결과 반전', () => {
+    it('negate=true: 키워드 미포함 트윗 삭제', () => {
       const filter = createKeywordFilter({
         type: 'keyword',
         keywords: ['hello'],
         matchMode: 'any',
         negate: true,
       });
-      const kept = filter.apply(tweets);
-      // hello 포함하지 않는 것: id=4, id=5
-      expect(kept.map((t) => t.id)).toEqual(['4', '5']);
+      const toDelete = filter.apply(tweets);
+      // hello 미포함 트윗 삭제: id=4, id=5
+      expect(toDelete.map((t) => t.id)).toEqual(['4', '5']);
     });
   });
 
   describe('엣지 케이스', () => {
-    it('빈 키워드 배열: 전체 보존', () => {
+    it('빈 키워드 배열: 삭제 대상 없음', () => {
       const filter = createKeywordFilter({
         type: 'keyword',
         keywords: [],
         matchMode: 'any',
       });
-      const kept = filter.apply(tweets);
-      expect(kept.length).toBe(tweets.length);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.length).toBe(0);
     });
 
     it('빈 키워드 배열 + negate: 전체 삭제 대상', () => {
@@ -126,8 +126,8 @@ describe('키워드 필터', () => {
         matchMode: 'any',
         negate: true,
       });
-      const kept = filter.apply(tweets);
-      expect(kept.length).toBe(0);
+      const toDelete = filter.apply(tweets);
+      expect(toDelete.length).toBe(tweets.length);
     });
   });
 });

@@ -24,18 +24,18 @@ describe('시작일 필터', () => {
     makeTweet({ id: '5', createdAt: new Date('2024-03-01') }),
   ];
 
-  it('시작일 이전 트윗 보존 (이후 삭제)', () => {
+  it('시작일 이후 트윗을 삭제 대상으로 반환', () => {
     const filter = createStartDateFilter('2024-01-15');
-    const preserved = filter.apply(tweets);
-    const ids = preserved.map((t) => t.id);
+    const toDelete = filter.apply(tweets);
+    const ids = toDelete.map((t) => t.id);
 
-    // 2024-01-15 이전 트윗만 보존
-    expect(ids).toContain('1');
+    // 2024-01-15 이전 트윗은 삭제 대상 아님
+    expect(ids).not.toContain('1');
     // 2024-01-15 이후 트윗은 삭제 대상
-    expect(ids).not.toContain('2');
-    expect(ids).not.toContain('3');
-    expect(ids).not.toContain('4');
-    expect(ids).not.toContain('5');
+    expect(ids).toContain('2');
+    expect(ids).toContain('3');
+    expect(ids).toContain('4');
+    expect(ids).toContain('5');
   });
 
   it('필터 메타데이터 확인', () => {
@@ -48,9 +48,9 @@ describe('시작일 필터', () => {
 
   it('빈 배열 입력 시 빈 배열 반환', () => {
     const filter = createStartDateFilter('2024-01-01');
-    const preserved = filter.apply([]);
+    const toDelete = filter.apply([]);
 
-    expect(preserved).toEqual([]);
+    expect(toDelete).toEqual([]);
   });
 
   it('경계값: 시작일과 동일한 날짜의 트윗', () => {
@@ -60,12 +60,12 @@ describe('시작일 필터', () => {
     ];
 
     const filter = createStartDateFilter('2024-01-15');
-    const preserved = filter.apply(tweetsOnBoundary);
-    const ids = preserved.map((t) => t.id);
+    const toDelete = filter.apply(tweetsOnBoundary);
+    const ids = toDelete.map((t) => t.id);
 
-    // 시작일에 해당하는 트윗은 범위 안 -> 삭제 대상
-    expect(ids).not.toContain('1');
-    expect(ids).not.toContain('2');
+    // 시작일에 해당하는 트윗은 삭제 대상
+    expect(ids).toContain('1');
+    expect(ids).toContain('2');
   });
 });
 
@@ -78,18 +78,18 @@ describe('종료일 필터', () => {
     makeTweet({ id: '5', createdAt: new Date('2024-03-01') }),
   ];
 
-  it('종료일 이후 트윗 보존 (이전 삭제)', () => {
+  it('종료일 이전 트윗을 삭제 대상으로 반환', () => {
     const filter = createEndDateFilter('2024-01-31');
-    const preserved = filter.apply(tweets);
-    const ids = preserved.map((t) => t.id);
+    const toDelete = filter.apply(tweets);
+    const ids = toDelete.map((t) => t.id);
 
-    // 2024-01-31 이후 트윗만 보존
-    expect(ids).toContain('4');
-    expect(ids).toContain('5');
     // 2024-01-31 이전 트윗은 삭제 대상
-    expect(ids).not.toContain('1');
-    expect(ids).not.toContain('2');
-    expect(ids).not.toContain('3');
+    expect(ids).toContain('1');
+    expect(ids).toContain('2');
+    expect(ids).toContain('3');
+    // 2024-01-31 이후 트윗은 삭제 대상 아님
+    expect(ids).not.toContain('4');
+    expect(ids).not.toContain('5');
   });
 
   it('종료일은 해당 일자 끝까지 포함 (23:59:59)', () => {
@@ -99,13 +99,13 @@ describe('종료일 필터', () => {
     ];
 
     const filter = createEndDateFilter('2024-01-31');
-    const preserved = filter.apply(tweetsWithTime);
-    const ids = preserved.map((t) => t.id);
+    const toDelete = filter.apply(tweetsWithTime);
+    const ids = toDelete.map((t) => t.id);
 
-    // 2024-01-31 23:59:59는 범위 안 -> 삭제 대상
-    expect(ids).not.toContain('1');
-    // 2024-02-01 00:00:01은 범위 밖 -> 보존
-    expect(ids).toContain('2');
+    // 2024-01-31 23:59:59는 삭제 대상
+    expect(ids).toContain('1');
+    // 2024-02-01 00:00:01은 삭제 대상 아님
+    expect(ids).not.toContain('2');
   });
 
   it('필터 메타데이터 확인', () => {
@@ -118,8 +118,8 @@ describe('종료일 필터', () => {
 
   it('빈 배열 입력 시 빈 배열 반환', () => {
     const filter = createEndDateFilter('2024-12-31');
-    const preserved = filter.apply([]);
+    const toDelete = filter.apply([]);
 
-    expect(preserved).toEqual([]);
+    expect(toDelete).toEqual([]);
   });
 });

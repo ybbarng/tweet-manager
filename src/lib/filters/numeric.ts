@@ -26,7 +26,7 @@ function compareValue(
   }
 }
 
-/** 통합 숫자 필터 생성 */
+/** 숫자 필터 생성: 조건에 맞는 트윗을 삭제 대상으로 반환 */
 export function createNumericFilter(config: NumericFilterConfig): TweetFilter {
   const { field, operator, value } = config;
 

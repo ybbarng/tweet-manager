@@ -49,7 +49,7 @@ export interface HasVideoFilterConfig {
 /** 답글 필터 설정 */
 export interface ReplyFilterConfig {
   type: 'reply';
-  /** true: 답글만 보존, false: 답글 아닌 것만 보존 */
+  /** true: 답글만 삭제, false: 답글 아닌 것만 삭제 */
   isReply: boolean;
 }
 
