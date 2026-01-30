@@ -344,7 +344,7 @@ export default function QueryBuilder({
             className={
               likesEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
-                : 'text-neutral-400 dark:text-neutral-600'
+                : 'text-neutral-600 dark:text-neutral-400'
             }
           >
             likes
@@ -416,7 +416,7 @@ export default function QueryBuilder({
             className={
               retweetsEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
-                : 'text-neutral-400 dark:text-neutral-600'
+                : 'text-neutral-600 dark:text-neutral-400'
             }
           >
             retweets
@@ -488,7 +488,7 @@ export default function QueryBuilder({
             className={
               viewsEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
-                : 'text-neutral-400 dark:text-neutral-600'
+                : 'text-neutral-600 dark:text-neutral-400'
             }
           >
             views
@@ -563,7 +563,7 @@ export default function QueryBuilder({
               className={
                 keywordEnabled
                   ? 'text-neutral-800 dark:text-neutral-200'
-                  : 'text-neutral-400 dark:text-neutral-600'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }
             >
               text
@@ -674,7 +674,7 @@ export default function QueryBuilder({
             className={
               mediaEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
-                : 'text-neutral-400 dark:text-neutral-600'
+                : 'text-neutral-600 dark:text-neutral-400'
             }
           >
             media
@@ -732,7 +732,7 @@ export default function QueryBuilder({
             className={
               replyEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
-                : 'text-neutral-400 dark:text-neutral-600'
+                : 'text-neutral-600 dark:text-neutral-400'
             }
           >
             is_reply
@@ -782,7 +782,7 @@ export default function QueryBuilder({
               className={
                 threadEnabled
                   ? 'text-neutral-800 dark:text-neutral-200'
-                  : 'text-neutral-400 dark:text-neutral-600'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }
             >
               thread_id
@@ -922,7 +922,7 @@ export default function QueryBuilder({
               className={
                 dateRangeEnabled
                   ? 'text-neutral-800 dark:text-neutral-200'
-                  : 'text-neutral-400 dark:text-neutral-600'
+                  : 'text-neutral-600 dark:text-neutral-400'
               }
             >
               created_at
