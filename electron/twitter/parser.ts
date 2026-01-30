@@ -7,6 +7,7 @@ export interface ParsedTweet {
   likes: number;
   retweets: number;
   replies: number;
+  views?: number;
   inReplyToId?: string;
   conversationId?: string;
   isRetweet: boolean;
@@ -118,6 +119,10 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
       return null;
     }
 
+    // views 파싱 (문자열 → 숫자)
+    const viewsCount = result.views?.count;
+    const views = viewsCount ? parseInt(viewsCount, 10) : undefined;
+
     return {
       id: result.rest_id,
       text: legacy.full_text,
@@ -125,6 +130,7 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
       likes: legacy.favorite_count,
       retweets: legacy.retweet_count,
       replies: legacy.reply_count,
+      views: Number.isNaN(views) ? undefined : views,
       inReplyToId: legacy.in_reply_to_status_id_str,
       conversationId: legacy.conversation_id_str,
       isRetweet: !!legacy.retweeted_status_result,

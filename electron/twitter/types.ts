@@ -29,6 +29,11 @@ export interface TweetResult {
       }>;
     };
   };
+  /** 조회수 정보 (view_count_info 객체 또는 views 객체) */
+  views?: {
+    count?: string;
+    state?: string;
+  };
 }
 
 /** UserTweets API 응답 구조 */

@@ -6,6 +6,8 @@ export interface Tweet {
   likes: number;
   retweets: number;
   replies: number;
+  /** 조회수 (없을 수 있음) */
+  views?: number;
   /** 답글 대상 트윗 ID */
   inReplyToId?: string;
   /** 타래(스레드) 식별용 */
