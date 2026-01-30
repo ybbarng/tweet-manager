@@ -1,20 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
-import { getRandomTaglineIndex, taglines } from '@/lib/taglines';
+import RandomTagline from '@/components/common/RandomTagline';
 
 interface AutoLoginLoaderProps {
   error?: string | null;
 }
 
 export default function AutoLoginLoader({ error }: AutoLoginLoaderProps) {
-  const tagline = useMemo(() => taglines[getRandomTaglineIndex()], []);
-
   return (
     <div className="max-w-lg mx-auto flex flex-col items-center justify-center min-h-[400px] text-center">
-      <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 italic">
-        "{tagline}"
-      </p>
+      <RandomTagline className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 italic" />
 
       {error ? (
         <div className="text-red-500">
