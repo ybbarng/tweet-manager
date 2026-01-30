@@ -131,4 +131,49 @@ describe('필터 엔진', () => {
     // id=3: 범위 밖 -> 보존
     expect(preserved.has('3')).toBe(true);
   });
+
+  describe('AND 조합 모드', () => {
+    it('AND 조합: 모든 필터 조건을 충족해야 보존', () => {
+      // id=1: likes=10, retweets=5 -> 둘 다 충족
+      // id=2: likes=2, retweets=0 -> likes 미충족
+      // id=3: likes=0, retweets=10 -> likes 미충족
+      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+      const preserved = getPreservedTweets(tweets, filters, 'AND');
+
+      expect(preserved.has('1')).toBe(true); // 둘 다 충족
+      expect(preserved.has('2')).toBe(false); // likes 미충족
+      expect(preserved.has('3')).toBe(false); // likes 미충족
+      expect(preserved.has('4')).toBe(false);
+      expect(preserved.has('5')).toBe(false);
+    });
+
+    it('AND 조합 vs OR 조합 비교', () => {
+      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+
+      const orPreserved = getPreservedTweets(tweets, filters, 'OR');
+      const andPreserved = getPreservedTweets(tweets, filters, 'AND');
+
+      // OR: id=1 (likes>=5), id=3 (retweets>=5)
+      expect(orPreserved.size).toBe(2);
+      expect(orPreserved.has('1')).toBe(true);
+      expect(orPreserved.has('3')).toBe(true);
+
+      // AND: id=1만 (둘 다 충족)
+      expect(andPreserved.size).toBe(1);
+      expect(andPreserved.has('1')).toBe(true);
+    });
+
+    it('getTweetsToDelete에 combineMode 전달', () => {
+      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+      const toDelete = getTweetsToDelete(tweets, filters, new Set(), 'AND');
+      const ids = toDelete.map((t) => t.id);
+
+      // AND 모드에서는 id=1만 보존, 나머지 삭제 대상
+      expect(ids).not.toContain('1');
+      expect(ids).toContain('2');
+      expect(ids).toContain('3');
+      expect(ids).toContain('4');
+      expect(ids).toContain('5');
+    });
+  });
 });
