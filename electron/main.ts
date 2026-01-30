@@ -14,6 +14,11 @@ import {
 import { autoUpdater } from 'electron-updater';
 import { DELETE_BATCH, HISTORY, TWITTER_BEARER_TOKEN } from './constants';
 import { TwitterApiClient } from './twitter/api';
+import {
+  clearCredentials,
+  loadCredentials,
+  saveCredentials,
+} from './utils/auth-storage';
 import { failure, handleIpc, success } from './utils/ipc';
 import { logger } from './utils/logger';
 
@@ -557,5 +562,38 @@ ipcMain.handle('history:save', (_event, entry: DeletionHistoryEntry) =>
     }
 
     await fsPromises.writeFile(filePath, JSON.stringify(history, null, 2));
+  }),
+);
+
+// --- 인증 저장소 IPC 핸들러 ---
+
+ipcMain.handle(
+  'auth:save',
+  (
+    _event,
+    data: {
+      auth: { authToken: string; csrfToken: string; bearerToken: string };
+      user: {
+        id: string;
+        name: string;
+        screenName: string;
+        profileImageUrl: string;
+      };
+    },
+  ) =>
+    handleIpc(() => {
+      saveCredentials(data);
+    }),
+);
+
+ipcMain.handle('auth:load', () =>
+  handleIpc(() => {
+    return loadCredentials();
+  }),
+);
+
+ipcMain.handle('auth:clear', () =>
+  handleIpc(() => {
+    clearCredentials();
   }),
 );

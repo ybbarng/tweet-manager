@@ -16,9 +16,9 @@ export function failure(error: unknown): IpcResponse<never> {
   return { success: false, error: message };
 }
 
-/** IPC 핸들러 래퍼 - 에러 처리 자동화 */
+/** IPC 핸들러 래퍼 - 에러 처리 자동화 (동기/비동기 모두 지원) */
 export async function handleIpc<T>(
-  fn: () => Promise<T>,
+  fn: () => T | Promise<T>,
 ): Promise<IpcResponse<T>> {
   try {
     const data = await fn();
