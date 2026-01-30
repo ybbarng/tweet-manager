@@ -139,7 +139,7 @@ function NotButton({
   );
 }
 
-/** AND/OR 구분선 컴포넌트 */
+/** AND/OR 커넥터 컴포넌트 */
 function CombineModeConnector({
   mode,
   onToggle,
@@ -148,8 +148,8 @@ function CombineModeConnector({
   onToggle: () => void;
 }) {
   return (
-    <div className="ml-4 my-2 flex items-center gap-2">
-      <div className="flex-1 border-t border-neutral-300 dark:border-neutral-700" />
+    <div className="ml-4 my-1 flex items-center gap-2">
+      <span className="w-16" />
       <button
         type="button"
         onClick={onToggle}
@@ -157,7 +157,6 @@ function CombineModeConnector({
       >
         {mode}
       </button>
-      <div className="flex-1 border-t border-neutral-300 dark:border-neutral-700" />
     </div>
   );
 }
