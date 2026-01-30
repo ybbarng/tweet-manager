@@ -1,6 +1,6 @@
 {
   "name": "tweet-manager",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Twitter/X 트윗을 쉽게 정리하고 삭제할 수 있는 데스크톱 앱",
   "author": "ybbarng",
   "private": true,
