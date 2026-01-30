@@ -25,6 +25,8 @@ export function isWarningDismissed() {
 
 type AuthStatus = 'checking' | 'logging-in' | 'idle' | 'error';
 
+const MIN_LOADING_DISPLAY_MS = 1500;
+
 export default function AuthForm() {
   const dispatch = useAppDispatch();
   const [authStatus, setAuthStatus] = useState<AuthStatus>('checking');
@@ -46,10 +48,22 @@ export default function AuthForm() {
     }
 
     const attemptAutoLogin = async () => {
+      const startTime = Date.now();
+
+      const ensureMinDisplayTime = async () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < MIN_LOADING_DISPLAY_MS) {
+          await new Promise((r) =>
+            setTimeout(r, MIN_LOADING_DISPLAY_MS - elapsed),
+          );
+        }
+      };
+
       try {
         const result = await loadAuth();
 
         if (!result.success || !result.data) {
+          await ensureMinDisplayTime();
           setAuthStatus('idle');
           return;
         }
@@ -65,6 +79,7 @@ export default function AuthForm() {
         if (!verifyResult.success) {
           // 토큰 만료 또는 무효화됨
           await clearAuth();
+          await ensureMinDisplayTime();
           setAutoLoginError('저장된 로그인 정보가 만료되었습니다.');
           setAuthStatus('error');
           // 3초 후 로그인 화면으로 전환
@@ -76,11 +91,13 @@ export default function AuthForm() {
         }
 
         // 자동 로그인 성공
+        await ensureMinDisplayTime();
         dispatch({
           type: 'SET_AUTH',
           payload: { auth, user },
         });
       } catch (err) {
+        await ensureMinDisplayTime();
         setAutoLoginError((err as Error).message);
         setAuthStatus('error');
         setTimeout(() => {
