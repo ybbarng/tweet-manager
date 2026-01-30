@@ -1,18 +1,5 @@
 import type { Tweet, TweetFilter } from '@/types';
-
-/** 사진 포함 여부 필터 설정 */
-export interface HasPhotoFilterConfig {
-  type: 'hasPhoto';
-  /** true: 사진 있는 트윗, false: 사진 없는 트윗 */
-  hasPhoto: boolean;
-}
-
-/** 동영상 포함 여부 필터 설정 */
-export interface HasVideoFilterConfig {
-  type: 'hasVideo';
-  /** true: 동영상 있는 트윗, false: 동영상 없는 트윗 */
-  hasVideo: boolean;
-}
+import type { HasPhotoFilterConfig, HasVideoFilterConfig } from './types';
 
 /** 사진 포함 여부 필터 생성 */
 export function createHasPhotoFilter(
