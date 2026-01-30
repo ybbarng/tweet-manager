@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import type { Tweet, TweetFilter } from '@/types';
 import { getPreservedTweets, getTweetsToDelete } from '../engine';
-import { createLikesFilterV2, createRetweetsFilterV2 } from '../numeric';
+import { createNumericFilter } from '../numeric';
 import { createThreadFilter } from '../thread';
+
+/** 테스트용 좋아요 필터 생성 헬퍼 */
+function likesFilter(value: number) {
+  return createNumericFilter({
+    type: 'numeric',
+    field: 'likes',
+    operator: '>=',
+    value,
+  });
+}
+
+/** 테스트용 리트윗 필터 생성 헬퍼 */
+function retweetsFilter(value: number) {
+  return createNumericFilter({
+    type: 'numeric',
+    field: 'retweets',
+    operator: '>=',
+    value,
+  });
+}
 
 /**
  * 삭제 안전성 테스트.
@@ -39,7 +59,7 @@ describe('보존 대상 트윗은 절대 삭제되지 않는다', () => {
       makeTweet({ id: 'del-2', likes: 0 }),
     ];
 
-    const filters = [createLikesFilterV2('>=', 5)];
+    const filters = [likesFilter(5)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
     const deleteIds = new Set(toDelete.map((t) => t.id));
 
@@ -56,7 +76,7 @@ describe('보존 대상 트윗은 절대 삭제되지 않는다', () => {
       makeTweet({ id: 'del-1', retweets: 2 }),
     ];
 
-    const filters = [createRetweetsFilterV2('>=', 3)];
+    const filters = [retweetsFilter(3)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
     const deleteIds = new Set(toDelete.map((t) => t.id));
 
@@ -98,8 +118,8 @@ describe('보존 대상 트윗은 절대 삭제되지 않는다', () => {
     ];
 
     const filters = [
-      createLikesFilterV2('>=', 5),
-      createRetweetsFilterV2('>=', 5),
+      likesFilter(5),
+      retweetsFilter(5),
       createThreadFilter(['keep-thread']),
     ];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
@@ -122,7 +142,7 @@ describe('수동 제외(excludedIds)된 트윗은 절대 삭제되지 않는다'
     makeTweet({ id: '2', likes: 0 }),
     makeTweet({ id: '3', likes: 0 }),
   ];
-  const filters = [createLikesFilterV2('>=', 5)]; // 전부 삭제 대상
+  const filters = [likesFilter(5)]; // 전부 삭제 대상
 
   it('excludedIds에 포함된 트윗은 필터에 걸리더라도 삭제되지 않는다', () => {
     const excluded = new Set(['1', '3']);
@@ -169,9 +189,9 @@ describe('필터가 없으면 전체 보존 (안전 기본값)', () => {
       makeTweet({ id: '2', likes: 0 }),
     ];
 
-    const f1 = createLikesFilterV2('>=', 5);
+    const f1 = likesFilter(5);
     f1.enabled = false;
-    const f2 = createRetweetsFilterV2('>=', 5);
+    const f2 = retweetsFilter(5);
     f2.enabled = false;
 
     const toDelete = getTweetsToDelete(tweets, [f1, f2], new Set());
@@ -193,10 +213,7 @@ describe('데이터 무결성', () => {
       makeTweet({ id: '5', likes: 0 }),
     ];
 
-    const filters = [
-      createLikesFilterV2('>=', 5),
-      createThreadFilter(['thread-1']),
-    ];
+    const filters = [likesFilter(5), createThreadFilter(['thread-1'])];
     const excluded = new Set(['5']);
 
     const preserved = getPreservedTweets(tweets, filters);
@@ -224,8 +241,8 @@ describe('데이터 무결성', () => {
     );
 
     const filters = [
-      createLikesFilterV2('>=', 20),
-      createRetweetsFilterV2('>=', 15),
+      likesFilter(20),
+      retweetsFilter(15),
       createThreadFilter(['keep-thread']),
     ];
     const excluded = new Set(['1', '3', '5']);
@@ -246,7 +263,7 @@ describe('데이터 무결성', () => {
       makeTweet({ id: '3', likes: 0 }),
     ];
 
-    const filters = [createLikesFilterV2('>=', 5)];
+    const filters = [likesFilter(5)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
     const ids = toDelete.map((t) => t.id);
     const uniqueIds = new Set(ids);
@@ -260,7 +277,7 @@ describe('데이터 무결성', () => {
 // ============================================================
 describe('경계 조건', () => {
   it('트윗이 0개일 때 에러 없이 빈 배열을 반환한다', () => {
-    const filters = [createLikesFilterV2('>=', 5)];
+    const filters = [likesFilter(5)];
     const toDelete = getTweetsToDelete([], filters, new Set());
 
     expect(toDelete).toHaveLength(0);
@@ -272,7 +289,7 @@ describe('경계 조건', () => {
       makeTweet({ id: '2', likes: 0 }),
     ];
 
-    const filters = [createLikesFilterV2('>=', 0)];
+    const filters = [likesFilter(0)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
 
     expect(toDelete).toHaveLength(0);
@@ -283,7 +300,7 @@ describe('경계 조건', () => {
       makeTweet({ id: String(i), likes: 100 }),
     );
 
-    const filters = [createLikesFilterV2('>=', 5)];
+    const filters = [likesFilter(5)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
 
     expect(toDelete).toHaveLength(0);
@@ -294,7 +311,7 @@ describe('경계 조건', () => {
       makeTweet({ id: String(i), likes: 0, retweets: 0 }),
     );
 
-    const filters = [createLikesFilterV2('>=', 100)];
+    const filters = [likesFilter(100)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
 
     expect(toDelete).toHaveLength(20);
@@ -308,7 +325,7 @@ describe('경계 조건', () => {
       }),
     );
 
-    const filters = [createLikesFilterV2('>=', 50)];
+    const filters = [likesFilter(50)];
     const preserved = getPreservedTweets(tweets, filters);
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
 
@@ -336,7 +353,7 @@ describe('경계 조건', () => {
       apply: () => [], // 항상 빈 배열 반환
     };
 
-    const filters = [createLikesFilterV2('>=', 5), buggyFilter];
+    const filters = [likesFilter(5), buggyFilter];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
     const deleteIds = new Set(toDelete.map((t) => t.id));
 

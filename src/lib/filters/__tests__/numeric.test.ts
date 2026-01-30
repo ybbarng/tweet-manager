@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Tweet } from '@/types';
-import {
-  createLikesFilterV2,
-  createNumericFilter,
-  createRepliesFilter,
-  createRetweetsFilterV2,
-  createViewsFilter,
-} from '../numeric';
+import { createNumericFilter } from '../numeric';
 
 function makeTweet(overrides: Partial<Tweet> = {}): Tweet {
   return {
@@ -89,35 +83,60 @@ describe('숫자 필터', () => {
 
   describe('views 필드', () => {
     it('views가 있는 트윗만 필터링', () => {
-      const filter = createViewsFilter('>=', 100);
+      const filter = createNumericFilter({
+        type: 'numeric',
+        field: 'views',
+        operator: '>=',
+        value: 100,
+      });
       const kept = filter.apply(tweets);
       // id=1 (100), id=3 (200)
       expect(kept.map((t) => t.id)).toEqual(['1', '3']);
     });
 
     it('views가 undefined인 트윗은 제외', () => {
-      const filter = createViewsFilter('>=', 0);
+      const filter = createNumericFilter({
+        type: 'numeric',
+        field: 'views',
+        operator: '>=',
+        value: 0,
+      });
       const kept = filter.apply(tweets);
       // id=4는 views 없음
       expect(kept.map((t) => t.id)).toEqual(['1', '2', '3', '5']);
     });
   });
 
-  describe('필드별 헬퍼 함수', () => {
-    it('createLikesFilterV2', () => {
-      const filter = createLikesFilterV2('>=', 5);
+  describe('다양한 필드 테스트', () => {
+    it('likes 필드', () => {
+      const filter = createNumericFilter({
+        type: 'numeric',
+        field: 'likes',
+        operator: '>=',
+        value: 5,
+      });
       const kept = filter.apply(tweets);
       expect(kept.map((t) => t.id)).toEqual(['1', '2']);
     });
 
-    it('createRetweetsFilterV2', () => {
-      const filter = createRetweetsFilterV2('>=', 5);
+    it('retweets 필드', () => {
+      const filter = createNumericFilter({
+        type: 'numeric',
+        field: 'retweets',
+        operator: '>=',
+        value: 5,
+      });
       const kept = filter.apply(tweets);
       expect(kept.map((t) => t.id)).toEqual(['1', '3']);
     });
 
-    it('createRepliesFilter', () => {
-      const filter = createRepliesFilter('>=', 3);
+    it('replies 필드', () => {
+      const filter = createNumericFilter({
+        type: 'numeric',
+        field: 'replies',
+        operator: '>=',
+        value: 3,
+      });
       const kept = filter.apply(tweets);
       expect(kept.map((t) => t.id)).toEqual(['1', '3', '4']);
     });
