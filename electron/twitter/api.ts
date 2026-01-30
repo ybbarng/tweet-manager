@@ -1,4 +1,5 @@
 import wretch, { type WretchError } from 'wretch';
+import { RATE_LIMIT } from '../constants';
 import {
   ENDPOINTS,
   getDeleteTweetVariables,
@@ -68,8 +69,6 @@ export class TwitterApiClient {
     cursor?: string,
     retryCount = 0,
   ): Promise<FetchTweetsResult> {
-    const MAX_RETRIES = 3;
-
     if (!this.userId) {
       await this.verifyCredentials();
     }
@@ -106,16 +105,17 @@ export class TwitterApiClient {
     } catch (err) {
       const error = err as WretchError;
       if (error.status === 429) {
-        if (retryCount >= MAX_RETRIES) {
+        if (retryCount >= RATE_LIMIT.MAX_RETRIES) {
           throw new Error('Rate limit 초과: 최대 재시도 횟수 도달');
         }
         const retryAfter = parseInt(
-          error.response?.headers?.get('x-rate-limit-reset') || '60',
+          error.response?.headers?.get('x-rate-limit-reset') ||
+            String(RATE_LIMIT.DEFAULT_RETRY_AFTER_SEC),
           10,
         );
         const waitMs = retryAfter * 1000 - Date.now();
         if (waitMs > 0) {
-          await delay(Math.min(waitMs, 60000));
+          await delay(Math.min(waitMs, RATE_LIMIT.MAX_WAIT_MS));
         }
         return this.fetchUserTweets(cursor, retryCount + 1);
       }
@@ -124,7 +124,6 @@ export class TwitterApiClient {
   }
 
   async deleteTweet(tweetId: string, retryCount = 0): Promise<void> {
-    const MAX_RETRIES = 3;
     const variables = getDeleteTweetVariables(tweetId);
 
     try {
@@ -135,11 +134,11 @@ export class TwitterApiClient {
     } catch (err) {
       const error = err as WretchError;
       if (error.status === 429) {
-        if (retryCount >= MAX_RETRIES) {
+        if (retryCount >= RATE_LIMIT.MAX_RETRIES) {
           throw new Error('Rate limit 초과: 최대 재시도 횟수 도달');
         }
-        // 재시도 시 대기 시간을 점점 늘림 (5초, 10초, 15초)
-        await delay(5000 * (retryCount + 1));
+        // 재시도 시 대기 시간을 점점 늘림
+        await delay(RATE_LIMIT.BASE_DELAY_MS * (retryCount + 1));
         return this.deleteTweet(tweetId, retryCount + 1);
       }
       throw new Error(`트윗 삭제 실패: ${error.status || error.message}`);

@@ -12,6 +12,7 @@ import {
   shell,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import { DELETE_BATCH, HISTORY, TWITTER_BEARER_TOKEN } from './constants';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
 import { failure, handleIpc, success } from './utils/ipc';
@@ -47,10 +48,6 @@ function requireAuth(): TwitterApiClient {
   if (!twitterClient) throw new Error('인증되지 않았습니다.');
   return twitterClient;
 }
-
-// Twitter 웹 클라이언트용 공개 Bearer 토큰
-const TWITTER_BEARER_TOKEN =
-  'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -279,7 +276,6 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
     failedTweetIds: [] as { id: string; error: string }[],
   };
   let consecutiveFailures = 0;
-  const MAX_CONSECUTIVE_FAILURES = 5;
 
   for (const tweetId of tweetIds) {
     try {
@@ -294,17 +290,17 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
         error: (error as Error).message,
       });
 
-      // 연속 실패 5회 시 중단
-      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      // 연속 실패 시 중단
+      if (consecutiveFailures >= DELETE_BATCH.MAX_CONSECUTIVE_FAILURES) {
         mainWindow?.webContents.send('twitter:delete-progress', {
           ...results,
           currentTweetId: tweetId,
           status: 'stopped',
-          stopReason: `연속 ${MAX_CONSECUTIVE_FAILURES}회 실패로 중단됨`,
+          stopReason: `연속 ${DELETE_BATCH.MAX_CONSECUTIVE_FAILURES}회 실패로 중단됨`,
         });
         return {
           success: false,
-          error: `연속 ${MAX_CONSECUTIVE_FAILURES}회 실패로 삭제가 중단되었습니다.`,
+          error: `연속 ${DELETE_BATCH.MAX_CONSECUTIVE_FAILURES}회 실패로 삭제가 중단되었습니다.`,
           data: results,
         };
       }
@@ -317,10 +313,11 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
       status: 'running',
     });
 
-    // Rate limit 대응: 1~2초 랜덤 딜레이 (계정 보호)
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1000 + Math.random() * 1000),
-    );
+    // Rate limit 대응: 랜덤 딜레이 (계정 보호)
+    const delay =
+      DELETE_BATCH.DELAY_MIN_MS +
+      Math.random() * (DELETE_BATCH.DELAY_MAX_MS - DELETE_BATCH.DELAY_MIN_MS);
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   return { success: true, data: results };
@@ -572,9 +569,9 @@ ipcMain.handle('history:save', (_event, entry: DeletionHistoryEntry) =>
 
     history.unshift(entry);
 
-    // 최근 100개만 유지
-    if (history.length > 100) {
-      history = history.slice(0, 100);
+    // 최근 항목만 유지
+    if (history.length > HISTORY.MAX_ENTRIES) {
+      history = history.slice(0, HISTORY.MAX_ENTRIES);
     }
 
     await fsPromises.writeFile(filePath, JSON.stringify(history, null, 2));
