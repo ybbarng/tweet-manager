@@ -1,5 +1,6 @@
 import wretch, { type WretchError } from 'wretch';
 import { RATE_LIMIT } from '../constants';
+import { logger } from '../utils/logger';
 import {
   ENDPOINTS,
   getDeleteTweetVariables,
@@ -91,7 +92,7 @@ export class TwitterApiClient {
       if (instructions) {
         for (const inst of instructions) {
           if (inst.entries) {
-            console.log(
+            logger.log(
               `[twitter:fetch] ${inst.entries.length}개 엔트리, types:`,
               inst.entries
                 .map((e) => e.content.entryType || 'unknown')

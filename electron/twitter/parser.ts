@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger';
 import type { TweetResult, UserTweetsResponse, ViewerResponse } from './types';
 
 export interface ParsedTweet {
@@ -96,13 +97,13 @@ function parseTweetResultWithWrapper(result: any): ParsedTweet | null {
 
   // TweetUnavailable 처리 (삭제됨, 비공개 등)
   if (result.__typename === 'TweetUnavailable') {
-    console.log('[parser] TweetUnavailable 스킵:', result.reason);
+    logger.log('[parser] TweetUnavailable 스킵:', result.reason);
     return null;
   }
 
   // TweetTombstone 처리 (규칙 위반 등으로 숨겨진 트윗)
   if (result.__typename === 'TweetTombstone') {
-    console.log('[parser] TweetTombstone 스킵');
+    logger.log('[parser] TweetTombstone 스킵');
     return null;
   }
 
@@ -115,7 +116,7 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
   try {
     const legacy = result.legacy;
     if (!legacy) {
-      console.log('[parser] legacy 필드 없음:', result);
+      logger.log('[parser] legacy 필드 없음:', result);
       return null;
     }
 
@@ -140,7 +141,7 @@ export function parseTweetResult(result: TweetResult): ParsedTweet | null {
       })),
     };
   } catch (err) {
-    console.error('[parser] parseTweetResult 에러:', err, result);
+    logger.error('[parser] parseTweetResult 에러:', err, result);
     return null;
   }
 }

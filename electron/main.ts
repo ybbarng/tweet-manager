@@ -15,6 +15,7 @@ import { autoUpdater } from 'electron-updater';
 import { DELETE_BATCH, HISTORY, TWITTER_BEARER_TOKEN } from './constants';
 import { TwitterApiClient } from './twitter/api';
 import { failure, handleIpc, success } from './utils/ipc';
+import { logger } from './utils/logger';
 
 const isDev = !app.isPackaged;
 const isMac = process.platform === 'darwin';
@@ -120,11 +121,11 @@ app.whenReady().then(() => {
 
 // 자동 업데이트 이벤트 핸들러
 autoUpdater.on('checking-for-update', () => {
-  console.log('[AutoUpdater] 업데이트 확인 중...');
+  logger.log('[AutoUpdater] 업데이트 확인 중...');
 });
 
 autoUpdater.on('update-available', (info) => {
-  console.log('[AutoUpdater] 업데이트 발견:', info.version);
+  logger.log('[AutoUpdater] 업데이트 발견:', info.version);
 
   // 렌더러에 업데이트 가능 알림
   mainWindow?.webContents.send('update:available', info.version);
@@ -151,15 +152,15 @@ autoUpdater.on('update-available', (info) => {
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  console.log('[AutoUpdater] 최신 버전입니다:', info.version);
+  logger.log('[AutoUpdater] 최신 버전입니다:', info.version);
 });
 
 autoUpdater.on('download-progress', (progress) => {
-  console.log(`[AutoUpdater] 다운로드 중: ${Math.round(progress.percent)}%`);
+  logger.log(`[AutoUpdater] 다운로드 중: ${Math.round(progress.percent)}%`);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('[AutoUpdater] 업데이트 다운로드 완료:', info.version);
+  logger.log('[AutoUpdater] 업데이트 다운로드 완료:', info.version);
   // 사용자에게 알림
   if (mainWindow) {
     dialog
@@ -180,7 +181,7 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 autoUpdater.on('error', (err) => {
-  console.error('[AutoUpdater] 에러:', err);
+  logger.error('[AutoUpdater] 에러:', err);
 });
 
 app.on('window-all-closed', () => {
@@ -216,7 +217,7 @@ ipcMain.handle(
         .replace(/\s*tweet-manager\/[\d.]+\s*/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      console.log('[twitter:verify] 인증 시도:', {
+      logger.log('[twitter:verify] 인증 시도:', {
         authToken: `${auth.authToken?.slice(0, 10)}...`,
         csrfToken: `${auth.csrfToken?.slice(0, 10)}...`,
         userId: auth.userId,
@@ -226,7 +227,7 @@ ipcMain.handle(
 
       // userId가 있으면 API 호출 없이 인증 성공으로 처리
       if (auth.userId) {
-        console.log('[twitter:verify] userId 있음, 인증 완료');
+        logger.log('[twitter:verify] userId 있음, 인증 완료');
         return {
           success: true,
           data: {
@@ -240,10 +241,10 @@ ipcMain.handle(
 
       // userId 없으면 (수동 입력) verifyCredentials 호출
       const user = await twitterClient.verifyCredentials();
-      console.log('[twitter:verify] 성공:', user);
+      logger.log('[twitter:verify] 성공:', user);
       return { success: true, data: user };
     } catch (error) {
-      console.error('[twitter:verify] 실패:', error);
+      logger.error('[twitter:verify] 실패:', error);
       twitterClient = null;
       return { success: false, error: (error as Error).message };
     }
@@ -453,7 +454,7 @@ ipcMain.handle('twitter:login', async () => {
           // 페이지 로드 완료 대기 후 사용자 정보 추출
           setTimeout(async () => {
             const userInfo = await extractUserInfo();
-            console.log('[twitter:login] 로그인 성공:', {
+            logger.log('[twitter:login] 로그인 성공:', {
               userId,
               screenName: userInfo?.screenName,
             });
