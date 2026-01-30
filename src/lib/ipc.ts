@@ -35,7 +35,6 @@ interface ElectronAPI {
         failedTweetIds?: { id: string; error: string }[];
       }>
     >;
-    parseArchive: () => Promise<IpcResponse<Tweet[]>>;
     saveBackup: (data: string) => Promise<IpcResponse<void>>;
     onDeleteProgress: (
       callback: (progress: DeletionProgress) => void,
@@ -88,11 +87,6 @@ export async function deleteTweet(tweetId: string) {
 /** 일괄 트윗 삭제 */
 export async function deleteBatch(tweetIds: string[]) {
   return getAPI().twitter.deleteBatch(tweetIds);
-}
-
-/** 아카이브 파일 파싱 */
-export async function parseArchive() {
-  return getAPI().twitter.parseArchive();
 }
 
 /** 백업 저장 */

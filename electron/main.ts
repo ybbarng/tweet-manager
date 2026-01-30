@@ -14,7 +14,6 @@ import {
 import { autoUpdater } from 'electron-updater';
 import { DELETE_BATCH, HISTORY, TWITTER_BEARER_TOKEN } from './constants';
 import { TwitterApiClient } from './twitter/api';
-import { parseArchive } from './twitter/archive';
 import { failure, handleIpc, success } from './utils/ipc';
 
 const isDev = !app.isPackaged;
@@ -321,24 +320,6 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
   }
 
   return { success: true, data: results };
-});
-
-ipcMain.handle('twitter:parse-archive', async () => {
-  const result = await dialog.showOpenDialog(mainWindow!, {
-    properties: ['openFile'],
-    filters: [{ name: 'ZIP 또는 JS 파일', extensions: ['zip', 'js'] }],
-  });
-
-  if (result.canceled || result.filePaths.length === 0) {
-    return failure('파일이 선택되지 않았습니다.');
-  }
-
-  try {
-    const tweets = await parseArchive(result.filePaths[0]);
-    return success(tweets);
-  } catch (error) {
-    return failure(error);
-  }
 });
 
 ipcMain.handle('twitter:save-backup', async (_event, data: string) => {

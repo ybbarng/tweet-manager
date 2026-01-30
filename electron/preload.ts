@@ -37,8 +37,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteBatch: (tweetIds: string[]) =>
       ipcRenderer.invoke('twitter:delete-batch', tweetIds),
 
-    parseArchive: () => ipcRenderer.invoke('twitter:parse-archive'),
-
     saveBackup: (data: string) =>
       ipcRenderer.invoke('twitter:save-backup', data),
 
