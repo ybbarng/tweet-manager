@@ -1,14 +1,8 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { deleteBatch, fetchTweets, saveBackup, verifyAuth } from '@/lib/ipc';
-import type { Tweet, TwitterAuth } from '@/types';
-
-export function useVerifyAuth() {
-  return useMutation({
-    mutationFn: (auth: TwitterAuth) => verifyAuth(auth),
-  });
-}
+import { deleteBatch, fetchTweets, saveBackup } from '@/lib/ipc';
+import type { Tweet } from '@/types';
 
 export function useFetchTweets(cursor?: string) {
   return useQuery({
