@@ -14,6 +14,7 @@ import {
 import { autoUpdater } from 'electron-updater';
 import { TwitterApiClient } from './twitter/api';
 import { parseArchive } from './twitter/archive';
+import { failure, handleIpc, success } from './utils/ipc';
 
 const isDev = !app.isPackaged;
 const isMac = process.platform === 'darwin';
@@ -40,6 +41,12 @@ if (!isDev) {
 
 let mainWindow: BrowserWindow | null = null;
 let twitterClient: TwitterApiClient | null = null;
+
+/** 인증 확인 헬퍼 - 미인증 시 예외 발생 */
+function requireAuth(): TwitterApiClient {
+  if (!twitterClient) throw new Error('인증되지 않았습니다.');
+  return twitterClient;
+}
 
 // Twitter 웹 클라이언트용 공개 Bearer 토큰
 const TWITTER_BEARER_TOKEN =
@@ -247,33 +254,22 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle('twitter:fetch-tweets', async (_event, cursor?: string) => {
-  if (!twitterClient) {
-    return { success: false, error: '인증되지 않았습니다.' };
-  }
-  try {
-    const result = await twitterClient.fetchUserTweets(cursor);
-    return { success: true, data: result };
-  } catch (error) {
-    return { success: false, error: (error as Error).message };
-  }
-});
+ipcMain.handle('twitter:fetch-tweets', (_event, cursor?: string) =>
+  handleIpc(() => requireAuth().fetchUserTweets(cursor)),
+);
 
-ipcMain.handle('twitter:delete-tweet', async (_event, tweetId: string) => {
-  if (!twitterClient) {
-    return { success: false, error: '인증되지 않았습니다.' };
-  }
-  try {
-    await twitterClient.deleteTweet(tweetId);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: (error as Error).message };
-  }
-});
+ipcMain.handle('twitter:delete-tweet', (_event, tweetId: string) =>
+  handleIpc(async () => {
+    await requireAuth().deleteTweet(tweetId);
+  }),
+);
 
 ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
-  if (!twitterClient) {
-    return { success: false, error: '인증되지 않았습니다.' };
+  let client: TwitterApiClient;
+  try {
+    client = requireAuth();
+  } catch (error) {
+    return failure(error);
   }
 
   const results = {
@@ -287,7 +283,7 @@ ipcMain.handle('twitter:delete-batch', async (_event, tweetIds: string[]) => {
 
   for (const tweetId of tweetIds) {
     try {
-      await twitterClient.deleteTweet(tweetId);
+      await client.deleteTweet(tweetId);
       results.completed++;
       consecutiveFailures = 0; // 성공 시 연속 실패 카운터 리셋
     } catch (error) {
@@ -337,14 +333,14 @@ ipcMain.handle('twitter:parse-archive', async () => {
   });
 
   if (result.canceled || result.filePaths.length === 0) {
-    return { success: false, error: '파일이 선택되지 않았습니다.' };
+    return failure('파일이 선택되지 않았습니다.');
   }
 
   try {
     const tweets = await parseArchive(result.filePaths[0]);
-    return { success: true, data: tweets };
+    return success(tweets);
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    return failure(error);
   }
 });
 
@@ -355,15 +351,14 @@ ipcMain.handle('twitter:save-backup', async (_event, data: string) => {
   });
 
   if (result.canceled || !result.filePath) {
-    return { success: false, error: '저장이 취소되었습니다.' };
+    return failure('저장이 취소되었습니다.');
   }
 
   try {
-    const fs = await import('node:fs/promises');
-    await fs.writeFile(result.filePath, data, 'utf-8');
-    return { success: true };
+    await fsPromises.writeFile(result.filePath, data, 'utf-8');
+    return success();
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    return failure(error);
   }
 });
 
@@ -554,23 +549,19 @@ function getHistoryFilePath(): string {
   return path.join(app.getPath('userData'), 'deletion-history.json');
 }
 
-ipcMain.handle('history:load', async () => {
-  try {
+ipcMain.handle('history:load', () =>
+  handleIpc(async () => {
     const filePath = getHistoryFilePath();
     if (!fs.existsSync(filePath)) {
-      return { success: true, data: [] };
+      return [];
     }
     const content = await fsPromises.readFile(filePath, 'utf-8');
-    const history: DeletionHistoryEntry[] = JSON.parse(content);
-    return { success: true, data: history };
-  } catch (error) {
-    console.error('[history:load] 실패:', error);
-    return { success: false, error: (error as Error).message };
-  }
-});
+    return JSON.parse(content) as DeletionHistoryEntry[];
+  }),
+);
 
-ipcMain.handle('history:save', async (_event, entry: DeletionHistoryEntry) => {
-  try {
+ipcMain.handle('history:save', (_event, entry: DeletionHistoryEntry) =>
+  handleIpc(async () => {
     const filePath = getHistoryFilePath();
     let history: DeletionHistoryEntry[] = [];
 
@@ -587,9 +578,5 @@ ipcMain.handle('history:save', async (_event, entry: DeletionHistoryEntry) => {
     }
 
     await fsPromises.writeFile(filePath, JSON.stringify(history, null, 2));
-    return { success: true };
-  } catch (error) {
-    console.error('[history:save] 실패:', error);
-    return { success: false, error: (error as Error).message };
-  }
-});
+  }),
+);
