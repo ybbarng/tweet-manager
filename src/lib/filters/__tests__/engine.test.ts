@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Tweet } from '@/types';
 import { createEndDateFilter, createStartDateFilter } from '../dateRange';
 import { getPreservedTweets, getTweetsToDelete } from '../engine';
-import { createLikesFilter } from '../likes';
-import { createRetweetsFilter } from '../retweets';
+import { createLikesFilterV2, createRetweetsFilterV2 } from '../numeric';
 import { createThreadFilter } from '../thread';
 
 function makeTweet(overrides: Partial<Tweet> = {}): Tweet {
@@ -34,14 +33,14 @@ describe('필터 엔진', () => {
   });
 
   it('좋아요 필터: minLikes 이상인 트윗만 보존', () => {
-    const filters = [createLikesFilter(5)];
+    const filters = [createLikesFilterV2('>=', 5)];
     const preserved = getPreservedTweets(tweets, filters);
     expect(preserved.has('1')).toBe(true);
     expect(preserved.has('2')).toBe(false);
   });
 
   it('리트윗 필터: minRetweets 이상인 트윗만 보존', () => {
-    const filters = [createRetweetsFilter(5)];
+    const filters = [createRetweetsFilterV2('>=', 5)];
     const preserved = getPreservedTweets(tweets, filters);
     expect(preserved.has('1')).toBe(true);
     expect(preserved.has('3')).toBe(true);
@@ -56,7 +55,10 @@ describe('필터 엔진', () => {
   });
 
   it('OR 조합: 하나라도 보존 조건에 맞으면 보존', () => {
-    const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+    const filters = [
+      createLikesFilterV2('>=', 5),
+      createRetweetsFilterV2('>=', 5),
+    ];
     const preserved = getPreservedTweets(tweets, filters);
     // id=1: likes=10 >= 5 -> 보존
     // id=3: retweets=10 >= 5 -> 보존
@@ -68,7 +70,7 @@ describe('필터 엔진', () => {
   });
 
   it('getTweetsToDelete: 보존되지 않은 트윗 반환', () => {
-    const filters = [createLikesFilter(5)];
+    const filters = [createLikesFilterV2('>=', 5)];
     const toDelete = getTweetsToDelete(tweets, filters, new Set());
     const ids = toDelete.map((t) => t.id);
     expect(ids).toContain('2');
@@ -79,7 +81,7 @@ describe('필터 엔진', () => {
   });
 
   it('getTweetsToDelete: excludedIds로 수동 제외', () => {
-    const filters = [createLikesFilter(5)];
+    const filters = [createLikesFilterV2('>=', 5)];
     const excluded = new Set(['2']); // id=2를 수동으로 보존
     const toDelete = getTweetsToDelete(tweets, filters, excluded);
     const ids = toDelete.map((t) => t.id);
@@ -89,7 +91,7 @@ describe('필터 엔진', () => {
   });
 
   it('비활성 필터는 무시됨', () => {
-    const filter = createLikesFilter(5);
+    const filter = createLikesFilterV2('>=', 5);
     filter.enabled = false;
     const preserved = getPreservedTweets(tweets, [filter]);
     // 활성 필터가 없으므로 전체 보존
@@ -126,7 +128,7 @@ describe('필터 엔진', () => {
     const filters = [
       createStartDateFilter('2024-03-01'),
       createEndDateFilter('2024-09-30'),
-      createLikesFilter(5),
+      createLikesFilterV2('>=', 5),
     ];
     const preserved = getPreservedTweets(tweetsWithDates, filters);
 
@@ -143,7 +145,10 @@ describe('필터 엔진', () => {
       // id=1: likes=10, retweets=5 -> 둘 다 충족
       // id=2: likes=2, retweets=0 -> likes 미충족
       // id=3: likes=0, retweets=10 -> likes 미충족
-      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+      const filters = [
+        createLikesFilterV2('>=', 5),
+        createRetweetsFilterV2('>=', 5),
+      ];
       const preserved = getPreservedTweets(tweets, filters, 'AND');
 
       expect(preserved.has('1')).toBe(true); // 둘 다 충족
@@ -154,7 +159,10 @@ describe('필터 엔진', () => {
     });
 
     it('AND 조합 vs OR 조합 비교', () => {
-      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+      const filters = [
+        createLikesFilterV2('>=', 5),
+        createRetweetsFilterV2('>=', 5),
+      ];
 
       const orPreserved = getPreservedTweets(tweets, filters, 'OR');
       const andPreserved = getPreservedTweets(tweets, filters, 'AND');
@@ -170,7 +178,10 @@ describe('필터 엔진', () => {
     });
 
     it('getTweetsToDelete에 combineMode 전달', () => {
-      const filters = [createLikesFilter(5), createRetweetsFilter(5)];
+      const filters = [
+        createLikesFilterV2('>=', 5),
+        createRetweetsFilterV2('>=', 5),
+      ];
       const toDelete = getTweetsToDelete(tweets, filters, new Set(), 'AND');
       const ids = toDelete.map((t) => t.id);
 
