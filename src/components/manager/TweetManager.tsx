@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { createDateRangeFilter } from '@/lib/filters/dateRange';
 import { getDeletionCandidates } from '@/lib/filters/engine';
-import { createLikesFilter } from '@/lib/filters/likes';
-import { createRetweetsFilter } from '@/lib/filters/retweets';
+import { createKeywordFilter } from '@/lib/filters/keyword';
+import { createMediaFilter } from '@/lib/filters/media';
+import { createNumericFilter } from '@/lib/filters/numeric';
+import { createReplyFilter } from '@/lib/filters/reply';
 import { createThreadFilter } from '@/lib/filters/thread';
+import type {
+  ComparisonOperator,
+  FilterCombineMode,
+} from '@/lib/filters/types';
 import {
   fetchTweets,
   isElectron,
@@ -32,15 +38,55 @@ export default function TweetManager() {
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
   const lastFetchTime = useRef(0);
-  const MIN_FETCH_INTERVAL = 500; // 최소 500ms 간격
+  const MIN_FETCH_INTERVAL = 500;
 
-  // 필터 상태 (삭제 조건)
+  // 필터 조합 모드
+  const [combineMode, setCombineMode] = useState<FilterCombineMode>('OR');
+
+  // 숫자 필터 상태 (likes)
   const [likesEnabled, setLikesEnabled] = useState(false);
+  const [likesOperator, setLikesOperator] = useState<ComparisonOperator>('>=');
   const [minLikes, setMinLikes] = useState(5);
+  const [likesNegate, setLikesNegate] = useState(false);
+
+  // 숫자 필터 상태 (retweets)
   const [retweetsEnabled, setRetweetsEnabled] = useState(false);
+  const [retweetsOperator, setRetweetsOperator] =
+    useState<ComparisonOperator>('>=');
   const [minRetweets, setMinRetweets] = useState(3);
+  const [retweetsNegate, setRetweetsNegate] = useState(false);
+
+  // 숫자 필터 상태 (views)
+  const [viewsEnabled, setViewsEnabled] = useState(false);
+  const [viewsOperator, setViewsOperator] = useState<ComparisonOperator>('>=');
+  const [minViews, setMinViews] = useState(100);
+  const [viewsNegate, setViewsNegate] = useState(false);
+
+  // 키워드 필터 상태
+  const [keywordEnabled, setKeywordEnabled] = useState(false);
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordMatchMode, setKeywordMatchMode] = useState<'any' | 'all'>(
+    'any',
+  );
+  const [keywordNegate, setKeywordNegate] = useState(false);
+
+  // 미디어 필터 상태
+  const [mediaEnabled, setMediaEnabled] = useState(false);
+  const [mediaType, setMediaType] = useState<
+    'photo' | 'video' | 'any' | 'none'
+  >('any');
+  const [mediaNegate, setMediaNegate] = useState(false);
+
+  // 답글 필터 상태
+  const [replyEnabled, setReplyEnabled] = useState(false);
+  const [replyIsReply, setReplyIsReply] = useState(true);
+  const [replyNegate, setReplyNegate] = useState(false);
+
+  // 타래 필터 상태
   const [threadEnabled, setThreadEnabled] = useState(false);
   const [excludedThreadIds, setExcludedThreadIds] = useState<string[]>([]);
+
+  // 날짜 범위 필터 상태
   const [dateRangeEnabled, setDateRangeEnabled] = useState(false);
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
@@ -62,18 +108,97 @@ export default function TweetManager() {
   // 필터 계산 (내부적으로는 "보존" 로직 사용)
   const filters = useMemo(() => {
     const f = [];
-    if (likesEnabled) f.push(createLikesFilter(minLikes));
-    if (retweetsEnabled) f.push(createRetweetsFilter(minRetweets));
-    if (threadEnabled && excludedThreadIds.length > 0)
+    if (likesEnabled) {
+      f.push(
+        createNumericFilter({
+          type: 'numeric',
+          field: 'likes',
+          operator: likesOperator,
+          value: minLikes,
+          negate: likesNegate,
+        }),
+      );
+    }
+    if (retweetsEnabled) {
+      f.push(
+        createNumericFilter({
+          type: 'numeric',
+          field: 'retweets',
+          operator: retweetsOperator,
+          value: minRetweets,
+          negate: retweetsNegate,
+        }),
+      );
+    }
+    if (viewsEnabled) {
+      f.push(
+        createNumericFilter({
+          type: 'numeric',
+          field: 'views',
+          operator: viewsOperator,
+          value: minViews,
+          negate: viewsNegate,
+        }),
+      );
+    }
+    if (keywordEnabled && keywords.length > 0) {
+      f.push(
+        createKeywordFilter({
+          type: 'keyword',
+          keywords,
+          matchMode: keywordMatchMode,
+          negate: keywordNegate,
+        }),
+      );
+    }
+    if (mediaEnabled) {
+      f.push(
+        createMediaFilter({
+          type: 'media',
+          mediaType,
+          negate: mediaNegate,
+        }),
+      );
+    }
+    if (replyEnabled) {
+      f.push(
+        createReplyFilter({
+          type: 'reply',
+          isReply: replyIsReply,
+          negate: replyNegate,
+        }),
+      );
+    }
+    if (threadEnabled && excludedThreadIds.length > 0) {
       f.push(createThreadFilter(excludedThreadIds));
-    if (dateRangeEnabled && (startDate || endDate))
+    }
+    if (dateRangeEnabled && (startDate || endDate)) {
       f.push(createDateRangeFilter(startDate, endDate));
+    }
     return f;
   }, [
     likesEnabled,
+    likesOperator,
     minLikes,
+    likesNegate,
     retweetsEnabled,
+    retweetsOperator,
     minRetweets,
+    retweetsNegate,
+    viewsEnabled,
+    viewsOperator,
+    minViews,
+    viewsNegate,
+    keywordEnabled,
+    keywords,
+    keywordMatchMode,
+    keywordNegate,
+    mediaEnabled,
+    mediaType,
+    mediaNegate,
+    replyEnabled,
+    replyIsReply,
+    replyNegate,
     threadEnabled,
     excludedThreadIds,
     dateRangeEnabled,
@@ -83,12 +208,18 @@ export default function TweetManager() {
 
   // 조건이 활성화되어 있는지 확인
   const hasActiveConditions =
-    likesEnabled || retweetsEnabled || dateRangeEnabled;
+    likesEnabled ||
+    retweetsEnabled ||
+    viewsEnabled ||
+    keywordEnabled ||
+    mediaEnabled ||
+    replyEnabled ||
+    dateRangeEnabled;
 
   // 삭제 후보 (쿼리 결과)
   const deletionCandidates = useMemo(
-    () => getDeletionCandidates(tweets, filters),
-    [tweets, filters],
+    () => getDeletionCandidates(tweets, filters, combineMode),
+    [tweets, filters, combineMode],
   );
 
   // 표시할 트윗 (limit 적용)
@@ -116,10 +247,8 @@ export default function TweetManager() {
   const handleApiLoad = async (cursor?: string) => {
     if (!isElectron()) return;
 
-    // 이미 로딩 중이면 무시 (중복 요청 방지)
     if (apiLoading) return;
 
-    // 최소 간격 체크 (Rate limit 방지)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
     if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
@@ -132,7 +261,6 @@ export default function TweetManager() {
     setApiLoading(true);
     setLoadError('');
 
-    // 첫 로드 시 삭제 진행 상태 초기화
     if (!cursor) {
       dispatch({
         type: 'SET_DELETION_PROGRESS',
@@ -170,12 +298,10 @@ export default function TweetManager() {
   };
 
   const handleLoadMore = () => {
-    // 이미 로딩 중이거나 더 불러올 데이터가 없으면 무시
     if (apiLoading || !nextCursor || !hasMore) return;
     handleApiLoad(nextCursor);
   };
 
-  // 트윗 선택/해제 토글
   const handleToggleSelection = useCallback((id: string) => {
     setSelectedForDeletion((prev) => {
       const next = new Set(prev);
@@ -188,12 +314,10 @@ export default function TweetManager() {
     });
   }, []);
 
-  // 전체 선택
   const handleSelectAll = useCallback(() => {
     setSelectedForDeletion(new Set(displayedTweets.map((t) => t.id)));
   }, [displayedTweets]);
 
-  // 전체 해제
   const handleDeselectAll = useCallback(() => {
     setSelectedForDeletion(new Set());
   }, []);
@@ -206,7 +330,6 @@ export default function TweetManager() {
   const handleDelete = async () => {
     if (!isElectron() || !confirmed) return;
 
-    // 백업 옵션이 켜져 있으면 먼저 백업
     if (backupBeforeDelete) {
       try {
         await new Promise<void>((resolve, reject) => {
@@ -238,7 +361,6 @@ export default function TweetManager() {
         const completedCount = result.data?.completed ?? tweetIds.length;
         const failedCount = result.data?.failed ?? 0;
 
-        // 히스토리 저장
         if (completedCount > 0 || failedCount > 0) {
           await saveHistory({
             id: crypto.randomUUID(),
@@ -248,7 +370,6 @@ export default function TweetManager() {
           });
         }
 
-        // 연속 실패로 중단된 경우
         if (!result.success && result.data) {
           dispatch({
             type: 'SET_DELETION_PROGRESS',
@@ -258,7 +379,6 @@ export default function TweetManager() {
               failedTweetIds: result.data.failedTweetIds,
             },
           });
-          // 성공적으로 삭제된 트윗만 목록에서 제거
           const deletedIds = tweetIds.filter(
             (id) =>
               !result.data?.failedTweetIds?.some(
@@ -287,7 +407,6 @@ export default function TweetManager() {
     return unsubscribe;
   }, [dispatch]);
 
-  // 로그인 후 자동으로 트윗 로드 (마운트 시 1회만 실행)
   // biome-ignore lint/correctness/useExhaustiveDependencies: 의도적으로 마운트 시에만 실행
   useEffect(() => {
     if (tweets.length === 0 && !apiLoading) {
@@ -299,7 +418,6 @@ export default function TweetManager() {
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
 
-  // 트윗 날짜 범위 계산
   const dateRange = useMemo(() => {
     if (tweets.length === 0) return null;
     const dates = tweets.map((t) => t.createdAt.getTime());
@@ -318,7 +436,6 @@ export default function TweetManager() {
       ? Math.round((deletionProgress.completed / deletionProgress.total) * 100)
       : 0;
 
-  // 메인 관리 화면
   return (
     <div className="max-w-4xl mx-auto">
       {/* 데이터 상태 바 */}
@@ -383,7 +500,7 @@ export default function TweetManager() {
         </div>
       )}
 
-      {/* 중단됨 상태 (연속 실패 등) */}
+      {/* 중단됨 상태 */}
       {deletionProgress.status === 'stopped' && (
         <div className="p-6 bg-amber-50 dark:bg-amber-950 rounded-lg mb-6">
           <p className="text-lg font-bold text-amber-600">삭제 중단됨</p>
@@ -445,25 +562,63 @@ export default function TweetManager() {
 
             <QueryBuilder
               tweets={tweets}
+              combineMode={combineMode}
+              onCombineModeChange={setCombineMode}
               likesEnabled={likesEnabled}
+              likesOperator={likesOperator}
               minLikes={minLikes}
+              likesNegate={likesNegate}
+              onLikesEnabledChange={setLikesEnabled}
+              onLikesOperatorChange={setLikesOperator}
+              onMinLikesChange={setMinLikes}
+              onLikesNegateChange={setLikesNegate}
               retweetsEnabled={retweetsEnabled}
+              retweetsOperator={retweetsOperator}
               minRetweets={minRetweets}
+              retweetsNegate={retweetsNegate}
+              onRetweetsEnabledChange={setRetweetsEnabled}
+              onRetweetsOperatorChange={setRetweetsOperator}
+              onMinRetweetsChange={setMinRetweets}
+              onRetweetsNegateChange={setRetweetsNegate}
+              viewsEnabled={viewsEnabled}
+              viewsOperator={viewsOperator}
+              minViews={minViews}
+              viewsNegate={viewsNegate}
+              onViewsEnabledChange={setViewsEnabled}
+              onViewsOperatorChange={setViewsOperator}
+              onMinViewsChange={setMinViews}
+              onViewsNegateChange={setViewsNegate}
+              keywordEnabled={keywordEnabled}
+              keywords={keywords}
+              keywordMatchMode={keywordMatchMode}
+              keywordNegate={keywordNegate}
+              onKeywordEnabledChange={setKeywordEnabled}
+              onKeywordsChange={setKeywords}
+              onKeywordMatchModeChange={setKeywordMatchMode}
+              onKeywordNegateChange={setKeywordNegate}
+              mediaEnabled={mediaEnabled}
+              mediaType={mediaType}
+              mediaNegate={mediaNegate}
+              onMediaEnabledChange={setMediaEnabled}
+              onMediaTypeChange={setMediaType}
+              onMediaNegateChange={setMediaNegate}
+              replyEnabled={replyEnabled}
+              replyIsReply={replyIsReply}
+              replyNegate={replyNegate}
+              onReplyEnabledChange={setReplyEnabled}
+              onReplyIsReplyChange={setReplyIsReply}
+              onReplyNegateChange={setReplyNegate}
               threadEnabled={threadEnabled}
               excludedThreadIds={excludedThreadIds}
+              onThreadEnabledChange={setThreadEnabled}
+              onExcludedThreadIdsChange={setExcludedThreadIds}
               dateRangeEnabled={dateRangeEnabled}
               startDate={startDate}
               endDate={endDate}
-              limit={displayLimit}
-              onLikesEnabledChange={setLikesEnabled}
-              onMinLikesChange={setMinLikes}
-              onRetweetsEnabledChange={setRetweetsEnabled}
-              onMinRetweetsChange={setMinRetweets}
-              onThreadEnabledChange={setThreadEnabled}
-              onExcludedThreadIdsChange={setExcludedThreadIds}
               onDateRangeEnabledChange={setDateRangeEnabled}
               onStartDateChange={setStartDate}
               onEndDateChange={setEndDate}
+              limit={displayLimit}
               onLimitChange={setDisplayLimit}
               resultCount={deletionCandidates.length}
             />
