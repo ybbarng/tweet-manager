@@ -33,29 +33,23 @@ export interface QueryBuilderProps {
   likesEnabled: boolean;
   likesOperator: ComparisonOperator;
   minLikes: number;
-  likesNegate: boolean;
   onLikesEnabledChange: (enabled: boolean) => void;
   onLikesOperatorChange: (op: ComparisonOperator) => void;
   onMinLikesChange: (value: number) => void;
-  onLikesNegateChange: (negate: boolean) => void;
   // 숫자 필터 (retweets)
   retweetsEnabled: boolean;
   retweetsOperator: ComparisonOperator;
   minRetweets: number;
-  retweetsNegate: boolean;
   onRetweetsEnabledChange: (enabled: boolean) => void;
   onRetweetsOperatorChange: (op: ComparisonOperator) => void;
   onMinRetweetsChange: (value: number) => void;
-  onRetweetsNegateChange: (negate: boolean) => void;
   // 숫자 필터 (views)
   viewsEnabled: boolean;
   viewsOperator: ComparisonOperator;
   minViews: number;
-  viewsNegate: boolean;
   onViewsEnabledChange: (enabled: boolean) => void;
   onViewsOperatorChange: (op: ComparisonOperator) => void;
   onMinViewsChange: (value: number) => void;
-  onViewsNegateChange: (negate: boolean) => void;
   // 키워드 필터
   keywordEnabled: boolean;
   keywords: string[];
@@ -65,31 +59,35 @@ export interface QueryBuilderProps {
   onKeywordsChange: (keywords: string[]) => void;
   onKeywordMatchModeChange: (mode: 'any' | 'all') => void;
   onKeywordNegateChange: (negate: boolean) => void;
-  // 미디어 필터
-  mediaEnabled: boolean;
-  mediaType: 'photo' | 'video' | 'any' | 'none';
-  mediaNegate: boolean;
-  onMediaEnabledChange: (enabled: boolean) => void;
-  onMediaTypeChange: (type: 'photo' | 'video' | 'any' | 'none') => void;
-  onMediaNegateChange: (negate: boolean) => void;
+  // 미디어 필터 (has_photo)
+  hasPhotoEnabled: boolean;
+  hasPhotoValue: boolean;
+  onHasPhotoEnabledChange: (enabled: boolean) => void;
+  onHasPhotoValueChange: (value: boolean) => void;
+  // 미디어 필터 (has_video)
+  hasVideoEnabled: boolean;
+  hasVideoValue: boolean;
+  onHasVideoEnabledChange: (enabled: boolean) => void;
+  onHasVideoValueChange: (value: boolean) => void;
   // 답글 필터
   replyEnabled: boolean;
   replyIsReply: boolean;
-  replyNegate: boolean;
   onReplyEnabledChange: (enabled: boolean) => void;
   onReplyIsReplyChange: (isReply: boolean) => void;
-  onReplyNegateChange: (negate: boolean) => void;
   // 타래 필터
   threadEnabled: boolean;
   excludedThreadIds: string[];
   onThreadEnabledChange: (enabled: boolean) => void;
   onExcludedThreadIdsChange: (ids: string[]) => void;
-  // 날짜 범위 필터
-  dateRangeEnabled: boolean;
+  // 날짜 범위 필터 (start)
+  startDateEnabled: boolean;
   startDate: string | null;
-  endDate: string | null;
-  onDateRangeEnabledChange: (enabled: boolean) => void;
+  onStartDateEnabledChange: (enabled: boolean) => void;
   onStartDateChange: (date: string | null) => void;
+  // 날짜 범위 필터 (end)
+  endDateEnabled: boolean;
+  endDate: string | null;
+  onEndDateEnabledChange: (enabled: boolean) => void;
   onEndDateChange: (date: string | null) => void;
   // 기타
   limit: number | null;
@@ -108,11 +106,61 @@ function extractTweetId(input: string): string | null {
 /** SQL 키워드 스타일 클래스 */
 const sqlKeyword = 'text-blue-600 dark:text-blue-400 font-semibold';
 const sqlOperator = 'text-cyan-600 dark:text-cyan-400 font-semibold';
-const sqlComment = 'text-neutral-400 dark:text-neutral-500';
+const sqlComment = 'text-neutral-500 dark:text-neutral-400';
 const sqlString = 'text-orange-500 dark:text-orange-400';
 const sqlNumber = 'text-green-600 dark:text-green-400';
+const filterLabel = 'text-neutral-400 dark:text-neutral-500 text-xs w-16';
 
 const COMPARISON_OPERATORS: ComparisonOperator[] = ['>=', '>', '<=', '<', '='];
+
+/** NOT 버튼 컴포넌트 */
+function NotButton({
+  active,
+  onClick,
+  disabled,
+}: {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-all ${
+        active
+          ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'
+          : 'text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      NOT
+    </button>
+  );
+}
+
+/** AND/OR 구분선 컴포넌트 */
+function CombineModeConnector({
+  mode,
+  onToggle,
+}: {
+  mode: FilterCombineMode;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="ml-4 my-2 flex items-center gap-2">
+      <div className="flex-1 border-t border-neutral-300 dark:border-neutral-700" />
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`px-2 py-0.5 rounded text-xs font-bold ${sqlKeyword} bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50`}
+      >
+        {mode}
+      </button>
+      <div className="flex-1 border-t border-neutral-300 dark:border-neutral-700" />
+    </div>
+  );
+}
 
 export default function QueryBuilder({
   tweets,
@@ -121,27 +169,21 @@ export default function QueryBuilder({
   likesEnabled,
   likesOperator,
   minLikes,
-  likesNegate,
   onLikesEnabledChange,
   onLikesOperatorChange,
   onMinLikesChange,
-  onLikesNegateChange,
   retweetsEnabled,
   retweetsOperator,
   minRetweets,
-  retweetsNegate,
   onRetweetsEnabledChange,
   onRetweetsOperatorChange,
   onMinRetweetsChange,
-  onRetweetsNegateChange,
   viewsEnabled,
   viewsOperator,
   minViews,
-  viewsNegate,
   onViewsEnabledChange,
   onViewsOperatorChange,
   onMinViewsChange,
-  onViewsNegateChange,
   keywordEnabled,
   keywords,
   keywordMatchMode,
@@ -150,27 +192,29 @@ export default function QueryBuilder({
   onKeywordsChange,
   onKeywordMatchModeChange,
   onKeywordNegateChange,
-  mediaEnabled,
-  mediaType,
-  mediaNegate,
-  onMediaEnabledChange,
-  onMediaTypeChange,
-  onMediaNegateChange,
+  hasPhotoEnabled,
+  hasPhotoValue,
+  onHasPhotoEnabledChange,
+  onHasPhotoValueChange,
+  hasVideoEnabled,
+  hasVideoValue,
+  onHasVideoEnabledChange,
+  onHasVideoValueChange,
   replyEnabled,
   replyIsReply,
-  replyNegate,
   onReplyEnabledChange,
   onReplyIsReplyChange,
-  onReplyNegateChange,
   threadEnabled,
   excludedThreadIds,
   onThreadEnabledChange,
   onExcludedThreadIdsChange,
-  dateRangeEnabled,
+  startDateEnabled,
   startDate,
-  endDate,
-  onDateRangeEnabledChange,
+  onStartDateEnabledChange,
   onStartDateChange,
+  endDateEnabled,
+  endDate,
+  onEndDateEnabledChange,
   onEndDateChange,
   limit,
   onLimitChange,
@@ -272,19 +316,20 @@ export default function QueryBuilder({
     }
   };
 
-  // 활성화된 조건 수 계산
-  const activeConditions = [
-    likesEnabled,
-    retweetsEnabled,
-    viewsEnabled,
-    keywordEnabled,
-    mediaEnabled,
-    replyEnabled,
-    threadEnabled,
-    dateRangeEnabled,
-  ].filter(Boolean);
+  // 활성화된 필터 목록 (순서대로)
+  const enabledFilters: string[] = [];
+  if (likesEnabled) enabledFilters.push('likes');
+  if (retweetsEnabled) enabledFilters.push('retweets');
+  if (viewsEnabled) enabledFilters.push('views');
+  if (keywordEnabled) enabledFilters.push('keyword');
+  if (hasPhotoEnabled) enabledFilters.push('hasPhoto');
+  if (hasVideoEnabled) enabledFilters.push('hasVideo');
+  if (replyEnabled) enabledFilters.push('reply');
+  if (threadEnabled) enabledFilters.push('thread');
+  if (startDateEnabled) enabledFilters.push('startDate');
+  if (endDateEnabled) enabledFilters.push('endDate');
 
-  const hasActiveConditions = activeConditions.length > 0;
+  const hasActiveConditions = enabledFilters.length > 0;
 
   // 현재 limit 값이 프리셋에 있는지 확인
   const isPresetLimit =
@@ -297,8 +342,17 @@ export default function QueryBuilder({
         ? String(limit)
         : 'custom';
 
-  // AND/OR 연결 표시 (2개 이상 활성화된 경우)
-  const showConnector = activeConditions.length >= 2;
+  const toggleCombineMode = () => {
+    onCombineModeChange(combineMode === 'OR' ? 'AND' : 'OR');
+  };
+
+  // 각 필터가 몇 번째 활성화된 필터인지 확인
+  const getFilterIndex = (filterName: string) =>
+    enabledFilters.indexOf(filterName);
+  const shouldShowConnector = (filterName: string) => {
+    const index = getFilterIndex(filterName);
+    return index > 0;
+  };
 
   return (
     <TooltipProvider>
@@ -309,25 +363,17 @@ export default function QueryBuilder({
           <span className={sqlKeyword}>FROM</span>{' '}
           <span className={sqlString}>tweets</span>{' '}
           <span className={sqlKeyword}>WHERE</span>
-          {showConnector && (
-            <span className="ml-2 text-xs text-neutral-500">
-              (조건 조합:
-              <button
-                type="button"
-                onClick={() =>
-                  onCombineModeChange(combineMode === 'OR' ? 'AND' : 'OR')
-                }
-                className={`ml-1 px-1.5 py-0.5 rounded ${sqlKeyword} bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50`}
-              >
-                {combineMode}
-              </button>
-              )
-            </span>
-          )}
         </div>
 
         {/* likes 조건 */}
+        {shouldShowConnector('likes') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-3 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>좋아요 수</span>
           <Checkbox
             checked={likesEnabled}
             onCheckedChange={(checked) =>
@@ -335,11 +381,6 @@ export default function QueryBuilder({
             }
             className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
-          {likesNegate && (
-            <span className={likesEnabled ? sqlKeyword : 'text-neutral-400'}>
-              NOT
-            </span>
-          )}
           <span
             className={
               likesEnabled
@@ -385,21 +426,17 @@ export default function QueryBuilder({
                 : 'text-neutral-400 bg-neutral-50 dark:bg-neutral-900'
             }`}
           />
-          {likesEnabled && (
-            <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={likesNegate}
-                onChange={(e) => onLikesNegateChange(e.target.checked)}
-                className="w-3 h-3"
-              />
-              NOT
-            </label>
-          )}
         </div>
 
         {/* retweets 조건 */}
+        {shouldShowConnector('retweets') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>리트윗 수</span>
           <Checkbox
             checked={retweetsEnabled}
             onCheckedChange={(checked) =>
@@ -407,11 +444,6 @@ export default function QueryBuilder({
             }
             className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
-          {retweetsNegate && (
-            <span className={retweetsEnabled ? sqlKeyword : 'text-neutral-400'}>
-              NOT
-            </span>
-          )}
           <span
             className={
               retweetsEnabled
@@ -457,21 +489,17 @@ export default function QueryBuilder({
                 : 'text-neutral-400 bg-neutral-50 dark:bg-neutral-900'
             }`}
           />
-          {retweetsEnabled && (
-            <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={retweetsNegate}
-                onChange={(e) => onRetweetsNegateChange(e.target.checked)}
-                className="w-3 h-3"
-              />
-              NOT
-            </label>
-          )}
         </div>
 
         {/* views 조건 */}
+        {shouldShowConnector('views') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>조회 수</span>
           <Checkbox
             checked={viewsEnabled}
             onCheckedChange={(checked) =>
@@ -479,11 +507,6 @@ export default function QueryBuilder({
             }
             className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
-          {viewsNegate && (
-            <span className={viewsEnabled ? sqlKeyword : 'text-neutral-400'}>
-              NOT
-            </span>
-          )}
           <span
             className={
               viewsEnabled
@@ -529,22 +552,18 @@ export default function QueryBuilder({
                 : 'text-neutral-400 bg-neutral-50 dark:bg-neutral-900'
             }`}
           />
-          {viewsEnabled && (
-            <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={viewsNegate}
-                onChange={(e) => onViewsNegateChange(e.target.checked)}
-                className="w-3 h-3"
-              />
-              NOT
-            </label>
-          )}
         </div>
 
         {/* 키워드 조건 */}
+        {shouldShowConnector('keyword') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-3">
           <div className="flex items-center gap-2 flex-wrap">
+            <span className={filterLabel}>키워드</span>
             <Checkbox
               checked={keywordEnabled}
               onCheckedChange={(checked) =>
@@ -552,13 +571,6 @@ export default function QueryBuilder({
               }
               className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
             />
-            {keywordNegate && (
-              <span
-                className={keywordEnabled ? sqlKeyword : 'text-neutral-400'}
-              >
-                NOT
-              </span>
-            )}
             <span
               className={
                 keywordEnabled
@@ -568,6 +580,11 @@ export default function QueryBuilder({
             >
               text
             </span>
+            <NotButton
+              active={keywordNegate}
+              onClick={() => onKeywordNegateChange(!keywordNegate)}
+              disabled={!keywordEnabled}
+            />
             <span className={keywordEnabled ? sqlKeyword : 'text-neutral-400'}>
               CONTAINS
             </span>
@@ -579,41 +596,30 @@ export default function QueryBuilder({
               disabled={!keywordEnabled}
             >
               <SelectTrigger
-                className={`w-20 h-7 ${keywordEnabled ? sqlOperator : 'text-neutral-400'}`}
+                className={`w-24 h-7 ${keywordEnabled ? sqlOperator : 'text-neutral-400'}`}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">ANY</SelectItem>
-                <SelectItem value="all">ALL</SelectItem>
+                <SelectItem value="any">ANY OF</SelectItem>
+                <SelectItem value="all">ALL OF</SelectItem>
               </SelectContent>
             </Select>
-            {keywordEnabled && (
-              <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={keywordNegate}
-                  onChange={(e) => onKeywordNegateChange(e.target.checked)}
-                  className="w-3 h-3"
-                />
-                NOT
-              </label>
-            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <HelpCircle className="w-4 h-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p>
-                  ANY: 키워드 중 하나라도 포함된 트윗
+                  ANY OF: 키워드 중 하나라도 포함된 트윗
                   <br />
-                  ALL: 모든 키워드가 포함된 트윗
+                  ALL OF: 모든 키워드가 포함된 트윗
                 </p>
               </TooltipContent>
             </Tooltip>
           </div>
           {keywordEnabled && (
-            <div className="ml-8 mt-2 space-y-2">
+            <div className="ml-20 mt-2 space-y-2">
               <div className="flex gap-2">
                 <Input
                   placeholder="키워드 입력"
@@ -656,66 +662,105 @@ export default function QueryBuilder({
           )}
         </div>
 
-        {/* 미디어 조건 */}
+        {/* has_photo 조건 */}
+        {shouldShowConnector('hasPhoto') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-3 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>사진</span>
           <Checkbox
-            checked={mediaEnabled}
+            checked={hasPhotoEnabled}
             onCheckedChange={(checked) =>
-              onMediaEnabledChange(checked === true)
+              onHasPhotoEnabledChange(checked === true)
             }
             className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
-          {mediaNegate && (
-            <span className={mediaEnabled ? sqlKeyword : 'text-neutral-400'}>
-              NOT
-            </span>
-          )}
           <span
             className={
-              mediaEnabled
+              hasPhotoEnabled
                 ? 'text-neutral-800 dark:text-neutral-200'
                 : 'text-neutral-600 dark:text-neutral-400'
             }
           >
-            media
+            has_photo
           </span>
-          <span className={mediaEnabled ? sqlOperator : 'text-neutral-400'}>
+          <span className={hasPhotoEnabled ? sqlOperator : 'text-neutral-400'}>
             =
           </span>
           <Select
-            value={mediaType}
-            onValueChange={(v) =>
-              onMediaTypeChange(v as 'photo' | 'video' | 'any' | 'none')
-            }
-            disabled={!mediaEnabled}
+            value={hasPhotoValue ? 'true' : 'false'}
+            onValueChange={(v) => onHasPhotoValueChange(v === 'true')}
+            disabled={!hasPhotoEnabled}
           >
             <SelectTrigger
-              className={`w-24 h-7 ${mediaEnabled ? sqlString : 'text-neutral-400'}`}
+              className={`w-20 h-7 ${hasPhotoEnabled ? sqlKeyword : 'text-neutral-400'}`}
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">있음</SelectItem>
-              <SelectItem value="none">없음</SelectItem>
-              <SelectItem value="photo">사진</SelectItem>
-              <SelectItem value="video">동영상</SelectItem>
+              <SelectItem value="true">TRUE</SelectItem>
+              <SelectItem value="false">FALSE</SelectItem>
             </SelectContent>
           </Select>
-          {mediaEnabled && (
-            <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={mediaNegate}
-                onChange={(e) => onMediaNegateChange(e.target.checked)}
-                className="w-3 h-3"
-              />
-              NOT
-            </label>
-          )}
+        </div>
+
+        {/* has_video 조건 */}
+        {shouldShowConnector('hasVideo') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
+        <div className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>동영상</span>
+          <Checkbox
+            checked={hasVideoEnabled}
+            onCheckedChange={(checked) =>
+              onHasVideoEnabledChange(checked === true)
+            }
+            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+          />
+          <span
+            className={
+              hasVideoEnabled
+                ? 'text-neutral-800 dark:text-neutral-200'
+                : 'text-neutral-600 dark:text-neutral-400'
+            }
+          >
+            has_video
+          </span>
+          <span className={hasVideoEnabled ? sqlOperator : 'text-neutral-400'}>
+            =
+          </span>
+          <Select
+            value={hasVideoValue ? 'true' : 'false'}
+            onValueChange={(v) => onHasVideoValueChange(v === 'true')}
+            disabled={!hasVideoEnabled}
+          >
+            <SelectTrigger
+              className={`w-20 h-7 ${hasVideoEnabled ? sqlKeyword : 'text-neutral-400'}`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">TRUE</SelectItem>
+              <SelectItem value="false">FALSE</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* 답글 조건 */}
+        {shouldShowConnector('reply') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>답글</span>
           <Checkbox
             checked={replyEnabled}
             onCheckedChange={(checked) =>
@@ -723,11 +768,6 @@ export default function QueryBuilder({
             }
             className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
-          {replyNegate && (
-            <span className={replyEnabled ? sqlKeyword : 'text-neutral-400'}>
-              NOT
-            </span>
-          )}
           <span
             className={
               replyEnabled
@@ -755,22 +795,18 @@ export default function QueryBuilder({
               <SelectItem value="false">FALSE</SelectItem>
             </SelectContent>
           </Select>
-          {replyEnabled && (
-            <label className="flex items-center gap-1 text-xs text-neutral-500 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={replyNegate}
-                onChange={(e) => onReplyNegateChange(e.target.checked)}
-                className="w-3 h-3"
-              />
-              NOT
-            </label>
-          )}
         </div>
 
         {/* thread_id NOT IN 조건 */}
+        {shouldShowConnector('thread') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
         <div className="ml-4 mt-3">
           <div className="flex items-center gap-2">
+            <span className={filterLabel}>타래</span>
             <Checkbox
               checked={threadEnabled}
               onCheckedChange={(checked) =>
@@ -812,7 +848,7 @@ export default function QueryBuilder({
             </Tooltip>
           </div>
           {threadEnabled && (
-            <div className="ml-8 mt-2 space-y-2">
+            <div className="ml-20 mt-2 space-y-2">
               {threads.length > 0 && (
                 <Select onValueChange={handleSelectThread}>
                   <SelectTrigger className="h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200">
@@ -900,67 +936,94 @@ export default function QueryBuilder({
           <span
             className={
               threadEnabled
-                ? 'ml-4 text-neutral-800 dark:text-neutral-200'
-                : 'ml-4 text-neutral-400'
+                ? 'ml-16 text-neutral-800 dark:text-neutral-200'
+                : 'ml-16 text-neutral-400'
             }
           >
             )
           </span>
         </div>
 
-        {/* created_at BETWEEN 조건 */}
-        <div className="ml-4 mt-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Checkbox
-              checked={dateRangeEnabled}
-              onCheckedChange={(checked) =>
-                onDateRangeEnabledChange(checked === true)
-              }
-              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-            />
-            <span
-              className={
-                dateRangeEnabled
-                  ? 'text-neutral-800 dark:text-neutral-200'
-                  : 'text-neutral-600 dark:text-neutral-400'
-              }
-            >
-              created_at
-            </span>
-            <span
-              className={dateRangeEnabled ? sqlKeyword : 'text-neutral-400'}
-            >
-              BETWEEN
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="w-4 h-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>
-                  지정된 기간 내의 트윗만 삭제 대상이 됩니다. 시작일 또는
-                  종료일을 비워두면 해당 방향으로 제한 없이 적용됩니다.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          {dateRangeEnabled && (
-            <div className="ml-8 mt-2 flex items-center gap-2 flex-wrap">
-              <Input
-                type="date"
-                value={startDate || ''}
-                onChange={(e) => onStartDateChange(e.target.value || null)}
-                className={`w-40 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
-              />
-              <span className={sqlKeyword}>AND</span>
-              <Input
-                type="date"
-                value={endDate || ''}
-                onChange={(e) => onEndDateChange(e.target.value || null)}
-                className={`w-40 h-7 bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 ${sqlString}`}
-              />
-            </div>
-          )}
+        {/* created_at >= 시작일 조건 */}
+        {shouldShowConnector('startDate') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
+        <div className="ml-4 mt-3 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>시작일</span>
+          <Checkbox
+            checked={startDateEnabled}
+            onCheckedChange={(checked) =>
+              onStartDateEnabledChange(checked === true)
+            }
+            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+          />
+          <span
+            className={
+              startDateEnabled
+                ? 'text-neutral-800 dark:text-neutral-200'
+                : 'text-neutral-600 dark:text-neutral-400'
+            }
+          >
+            created_at
+          </span>
+          <span className={startDateEnabled ? sqlOperator : 'text-neutral-400'}>
+            &gt;=
+          </span>
+          <Input
+            type="date"
+            value={startDate || ''}
+            onChange={(e) => onStartDateChange(e.target.value || null)}
+            disabled={!startDateEnabled}
+            className={`w-40 h-7 border-neutral-300 dark:border-neutral-700 ${
+              startDateEnabled
+                ? `${sqlString} bg-white dark:bg-neutral-800`
+                : 'text-neutral-400 bg-neutral-50 dark:bg-neutral-900'
+            }`}
+          />
+        </div>
+
+        {/* created_at <= 종료일 조건 */}
+        {shouldShowConnector('endDate') && (
+          <CombineModeConnector
+            mode={combineMode}
+            onToggle={toggleCombineMode}
+          />
+        )}
+        <div className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+          <span className={filterLabel}>종료일</span>
+          <Checkbox
+            checked={endDateEnabled}
+            onCheckedChange={(checked) =>
+              onEndDateEnabledChange(checked === true)
+            }
+            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+          />
+          <span
+            className={
+              endDateEnabled
+                ? 'text-neutral-800 dark:text-neutral-200'
+                : 'text-neutral-600 dark:text-neutral-400'
+            }
+          >
+            created_at
+          </span>
+          <span className={endDateEnabled ? sqlOperator : 'text-neutral-400'}>
+            &lt;=
+          </span>
+          <Input
+            type="date"
+            value={endDate || ''}
+            onChange={(e) => onEndDateChange(e.target.value || null)}
+            disabled={!endDateEnabled}
+            className={`w-40 h-7 border-neutral-300 dark:border-neutral-700 ${
+              endDateEnabled
+                ? `${sqlString} bg-white dark:bg-neutral-800`
+                : 'text-neutral-400 bg-neutral-50 dark:bg-neutral-900'
+            }`}
+          />
         </div>
 
         {/* LIMIT */}
@@ -1022,7 +1085,7 @@ export default function QueryBuilder({
             {hasActiveConditions
               ? `${resultCount.toLocaleString()}개 삭제 후보`
               : '조건을 선택하세요'}
-            {showConnector && ` (${combineMode} 조합)`}
+            {enabledFilters.length >= 2 && ` (${combineMode} 조합)`}
           </span>
         </div>
       </div>

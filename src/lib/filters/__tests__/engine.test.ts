@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Tweet } from '@/types';
-import { createDateRangeFilter } from '../dateRange';
+import { createEndDateFilter, createStartDateFilter } from '../dateRange';
 import { getPreservedTweets, getTweetsToDelete } from '../engine';
 import { createLikesFilter } from '../likes';
 import { createRetweetsFilter } from '../retweets';
@@ -102,7 +102,12 @@ describe('필터 엔진', () => {
       makeTweet({ id: '2', createdAt: new Date('2024-06-15') }),
       makeTweet({ id: '3', createdAt: new Date('2024-12-31') }),
     ];
-    const filters = [createDateRangeFilter('2024-03-01', '2024-09-30')];
+    // startDate: 시작일 이전 보존, endDate: 종료일 이후 보존
+    // OR 조합 시 범위 밖 트윗이 보존됨
+    const filters = [
+      createStartDateFilter('2024-03-01'),
+      createEndDateFilter('2024-09-30'),
+    ];
     const preserved = getPreservedTweets(tweetsWithDates, filters);
 
     // 범위 밖 트윗 보존
@@ -119,7 +124,8 @@ describe('필터 엔진', () => {
       makeTweet({ id: '3', createdAt: new Date('2024-01-01'), likes: 0 }), // 범위 밖, 좋아요 없음
     ];
     const filters = [
-      createDateRangeFilter('2024-03-01', '2024-09-30'),
+      createStartDateFilter('2024-03-01'),
+      createEndDateFilter('2024-09-30'),
       createLikesFilter(5),
     ];
     const preserved = getPreservedTweets(tweetsWithDates, filters);

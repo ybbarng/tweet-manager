@@ -1,42 +1,56 @@
 import type { Tweet, TweetFilter } from '@/types';
-import type { MediaFilterConfig } from './types';
-import { applyNegate } from './types';
 
-/** 미디어 필터 생성 */
-export function createMediaFilter(config: MediaFilterConfig): TweetFilter {
-  const { mediaType, negate } = config;
+/** 사진 포함 여부 필터 설정 */
+export interface HasPhotoFilterConfig {
+  type: 'hasPhoto';
+  /** true: 사진 있는 트윗, false: 사진 없는 트윗 */
+  hasPhoto: boolean;
+}
+
+/** 동영상 포함 여부 필터 설정 */
+export interface HasVideoFilterConfig {
+  type: 'hasVideo';
+  /** true: 동영상 있는 트윗, false: 동영상 없는 트윗 */
+  hasVideo: boolean;
+}
+
+/** 사진 포함 여부 필터 생성 */
+export function createHasPhotoFilter(
+  config: HasPhotoFilterConfig,
+): TweetFilter {
+  const { hasPhoto } = config;
 
   return {
-    id: 'media',
-    type: 'media',
+    id: 'hasPhoto',
+    type: 'hasPhoto',
     enabled: true,
     apply: (tweets: Tweet[]) => {
-      const kept = tweets.filter((t) => {
-        const hasMedia = t.media && t.media.length > 0;
-
-        switch (mediaType) {
-          case 'any':
-            // 미디어가 있는 트윗
-            return hasMedia;
-          case 'none':
-            // 미디어가 없는 트윗
-            return !hasMedia;
-          case 'photo':
-            // 사진이 포함된 트윗
-            return t.media?.some((m) => m.type === 'photo') ?? false;
-          case 'video':
-            // 동영상이 포함된 트윗 (animated_gif 포함)
-            return (
-              t.media?.some(
-                (m) => m.type === 'video' || m.type === 'animated_gif',
-              ) ?? false
-            );
-          default:
-            return false;
-        }
+      return tweets.filter((t) => {
+        const tweetHasPhoto = t.media?.some((m) => m.type === 'photo') ?? false;
+        return hasPhoto ? tweetHasPhoto : !tweetHasPhoto;
       });
+    },
+  };
+}
 
-      return applyNegate(kept, tweets, negate);
+/** 동영상 포함 여부 필터 생성 */
+export function createHasVideoFilter(
+  config: HasVideoFilterConfig,
+): TweetFilter {
+  const { hasVideo } = config;
+
+  return {
+    id: 'hasVideo',
+    type: 'hasVideo',
+    enabled: true,
+    apply: (tweets: Tweet[]) => {
+      return tweets.filter((t) => {
+        const tweetHasVideo =
+          t.media?.some(
+            (m) => m.type === 'video' || m.type === 'animated_gif',
+          ) ?? false;
+        return hasVideo ? tweetHasVideo : !tweetHasVideo;
+      });
     },
   };
 }

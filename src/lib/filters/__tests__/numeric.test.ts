@@ -87,21 +87,6 @@ describe('숫자 필터', () => {
     });
   });
 
-  describe('NOT 조건', () => {
-    it('negate=true일 때 결과 반전', () => {
-      const filter = createNumericFilter({
-        type: 'numeric',
-        field: 'likes',
-        operator: '>=',
-        value: 5,
-        negate: true,
-      });
-      const kept = filter.apply(tweets);
-      // 원래 보존: id=1, id=2 -> NOT: id=3, id=4, id=5
-      expect(kept.map((t) => t.id)).toEqual(['3', '4', '5']);
-    });
-  });
-
   describe('views 필드', () => {
     it('views가 있는 트윗만 필터링', () => {
       const filter = createViewsFilter('>=', 100);
@@ -134,13 +119,6 @@ describe('숫자 필터', () => {
     it('createRepliesFilter', () => {
       const filter = createRepliesFilter('>=', 3);
       const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '3', '4']);
-    });
-
-    it('createViewsFilter with NOT', () => {
-      const filter = createViewsFilter('<', 100, true);
-      const kept = filter.apply(tweets);
-      // 원래 보존: id=2 (50), id=5 (0) -> NOT: id=1, id=3, id=4
       expect(kept.map((t) => t.id)).toEqual(['1', '3', '4']);
     });
   });

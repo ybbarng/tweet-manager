@@ -1,6 +1,5 @@
 import type { Tweet, TweetFilter } from '@/types';
 import type { ComparisonOperator, NumericFilterConfig } from './types';
-import { applyNegate } from './types';
 
 /** 비교 연산자 적용 */
 function compareValue(
@@ -29,78 +28,69 @@ function compareValue(
 
 /** 통합 숫자 필터 생성 */
 export function createNumericFilter(config: NumericFilterConfig): TweetFilter {
-  const { field, operator, value, negate } = config;
+  const { field, operator, value } = config;
 
   return {
     id: `numeric-${field}`,
     type: 'numeric',
     enabled: true,
     apply: (tweets: Tweet[]) => {
-      const kept = tweets.filter((t) => {
+      return tweets.filter((t) => {
         const fieldValue = t[field as keyof Tweet] as number | undefined;
         return compareValue(fieldValue, operator, value);
       });
-      return applyNegate(kept, tweets, negate);
     },
   };
 }
 
-/** 좋아요 필터 (비교 연산자, NOT 지원) */
+/** 좋아요 필터 (비교 연산자 지원) */
 export function createLikesFilterV2(
   operator: ComparisonOperator,
   value: number,
-  negate?: boolean,
 ): TweetFilter {
   return createNumericFilter({
     type: 'numeric',
     field: 'likes',
     operator,
     value,
-    negate,
   });
 }
 
-/** 리트윗 필터 (비교 연산자, NOT 지원) */
+/** 리트윗 필터 (비교 연산자 지원) */
 export function createRetweetsFilterV2(
   operator: ComparisonOperator,
   value: number,
-  negate?: boolean,
 ): TweetFilter {
   return createNumericFilter({
     type: 'numeric',
     field: 'retweets',
     operator,
     value,
-    negate,
   });
 }
 
-/** 답글 수 필터 (비교 연산자, NOT 지원) */
+/** 답글 수 필터 (비교 연산자 지원) */
 export function createRepliesFilter(
   operator: ComparisonOperator,
   value: number,
-  negate?: boolean,
 ): TweetFilter {
   return createNumericFilter({
     type: 'numeric',
     field: 'replies',
     operator,
     value,
-    negate,
   });
 }
 
-/** 조회수 필터 (비교 연산자, NOT 지원) */
+/** 조회수 필터 (비교 연산자 지원) */
 export function createViewsFilter(
   operator: ComparisonOperator,
   value: number,
-  negate?: boolean,
 ): TweetFilter {
   return createNumericFilter({
     type: 'numeric',
     field: 'views',
     operator,
     value,
-    negate,
   });
 }

@@ -39,26 +39,4 @@ describe('답글 필터', () => {
       expect(kept.map((t) => t.id)).toEqual(['1', '3']);
     });
   });
-
-  describe('NOT 조건', () => {
-    it('negate=true + isReply=true: 답글 아닌 것만', () => {
-      const filter = createReplyFilter({
-        type: 'reply',
-        isReply: true,
-        negate: true,
-      });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['1', '3']);
-    });
-
-    it('negate=true + isReply=false: 답글만', () => {
-      const filter = createReplyFilter({
-        type: 'reply',
-        isReply: false,
-        negate: true,
-      });
-      const kept = filter.apply(tweets);
-      expect(kept.map((t) => t.id)).toEqual(['2', '4', '5']);
-    });
-  });
 });
