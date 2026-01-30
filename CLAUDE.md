@@ -23,7 +23,12 @@ pnpm run test:watch       # vitest watch 모드
 ## 아키텍처 결정
 
 - **Electron 이중 프로세스**: 메인 프로세스(Node.js)에서 Twitter API 호출(CORS 우회), 렌더러(React)에서 UI 담당. IPC로 통신.
-- **필터 시스템**: "보존 조건" 방식. 각 필터는 보존할 트윗을 반환하며, 여러 필터를 OR 조합으로 실행. 필터가 없으면 전체 트윗이 삭제 후보가 되어 사용자가 수동으로 보존할 트윗을 선택.
+- **필터 시스템**: "보존 조건" 방식. 각 필터는 보존할 트윗을 반환.
+  - **조합 모드**: OR(하나라도 통과) 또는 AND(모두 통과) 선택 가능
+  - **NOT 조건**: 각 필터에 negate 옵션으로 결과 반전
+  - **비교 연산자**: 숫자 필터에 >=, >, <=, <, = 지원
+  - **필터 종류**: numeric(likes/retweets/replies/views), keyword, media, reply, thread, dateRange
+  - 필터가 없으면 전체 트윗이 삭제 후보가 되어 사용자가 수동으로 보존할 트윗을 선택.
 - **Next.js `output: 'export'`**: 정적 빌드하여 Electron에서 로드. 서버 기능 미사용.
 - **Electron tsconfig 분리**: `tsconfig.electron.json`으로 `electron/` 디렉토리를 CommonJS 타겟으로 별도 컴파일. 출력 디렉토리는 `dist-electron/`.
 - **HTTP 클라이언트**: Electron 메인 프로세스에서 wretch 사용 (fetch 래퍼). `electron/twitter/api.ts` 참고.
@@ -54,7 +59,7 @@ pnpm run test:watch       # vitest watch 모드
 - **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
-- 필터 추가 시: `TweetFilter` 인터페이스 구현 → `src/lib/filters/`에 파일 추가 → `QueryBuilder.tsx`에 UI 연결
+- 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `QueryBuilder.tsx`에 UI 연결 → `TweetManager.tsx`에 상태 연동
 - IPC 채널 추가 시: `electron/main.ts`에 핸들러 → `electron/preload.ts`에 노출 → `src/lib/ipc.ts`에 래퍼 함수 → `src/lib/queries.ts`에 query/mutation 훅
 
 ## 작업 완료 체크리스트
