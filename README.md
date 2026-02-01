@@ -193,13 +193,13 @@ src/
     upload/            아카이브 업로드 / API 로드
     filters/           SQL 스타일 쿼리 빌더 UI
     tweets/            트윗 카드, 목록 (가상 스크롤), 통계
-    manager/           트윗 관리 메인 화면
+    manager/           트윗 관리 메인 화면 (TweetManager, 상태바, 삭제 상태, 액션 등)
     history/           삭제 히스토리 모달
     ui/                shadcn/ui 컴포넌트, 테마 토글
   lib/
     ipc.ts             Electron IPC 호출 래퍼
     filters/           필터 엔진 및 개별 필터 로직
     hooks/             커스텀 훅 (useTheme 등)
-    store/             React Context 기반 상태 관리
+    store/             zustand 기반 상태 관리
   types/               공통 타입 정의
 ```
