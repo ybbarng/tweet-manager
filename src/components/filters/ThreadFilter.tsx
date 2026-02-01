@@ -17,16 +17,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAppStore } from '@/lib/store/app-store';
 import type { Tweet } from '@/types';
 import { fieldTextStyle, filterLabel, sqlKeyword, sqlString } from './styles';
-
-export interface ThreadFilterProps {
-  tweets: Tweet[];
-  enabled: boolean;
-  excludedIds: string[];
-  onEnabledChange: (enabled: boolean) => void;
-  onExcludedIdsChange: (ids: string[]) => void;
-}
 
 /** 트윗 URL에서 ID를 추출 */
 function extractTweetId(input: string): string | null {
@@ -36,13 +29,12 @@ function extractTweetId(input: string): string | null {
   return null;
 }
 
-export default function ThreadFilter({
-  tweets,
-  enabled,
-  excludedIds,
-  onEnabledChange,
-  onExcludedIdsChange,
-}: ThreadFilterProps) {
+export default function ThreadFilter() {
+  const { tweets, filterState, setThreadEnabled, setThreadExcludedIds } =
+    useAppStore();
+
+  const { enabled, excludedIds } = filterState.thread;
+
   const [threadInput, setThreadInput] = useState('');
   const [threadError, setThreadError] = useState('');
 
@@ -88,19 +80,19 @@ export default function ThreadFilter({
       setThreadError('이미 추가된 ID입니다.');
       return;
     }
-    onExcludedIdsChange([...excludedIds, id]);
+    setThreadExcludedIds([...excludedIds, id]);
     setThreadInput('');
     setThreadError('');
   };
 
   const handleSelectThread = (id: string) => {
     if (!excludedIds.includes(id)) {
-      onExcludedIdsChange([...excludedIds, id]);
+      setThreadExcludedIds([...excludedIds, id]);
     }
   };
 
   const handleRemoveThreadId = (id: string) => {
-    onExcludedIdsChange(excludedIds.filter((tid) => tid !== id));
+    setThreadExcludedIds(excludedIds.filter((tid) => tid !== id));
   };
 
   return (
@@ -109,7 +101,7 @@ export default function ThreadFilter({
         <span className={filterLabel}>타래</span>
         <Checkbox
           checked={enabled}
-          onCheckedChange={(checked) => onEnabledChange(checked === true)}
+          onCheckedChange={(checked) => setThreadEnabled(checked === true)}
           className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
         />
         <span className={fieldTextStyle(enabled)}>thread_id</span>

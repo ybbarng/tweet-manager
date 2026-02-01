@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAppStore } from '@/lib/store/app-store';
 import {
   fieldTextStyle,
   filterLabel,
@@ -24,17 +25,6 @@ import {
   sqlOperator,
   sqlString,
 } from './styles';
-
-export interface KeywordFilterProps {
-  enabled: boolean;
-  keywords: string[];
-  matchMode: 'any' | 'all';
-  negate: boolean;
-  onEnabledChange: (enabled: boolean) => void;
-  onKeywordsChange: (keywords: string[]) => void;
-  onMatchModeChange: (mode: 'any' | 'all') => void;
-  onNegateChange: (negate: boolean) => void;
-}
 
 /** NOT 버튼 컴포넌트 */
 function NotButton({
@@ -62,28 +52,29 @@ function NotButton({
   );
 }
 
-export default function KeywordFilter({
-  enabled,
-  keywords,
-  matchMode,
-  negate,
-  onEnabledChange,
-  onKeywordsChange,
-  onMatchModeChange,
-  onNegateChange,
-}: KeywordFilterProps) {
+export default function KeywordFilter() {
+  const {
+    filterState,
+    setKeywordEnabled,
+    setKeywords,
+    setKeywordMatchMode,
+    setKeywordNegate,
+  } = useAppStore();
+
+  const { enabled, keywords, matchMode, negate } = filterState.keyword;
+
   const [keywordInput, setKeywordInput] = useState('');
 
   const handleAddKeyword = () => {
     const keyword = keywordInput.trim();
     if (keyword && !keywords.includes(keyword)) {
-      onKeywordsChange([...keywords, keyword]);
+      setKeywords([...keywords, keyword]);
       setKeywordInput('');
     }
   };
 
   const handleRemoveKeyword = (keyword: string) => {
-    onKeywordsChange(keywords.filter((k) => k !== keyword));
+    setKeywords(keywords.filter((k) => k !== keyword));
   };
 
   return (
@@ -92,13 +83,13 @@ export default function KeywordFilter({
         <span className={filterLabel}>키워드</span>
         <Checkbox
           checked={enabled}
-          onCheckedChange={(checked) => onEnabledChange(checked === true)}
+          onCheckedChange={(checked) => setKeywordEnabled(checked === true)}
           className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
         />
         <span className={fieldTextStyle(enabled)}>text</span>
         <NotButton
           active={negate}
-          onClick={() => onNegateChange(!negate)}
+          onClick={() => setKeywordNegate(!negate)}
           disabled={!enabled}
         />
         <span className={enabled ? sqlKeyword : 'text-neutral-400'}>
@@ -106,7 +97,7 @@ export default function KeywordFilter({
         </span>
         <Select
           value={matchMode}
-          onValueChange={(v) => onMatchModeChange(v as 'any' | 'all')}
+          onValueChange={(v) => setKeywordMatchMode(v as 'any' | 'all')}
           disabled={!enabled}
         >
           <SelectTrigger

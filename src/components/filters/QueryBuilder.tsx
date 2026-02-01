@@ -51,7 +51,6 @@ export default function QueryBuilder({ resultCount }: QueryBuilderProps) {
 
   // zustand 스토어에서 직접 상태와 액션 가져오기
   const {
-    tweets,
     filterState,
     setCombineMode,
     setLikesEnabled,
@@ -63,18 +62,12 @@ export default function QueryBuilder({ resultCount }: QueryBuilderProps) {
     setViewsEnabled,
     setViewsOperator,
     setViewsValue,
-    setKeywordEnabled,
-    setKeywords,
-    setKeywordMatchMode,
-    setKeywordNegate,
     setHasPhotoEnabled,
     setHasPhotoValue,
     setHasVideoEnabled,
     setHasVideoValue,
     setReplyEnabled,
     setReplyValue,
-    setThreadEnabled,
-    setThreadExcludedIds,
     setStartDateEnabled,
     setStartDate,
     setEndDateEnabled,
@@ -217,16 +210,7 @@ export default function QueryBuilder({ resultCount }: QueryBuilderProps) {
             onToggle={toggleCombineMode}
           />
         )}
-        <KeywordFilter
-          enabled={filterState.keyword.enabled}
-          keywords={filterState.keyword.keywords}
-          matchMode={filterState.keyword.matchMode}
-          negate={filterState.keyword.negate}
-          onEnabledChange={setKeywordEnabled}
-          onKeywordsChange={setKeywords}
-          onMatchModeChange={setKeywordMatchMode}
-          onNegateChange={setKeywordNegate}
-        />
+        <KeywordFilter />
 
         {/* has_photo 조건 */}
         {shouldShowConnector('hasPhoto') && (
@@ -284,13 +268,7 @@ export default function QueryBuilder({ resultCount }: QueryBuilderProps) {
             onToggle={toggleCombineMode}
           />
         )}
-        <ThreadFilter
-          tweets={tweets}
-          enabled={filterState.thread.enabled}
-          excludedIds={filterState.thread.excludedIds}
-          onEnabledChange={setThreadEnabled}
-          onExcludedIdsChange={setThreadExcludedIds}
-        />
+        <ThreadFilter />
 
         {/* created_at >= 시작일 조건 */}
         {shouldShowConnector('startDate') && (
