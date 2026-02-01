@@ -43,10 +43,12 @@ export function parseTimelineResponse(
   data: UserTweetsResponse,
 ): FetchTweetsResult {
   const tweets: ParsedTweet[] = [];
+  const retweetedOriginalIds = new Set<string>(); // 리트윗의 원본 트윗 ID
   let nextCursor: string | undefined;
 
   const instructions = data.data.user.result.timeline_v2.timeline.instructions;
 
+  // 1차: 모든 트윗 파싱 + 리트윗 원본 ID 수집
   for (const instruction of instructions) {
     if (!instruction.entries) continue;
 
@@ -63,6 +65,11 @@ export function parseTimelineResponse(
         const parsed = parseTweetResultWithWrapper(tweetResult);
         if (parsed) {
           tweets.push(parsed);
+          // 리트윗이면 원본 트윗 ID 수집
+          const originalId = getRetweetedOriginalId(tweetResult);
+          if (originalId) {
+            retweetedOriginalIds.add(originalId);
+          }
         }
         continue;
       }
@@ -77,6 +84,10 @@ export function parseTimelineResponse(
             const parsed = parseTweetResultWithWrapper(tweetResult);
             if (parsed) {
               tweets.push(parsed);
+              const originalId = getRetweetedOriginalId(tweetResult);
+              if (originalId) {
+                retweetedOriginalIds.add(originalId);
+              }
             }
           }
         }
@@ -84,7 +95,19 @@ export function parseTimelineResponse(
     }
   }
 
-  return { tweets, nextCursor };
+  // 2차: 리트윗 원본 트윗 제외 (번들로 온 원본만 제거)
+  const filteredTweets = tweets.filter((t) => !retweetedOriginalIds.has(t.id));
+
+  return { tweets: filteredTweets, nextCursor };
+}
+
+/** 리트윗의 원본 트윗 ID 추출 */
+// biome-ignore lint/suspicious/noExplicitAny: Twitter API 응답 타입이 복잡하여 any 사용
+function getRetweetedOriginalId(result: any): string | null {
+  // TweetWithVisibilityResults 래퍼 처리
+  const tweet =
+    result.__typename === 'TweetWithVisibilityResults' ? result.tweet : result;
+  return tweet?.legacy?.retweeted_status_result?.result?.rest_id || null;
 }
 
 /** TweetWithVisibilityResults 등 래퍼 타입 처리 */
