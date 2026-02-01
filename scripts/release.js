@@ -46,7 +46,9 @@ if (fs.existsSync(envPath)) {
 
 if (!process.env.GH_TOKEN) {
   console.error('오류: GH_TOKEN이 설정되지 않았습니다.');
-  console.error('.env.local 파일에 GH_TOKEN을 설정해주세요. (electron-builder용)');
+  console.error(
+    '.env.local 파일에 GH_TOKEN을 설정해주세요. (electron-builder용)',
+  );
   process.exit(1);
 }
 
@@ -125,6 +127,7 @@ function generateReleaseNotes(previousTag) {
   // 커밋 분류
   const features = [];
   const fixes = [];
+  const improvements = []; // refactor, perf, test
   const others = [];
 
   for (const commit of commits) {
@@ -135,6 +138,15 @@ function generateReleaseNotes(previousTag) {
       features.push(commit.replace(/^feat(\([^)]+\))?:\s*/, ''));
     } else if (commit.startsWith('fix:') || commit.startsWith('fix(')) {
       fixes.push(commit.replace(/^fix(\([^)]+\))?:\s*/, ''));
+    } else if (
+      commit.startsWith('refactor:') ||
+      commit.startsWith('refactor(')
+    ) {
+      improvements.push(commit.replace(/^refactor(\([^)]+\))?:\s*/, ''));
+    } else if (commit.startsWith('perf:') || commit.startsWith('perf(')) {
+      improvements.push(commit.replace(/^perf(\([^)]+\))?:\s*/, ''));
+    } else if (commit.startsWith('test:') || commit.startsWith('test(')) {
+      improvements.push(commit.replace(/^test(\([^)]+\))?:\s*/, ''));
     } else if (
       commit.startsWith('docs:') ||
       commit.startsWith('chore:') ||
@@ -158,9 +170,15 @@ function generateReleaseNotes(previousTag) {
     sections.push(`### 🐛 버그 수정\n${fixes.map((f) => `- ${f}`).join('\n')}`);
   }
 
+  if (improvements.length > 0) {
+    sections.push(
+      `### 📦 내부 개선\n${improvements.map((i) => `- ${i}`).join('\n')}`,
+    );
+  }
+
   if (others.length > 0) {
     sections.push(
-      `### 📦 기타 변경사항\n${others.map((o) => `- ${o}`).join('\n')}`,
+      `### 🔧 기타 변경사항\n${others.map((o) => `- ${o}`).join('\n')}`,
     );
   }
 
