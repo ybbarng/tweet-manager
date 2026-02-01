@@ -75,12 +75,14 @@ export function getTweetsToDelete(
   return tweets.filter((t) => matched.has(t.id) && !excludedIds.has(t.id));
 }
 
-/** 삭제 후보 트윗 반환 (수동 제외 적용 전) */
+/** 삭제 후보 트윗 반환 (수동 제외 적용 전, 최신순 정렬) */
 export function getDeletionCandidates(
   tweets: Tweet[],
   filters: TweetFilter[],
   combineMode: FilterCombineMode = 'AND',
 ): Tweet[] {
   const matched = getMatchedTweets(tweets, filters, combineMode);
-  return tweets.filter((t) => matched.has(t.id));
+  return tweets
+    .filter((t) => matched.has(t.id))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
