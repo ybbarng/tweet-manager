@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  createFiltersFromState,
+  hasActiveConditions,
+} from '@/lib/filters/create-filters';
+import { getDeletionCandidates } from '@/lib/filters/engine';
+import {
   clearAuth,
   fetchTweets,
   isElectron,
@@ -59,9 +64,6 @@ export default function TweetManager() {
     setEndDateEnabled,
     setEndDate,
     setDisplayLimit,
-    // Derived
-    getDeletionCandidates,
-    hasActiveConditions,
   } = useAppStore();
 
   // 데이터 로드 상태
@@ -83,11 +85,22 @@ export default function TweetManager() {
   const deleteMutation = useDeleteBatch();
   const backupMutation = useSaveBackup();
 
-  // 삭제 후보 (스토어의 derived state)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: getDeletionCandidates 함수 참조는 변하지 않으므로 tweets, filterState를 의존성에 포함해야 재계산됨
+  // 필터 배열 생성 (filterState가 변경될 때만 재계산)
+  const filters = useMemo(
+    () => createFiltersFromState(filterState),
+    [filterState],
+  );
+
+  // 활성화된 필터가 있는지 확인
+  const activeConditions = useMemo(
+    () => hasActiveConditions(filterState),
+    [filterState],
+  );
+
+  // 삭제 후보 (tweets, filters, combineMode가 변경될 때 재계산)
   const deletionCandidates = useMemo(
-    () => getDeletionCandidates(),
-    [getDeletionCandidates, tweets, filterState],
+    () => getDeletionCandidates(tweets, filters, filterState.combineMode),
+    [tweets, filters, filterState.combineMode],
   );
 
   // 표시할 트윗 (limit 적용)
@@ -278,7 +291,6 @@ export default function TweetManager() {
   const loading = apiLoading;
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
-  const activeConditions = hasActiveConditions();
 
   const dateRange = useMemo(() => {
     if (tweets.length === 0) return null;

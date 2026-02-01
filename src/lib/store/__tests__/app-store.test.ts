@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  createFiltersFromState,
+  hasActiveConditions,
+} from '@/lib/filters/create-filters';
+import { getDeletionCandidates } from '@/lib/filters/engine';
 import type { Tweet, TwitterAuth, TwitterUser } from '@/types';
-import { useAppStore } from '../app-store';
+import { DEFAULT_FILTER_STATE, useAppStore } from '../app-store';
 
 // 테스트용 트윗 생성
 function createTweet(overrides: Partial<Tweet> = {}): Tweet {
@@ -31,25 +36,7 @@ describe('useAppStore', () => {
         failed: 0,
         status: 'idle',
       },
-      filterState: {
-        combineMode: 'AND',
-        likes: { enabled: false, operator: '<=', value: 5 },
-        retweets: { enabled: false, operator: '<=', value: 3 },
-        views: { enabled: false, operator: '<=', value: 100 },
-        keyword: {
-          enabled: false,
-          keywords: [],
-          matchMode: 'any',
-          negate: false,
-        },
-        hasPhoto: { enabled: false, value: false },
-        hasVideo: { enabled: false, value: false },
-        reply: { enabled: false, value: false },
-        thread: { enabled: false, excludedIds: [] },
-        startDate: { enabled: false, date: null },
-        endDate: { enabled: false, date: null },
-        displayLimit: 100,
-      },
+      filterState: DEFAULT_FILTER_STATE,
     });
   });
 
@@ -160,21 +147,25 @@ describe('useAppStore', () => {
     });
   });
 
-  describe('Derived State', () => {
+  describe('Filter Utilities', () => {
     it('hasActiveConditions는 활성화된 필터가 있을 때 true를 반환한다', () => {
-      expect(useAppStore.getState().hasActiveConditions()).toBe(false);
+      const { filterState } = useAppStore.getState();
+      expect(hasActiveConditions(filterState)).toBe(false);
 
       useAppStore.getState().setLikesEnabled(true);
 
-      expect(useAppStore.getState().hasActiveConditions()).toBe(true);
+      const updatedState = useAppStore.getState().filterState;
+      expect(hasActiveConditions(updatedState)).toBe(true);
     });
 
-    it('getFilters는 활성화된 필터들을 반환한다', () => {
-      expect(useAppStore.getState().getFilters()).toHaveLength(0);
+    it('createFiltersFromState는 활성화된 필터들을 반환한다', () => {
+      const { filterState } = useAppStore.getState();
+      expect(createFiltersFromState(filterState)).toHaveLength(0);
 
       useAppStore.getState().setLikesEnabled(true);
 
-      expect(useAppStore.getState().getFilters()).toHaveLength(1);
+      const updatedState = useAppStore.getState().filterState;
+      expect(createFiltersFromState(updatedState)).toHaveLength(1);
     });
 
     it('getDeletionCandidates는 필터링된 트윗을 반환한다', () => {
@@ -185,14 +176,26 @@ describe('useAppStore', () => {
           createTweet({ id: '2', likes: 10 }),
         ]);
 
+      const { tweets, filterState } = useAppStore.getState();
+      const filters = createFiltersFromState(filterState);
+
       // 필터 없음 - 결과 없음
-      expect(useAppStore.getState().getDeletionCandidates()).toHaveLength(0);
+      expect(
+        getDeletionCandidates(tweets, filters, filterState.combineMode),
+      ).toHaveLength(0);
 
       // likes <= 5 필터 활성화
       useAppStore.getState().setLikesEnabled(true);
       useAppStore.getState().setLikesValue(5);
 
-      const candidates = useAppStore.getState().getDeletionCandidates();
+      const updatedState = useAppStore.getState();
+      const updatedFilters = createFiltersFromState(updatedState.filterState);
+      const candidates = getDeletionCandidates(
+        updatedState.tweets,
+        updatedFilters,
+        updatedState.filterState.combineMode,
+      );
+
       expect(candidates).toHaveLength(1);
       expect(candidates[0].id).toBe('1');
     });
