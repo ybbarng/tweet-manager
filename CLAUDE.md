@@ -65,6 +65,7 @@ pnpm run test:watch       # vitest watch 모드
 - 공통 타입은 `src/types/index.ts`에 정의
 - 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `app-store.ts`에 상태/액션 추가 → `create-filters.ts`에 필터 생성 로직 추가 → `QueryBuilder.tsx`에 UI 연결 (zustand에서 직접 상태 사용)
 - **커스텀 훅**: `src/lib/hooks/`에 위치. `useTheme`는 다크모드 관리.
+- **날짜 유틸**: `src/lib/utils/date.ts`에 date-fns 기반 포맷 함수. `formatDate`, `formatDateTime`, `formatYearMonth` 제공.
 - **TweetManager 컴포넌트 구조**: 메인 화면은 다음 하위 컴포넌트로 구성:
   - `TweetStatusBar`: 트윗 수, 날짜 범위, 로드/새로고침/로그아웃 버튼
   - `DeletionStatus`: 삭제 진행/완료/중단 상태 표시

@@ -3,6 +3,7 @@
 import { LogOut, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 import { useAppStore } from '@/lib/store/app-store';
+import { formatDate } from '@/lib/utils/date';
 
 interface TweetStatusBarProps {
   loading: boolean;
@@ -30,12 +31,6 @@ export default function TweetStatusBar({
     const dates = tweets.map((t) => t.createdAt.getTime());
     const oldest = new Date(Math.min(...dates));
     const newest = new Date(Math.max(...dates));
-    const formatDate = (d: Date) =>
-      d.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
     return { oldest: formatDate(oldest), newest: formatDate(newest) };
   }, [tweets]);
 

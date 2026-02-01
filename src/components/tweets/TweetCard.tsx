@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart, MessageCircle, Repeat2 } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils/date';
 import type { Tweet } from '@/types';
 
 interface TweetCardProps {
@@ -16,11 +17,6 @@ export default function TweetCard({
   checked,
   onToggle,
 }: TweetCardProps) {
-  const date =
-    tweet.createdAt instanceof Date
-      ? tweet.createdAt
-      : new Date(tweet.createdAt);
-
   const isExcluded = showCheckbox && checked === false;
 
   return (
@@ -42,11 +38,7 @@ export default function TweetCard({
               <span className="text-xs text-green-500 font-medium">RT</span>
             )}
             <span className="text-xs text-neutral-500">
-              {date.toLocaleDateString('ko-KR')}{' '}
-              {date.toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatDateTime(tweet.createdAt)}
             </span>
           </div>
 

@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAppStore } from '@/lib/store/app-store';
+import { formatDate } from '@/lib/utils/date';
 import type { Tweet } from '@/types';
 import { fieldTextStyle, filterLabel, sqlKeyword, sqlString } from './styles';
 
@@ -138,7 +139,7 @@ export default function ThreadFilter() {
                   >
                     <div className="truncate max-w-[250px]">
                       <span className="text-neutral-500 text-xs mr-2">
-                        {new Date(thread.createdAt).toLocaleDateString()}
+                        {formatDate(thread.createdAt)}
                       </span>
                       {thread.text.slice(0, 50)}
                       {thread.text.length > 50 && '...'}

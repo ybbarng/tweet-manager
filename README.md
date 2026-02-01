@@ -39,6 +39,7 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 | Desktop | Electron + electron-builder |
 | Frontend | Next.js 16 (App Router) + TypeScript |
 | UI | Tailwind CSS + shadcn/ui + lucide-react |
+| 날짜 처리 | date-fns |
 | 상태 관리 | Zustand |
 | 서버 상태 | @tanstack/react-query |
 | 가상 스크롤 | @tanstack/react-virtual |

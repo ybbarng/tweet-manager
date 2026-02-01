@@ -3,6 +3,7 @@
 import { History, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { loadHistory } from '@/lib/ipc';
+import { formatDateTime } from '@/lib/utils/date';
 import type { DeletionHistoryEntry } from '@/types';
 
 interface DeletionHistoryModalProps {
@@ -40,17 +41,6 @@ export default function DeletionHistoryModal({
   }, [open]);
 
   if (!open) return null;
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -101,7 +91,7 @@ export default function DeletionHistoryModal({
                       )}
                     </span>
                     <span className="text-xs text-neutral-500">
-                      {formatDate(entry.deletedAt)}
+                      {formatDateTime(entry.deletedAt)}
                     </span>
                   </div>
                 </div>
