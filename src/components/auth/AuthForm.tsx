@@ -9,7 +9,7 @@ import {
   saveAuth,
   verifyAuth,
 } from '@/lib/ipc';
-import { useAppDispatch } from '@/lib/store/tweet-store';
+import { useAppStore } from '@/lib/store/app-store';
 import AutoLoginLoader from './AutoLoginLoader';
 import SecurityWarningModal from './SecurityWarningModal';
 
@@ -28,7 +28,7 @@ type AuthStatus = 'checking' | 'logging-in' | 'idle' | 'error';
 const MIN_LOADING_DISPLAY_MS = 1500;
 
 export default function AuthForm() {
-  const dispatch = useAppDispatch();
+  const setAuth = useAppStore((s) => s.setAuth);
   const [authStatus, setAuthStatus] = useState<AuthStatus>('checking');
   const [autoLoginError, setAutoLoginError] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -92,10 +92,7 @@ export default function AuthForm() {
 
         // 자동 로그인 성공
         await ensureMinDisplayTime();
-        dispatch({
-          type: 'SET_AUTH',
-          payload: { auth, user },
-        });
+        setAuth(auth, user);
       } catch (err) {
         await ensureMinDisplayTime();
         setAutoLoginError((err as Error).message);
@@ -108,7 +105,7 @@ export default function AuthForm() {
     };
 
     attemptAutoLogin();
-  }, [dispatch]);
+  }, [setAuth]);
 
   const handleLoginClick = () => {
     if (warningDismissed) {
@@ -153,10 +150,7 @@ export default function AuthForm() {
       // 인증 정보 저장
       await saveAuth({ auth: authData, user: userData });
 
-      dispatch({
-        type: 'SET_AUTH',
-        payload: { auth: authData, user: userData },
-      });
+      setAuth(authData, userData);
     } catch (err) {
       setError((err as Error).message);
       setAuthStatus('idle');

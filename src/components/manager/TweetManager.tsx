@@ -4,8 +4,6 @@ import { LogOut, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { getDeletionCandidates } from '@/lib/filters/engine';
-import { useFilterState } from '@/lib/hooks/useFilterState';
 import {
   clearAuth,
   fetchTweets,
@@ -14,23 +12,57 @@ import {
   saveHistory,
 } from '@/lib/ipc';
 import { useDeleteBatch, useSaveBackup } from '@/lib/queries';
-import { useAppDispatch, useAppState } from '@/lib/store/tweet-store';
+import { useAppStore } from '@/lib/store/app-store';
 import type { DeletionProgress as DeletionProgressType, Tweet } from '@/types';
 import QueryBuilder from '../filters/QueryBuilder';
 import TweetList from '../tweets/TweetList';
 import TweetStats from '../tweets/TweetStats';
 
 export default function TweetManager() {
-  const { user, tweets, deletionProgress } = useAppState();
-  const dispatch = useAppDispatch();
-
-  // 필터 상태 (커스텀 훅)
+  // Zustand 스토어에서 상태와 액션 가져오기
   const {
-    state: filterState,
-    actions: filterActions,
-    filters,
+    user,
+    tweets,
+    deletionProgress,
+    filterState,
+    setTweets,
+    appendTweets,
+    removeTweets,
+    setDeletionProgress,
+    resetDeletionProgress,
+    logout,
+    // Filter actions
+    setCombineMode,
+    setLikesEnabled,
+    setLikesOperator,
+    setLikesValue,
+    setRetweetsEnabled,
+    setRetweetsOperator,
+    setRetweetsValue,
+    setViewsEnabled,
+    setViewsOperator,
+    setViewsValue,
+    setKeywordEnabled,
+    setKeywords,
+    setKeywordMatchMode,
+    setKeywordNegate,
+    setHasPhotoEnabled,
+    setHasPhotoValue,
+    setHasVideoEnabled,
+    setHasVideoValue,
+    setReplyEnabled,
+    setReplyValue,
+    setThreadEnabled,
+    setThreadExcludedIds,
+    setStartDateEnabled,
+    setStartDate,
+    setEndDateEnabled,
+    setEndDate,
+    setDisplayLimit,
+    // Derived
+    getDeletionCandidates,
     hasActiveConditions,
-  } = useFilterState();
+  } = useAppStore();
 
   // 데이터 로드 상태
   const [apiLoading, setApiLoading] = useState(false);
@@ -51,10 +83,10 @@ export default function TweetManager() {
   const deleteMutation = useDeleteBatch();
   const backupMutation = useSaveBackup();
 
-  // 삭제 후보 (쿼리 결과)
+  // 삭제 후보 (스토어의 derived state)
   const deletionCandidates = useMemo(
-    () => getDeletionCandidates(tweets, filters, filterState.combineMode),
-    [tweets, filters, filterState.combineMode],
+    () => getDeletionCandidates(),
+    [getDeletionCandidates],
   );
 
   // 표시할 트윗 (limit 적용)
@@ -97,10 +129,7 @@ export default function TweetManager() {
     setLoadError('');
 
     if (!cursor) {
-      dispatch({
-        type: 'SET_DELETION_PROGRESS',
-        payload: { total: 0, completed: 0, failed: 0, status: 'idle' },
-      });
+      resetDeletionProgress();
     }
 
     try {
@@ -117,9 +146,9 @@ export default function TweetManager() {
 
       if (loadedTweets.length > 0) {
         if (cursor) {
-          dispatch({ type: 'APPEND_TWEETS', payload: loadedTweets });
+          appendTweets(loadedTweets);
         } else {
-          dispatch({ type: 'SET_TWEETS', payload: loadedTweets });
+          setTweets(loadedTweets);
         }
       }
 
@@ -179,15 +208,12 @@ export default function TweetManager() {
       }
     }
 
-    dispatch({
-      type: 'SET_DELETION_PROGRESS',
-      payload: {
-        total: toDelete.length,
-        completed: 0,
-        failed: 0,
-        status: 'running',
-        failedTweetIds: [],
-      },
+    setDeletionProgress({
+      total: toDelete.length,
+      completed: 0,
+      failed: 0,
+      status: 'running',
+      failedTweetIds: [],
     });
 
     const tweetIds = toDelete.map((t) => t.id);
@@ -206,13 +232,10 @@ export default function TweetManager() {
         }
 
         if (!result.success && result.data) {
-          dispatch({
-            type: 'SET_DELETION_PROGRESS',
-            payload: {
-              status: 'stopped',
-              stopReason: result.error,
-              failedTweetIds: result.data.failedTweetIds,
-            },
+          setDeletionProgress({
+            status: 'stopped',
+            stopReason: result.error,
+            failedTweetIds: result.data.failedTweetIds,
           });
           const deletedIds = tweetIds.filter(
             (id) =>
@@ -220,13 +243,10 @@ export default function TweetManager() {
                 (f: { id: string }) => f.id === id,
               ),
           );
-          dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: deletedIds });
+          removeTweets(deletedIds);
         } else {
-          dispatch({
-            type: 'SET_DELETION_PROGRESS',
-            payload: { status: 'done' },
-          });
-          dispatch({ type: 'REMOVE_DELETED_TWEETS', payload: tweetIds });
+          setDeletionProgress({ status: 'done' });
+          removeTweets(tweetIds);
         }
         setConfirmed(false);
         setSelectedForDeletion(new Set());
@@ -237,10 +257,10 @@ export default function TweetManager() {
   useEffect(() => {
     if (!isElectron()) return;
     const unsubscribe = onDeleteProgress((progress: DeletionProgressType) => {
-      dispatch({ type: 'SET_DELETION_PROGRESS', payload: progress });
+      setDeletionProgress(progress);
     });
     return unsubscribe;
-  }, [dispatch]);
+  }, [setDeletionProgress]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: 의도적으로 마운트 시에만 실행
   useEffect(() => {
@@ -251,12 +271,13 @@ export default function TweetManager() {
 
   const handleLogout = async () => {
     await clearAuth();
-    dispatch({ type: 'LOGOUT' });
+    logout();
   };
 
   const loading = apiLoading;
   const isRunning = deletionProgress.status === 'running';
   const isDone = deletionProgress.status === 'done';
+  const activeConditions = hasActiveConditions();
 
   const dateRange = useMemo(() => {
     if (tweets.length === 0) return null;
@@ -416,59 +437,59 @@ export default function TweetManager() {
             <QueryBuilder
               tweets={tweets}
               combineMode={filterState.combineMode}
-              onCombineModeChange={filterActions.setCombineMode}
+              onCombineModeChange={setCombineMode}
               likesEnabled={filterState.likes.enabled}
               likesOperator={filterState.likes.operator}
               minLikes={filterState.likes.value}
-              onLikesEnabledChange={filterActions.setLikesEnabled}
-              onLikesOperatorChange={filterActions.setLikesOperator}
-              onMinLikesChange={filterActions.setLikesValue}
+              onLikesEnabledChange={setLikesEnabled}
+              onLikesOperatorChange={setLikesOperator}
+              onMinLikesChange={setLikesValue}
               retweetsEnabled={filterState.retweets.enabled}
               retweetsOperator={filterState.retweets.operator}
               minRetweets={filterState.retweets.value}
-              onRetweetsEnabledChange={filterActions.setRetweetsEnabled}
-              onRetweetsOperatorChange={filterActions.setRetweetsOperator}
-              onMinRetweetsChange={filterActions.setRetweetsValue}
+              onRetweetsEnabledChange={setRetweetsEnabled}
+              onRetweetsOperatorChange={setRetweetsOperator}
+              onMinRetweetsChange={setRetweetsValue}
               viewsEnabled={filterState.views.enabled}
               viewsOperator={filterState.views.operator}
               minViews={filterState.views.value}
-              onViewsEnabledChange={filterActions.setViewsEnabled}
-              onViewsOperatorChange={filterActions.setViewsOperator}
-              onMinViewsChange={filterActions.setViewsValue}
+              onViewsEnabledChange={setViewsEnabled}
+              onViewsOperatorChange={setViewsOperator}
+              onMinViewsChange={setViewsValue}
               keywordEnabled={filterState.keyword.enabled}
               keywords={filterState.keyword.keywords}
               keywordMatchMode={filterState.keyword.matchMode}
               keywordNegate={filterState.keyword.negate}
-              onKeywordEnabledChange={filterActions.setKeywordEnabled}
-              onKeywordsChange={filterActions.setKeywords}
-              onKeywordMatchModeChange={filterActions.setKeywordMatchMode}
-              onKeywordNegateChange={filterActions.setKeywordNegate}
+              onKeywordEnabledChange={setKeywordEnabled}
+              onKeywordsChange={setKeywords}
+              onKeywordMatchModeChange={setKeywordMatchMode}
+              onKeywordNegateChange={setKeywordNegate}
               hasPhotoEnabled={filterState.hasPhoto.enabled}
               hasPhotoValue={filterState.hasPhoto.value}
-              onHasPhotoEnabledChange={filterActions.setHasPhotoEnabled}
-              onHasPhotoValueChange={filterActions.setHasPhotoValue}
+              onHasPhotoEnabledChange={setHasPhotoEnabled}
+              onHasPhotoValueChange={setHasPhotoValue}
               hasVideoEnabled={filterState.hasVideo.enabled}
               hasVideoValue={filterState.hasVideo.value}
-              onHasVideoEnabledChange={filterActions.setHasVideoEnabled}
-              onHasVideoValueChange={filterActions.setHasVideoValue}
+              onHasVideoEnabledChange={setHasVideoEnabled}
+              onHasVideoValueChange={setHasVideoValue}
               replyEnabled={filterState.reply.enabled}
               replyIsReply={filterState.reply.value}
-              onReplyEnabledChange={filterActions.setReplyEnabled}
-              onReplyIsReplyChange={filterActions.setReplyValue}
+              onReplyEnabledChange={setReplyEnabled}
+              onReplyIsReplyChange={setReplyValue}
               threadEnabled={filterState.thread.enabled}
               excludedThreadIds={filterState.thread.excludedIds}
-              onThreadEnabledChange={filterActions.setThreadEnabled}
-              onExcludedThreadIdsChange={filterActions.setThreadExcludedIds}
+              onThreadEnabledChange={setThreadEnabled}
+              onExcludedThreadIdsChange={setThreadExcludedIds}
               startDateEnabled={filterState.startDate.enabled}
               startDate={filterState.startDate.date}
-              onStartDateEnabledChange={filterActions.setStartDateEnabled}
-              onStartDateChange={filterActions.setStartDate}
+              onStartDateEnabledChange={setStartDateEnabled}
+              onStartDateChange={setStartDate}
               endDateEnabled={filterState.endDate.enabled}
               endDate={filterState.endDate.date}
-              onEndDateEnabledChange={filterActions.setEndDateEnabled}
-              onEndDateChange={filterActions.setEndDate}
+              onEndDateEnabledChange={setEndDateEnabled}
+              onEndDateChange={setEndDate}
               limit={filterState.displayLimit}
-              onLimitChange={filterActions.setDisplayLimit}
+              onLimitChange={setDisplayLimit}
               resultCount={deletionCandidates.length}
             />
           </div>
@@ -485,7 +506,7 @@ export default function TweetManager() {
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h4 className="font-medium text-sm text-red-500">
-                  {hasActiveConditions
+                  {activeConditions
                     ? `삭제 후보 (${displayedTweets.length.toLocaleString()}개${filterState.displayLimit && deletionCandidates.length > filterState.displayLimit ? ` / 전체 ${deletionCandidates.length.toLocaleString()}개` : ''})`
                     : '조건을 선택하세요'}
                 </h4>
@@ -495,7 +516,7 @@ export default function TweetManager() {
                   </span>
                 )}
               </div>
-              {hasActiveConditions && displayedTweets.length > 0 && (
+              {activeConditions && displayedTweets.length > 0 && (
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -520,12 +541,12 @@ export default function TweetManager() {
             </div>
 
             <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-2">
-              {hasActiveConditions
+              {activeConditions
                 ? '삭제할 트윗을 체크하세요. 체크한 트윗만 삭제됩니다.'
                 : '왼쪽 패널에서 삭제 조건을 설정하세요.'}
             </p>
 
-            {hasActiveConditions ? (
+            {activeConditions ? (
               <TweetList
                 tweets={displayedTweets}
                 showCheckbox

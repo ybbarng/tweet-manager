@@ -33,7 +33,8 @@ pnpm run test:watch       # vitest watch 모드
 - **Next.js `output: 'export'`**: 정적 빌드하여 Electron에서 로드. 서버 기능 미사용.
 - **Electron tsconfig 분리**: `tsconfig.electron.json`으로 `electron/` 디렉토리를 CommonJS 타겟으로 별도 컴파일. 출력 디렉토리는 `dist-electron/`.
 - **HTTP 클라이언트**: Electron 메인 프로세스에서 wretch 사용 (fetch 래퍼). `electron/twitter/api.ts` 참고.
-- **서버 상태 관리**: 렌더러에서 @tanstack/react-query 사용. mutation 훅은 `src/lib/queries.ts`에 정의.
+- **클라이언트 상태 관리**: zustand 사용 (`src/lib/store/app-store.ts`). 인증, 트윗, 필터, 삭제 진행 상태를 Single Source of Truth로 관리.
+- **서버 상태 관리**: @tanstack/react-query 사용. mutation 훅은 `src/lib/queries.ts`에 정의.
 - **electron-builder 패키징**: `files` 설정에서 `node_modules`를 제외하고 `wretch`만 포함. Next.js, React 등은 정적 빌드(`out/`) 후 런타임에 불필요. `sharp`는 아이콘 생성 스크립트용(devDependency).
 - **프로덕션 정적 파일 서빙**: 커스텀 `app://` 프로토콜 사용. Next.js 정적 빌드의 절대 경로(`/_next/...`)를 `file://`에서 로드할 수 없어 `protocol.handle`로 해결. 개발 모드 판별은 `app.isPackaged` 사용.
 - **아이콘 관리**: 원본은 `src/app/icon.svg` 하나만 유지. Next.js App Router가 이 파일을 favicon 및 `/icon.svg` 경로로 제공. Electron 앱 아이콘(`resources/icon.png`)은 `pnpm run icon:build` 또는 `electron:build` 시 자동 생성.
@@ -61,8 +62,8 @@ pnpm run test:watch       # vitest watch 모드
 - **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
-- 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `useFilterState.ts` 훅에 상태 추가 → `QueryBuilder.tsx`에 UI 연결
-- **커스텀 훅**: `src/lib/hooks/`에 위치. `useFilterState`는 모든 필터 상태 관리, `useTheme`는 다크모드 관리.
+- 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `app-store.ts`에 상태/액션 추가 → `QueryBuilder.tsx`에 UI 연결
+- **커스텀 훅**: `src/lib/hooks/`에 위치. `useTheme`는 다크모드 관리.
 - IPC 채널 추가 시: `electron/main.ts`에 핸들러 → `electron/preload.ts`에 노출 → `src/lib/ipc.ts`에 래퍼 함수 → `src/lib/queries.ts`에 query/mutation 훅
 
 ## 작업 완료 체크리스트

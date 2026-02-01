@@ -39,7 +39,7 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 | Desktop | Electron + electron-builder |
 | Frontend | Next.js 16 (App Router) + TypeScript |
 | UI | Tailwind CSS + shadcn/ui + lucide-react |
-| 상태 관리 | React Context + useReducer |
+| 상태 관리 | Zustand |
 | 서버 상태 | @tanstack/react-query |
 | 가상 스크롤 | @tanstack/react-virtual |
 | HTTP 클라이언트 | wretch |
@@ -68,7 +68,7 @@ pnpm install
 ### 설치 확인
 
 ```bash
-pnpm test  # 94개 테스트 통과 확인
+pnpm test  # 100개 테스트 통과 확인
 ```
 
 ## 실행
