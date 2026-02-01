@@ -42,6 +42,7 @@ export default function TweetManager() {
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
   const lastFetchTime = useRef(0);
+  const pageCountRef = useRef(0); // 디버그용 페이지 카운터
   const MIN_FETCH_INTERVAL = 500;
 
   // 사용자가 체크한 트윗 ID (삭제 선택)
@@ -113,11 +114,15 @@ export default function TweetManager() {
       setLoadError('');
 
       if (!cursor) {
+        pageCountRef.current = 0;
         resetDeletionProgress();
       }
 
+      pageCountRef.current += 1;
+      const currentPage = pageCountRef.current;
+
       try {
-        const result = await fetchTweets(cursor);
+        const result = await fetchTweets(cursor, currentPage);
         if (!result.success || !result.data) {
           setLoadError(result.error || '트윗 조회에 실패했습니다.');
           return;

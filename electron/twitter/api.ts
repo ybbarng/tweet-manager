@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { app } from 'electron';
 import wretch, { type WretchError } from 'wretch';
 import { RATE_LIMIT } from '../constants';
 import { logger } from '../utils/logger';
@@ -15,6 +18,25 @@ import {
   parseViewer,
 } from './parser';
 import type { UserTweetsResponse, ViewerResponse } from './types';
+
+/** 디버그용 API 응답 저장 */
+function saveDebugResponse(data: unknown, pageNumber: number): void {
+  try {
+    const debugDir = path.join(app.getPath('userData'), 'debug');
+    if (!fs.existsSync(debugDir)) {
+      fs.mkdirSync(debugDir, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `api-response-page${pageNumber}-${timestamp}.json`;
+    const filepath = path.join(debugDir, filename);
+
+    fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf-8');
+    logger.log(`[debug] API 응답 저장: ${filepath}`);
+  } catch (err) {
+    logger.error('[debug] API 응답 저장 실패:', err);
+  }
+}
 
 interface TwitterAuth {
   authToken: string;
@@ -68,6 +90,7 @@ export class TwitterApiClient {
 
   async fetchUserTweets(
     cursor?: string,
+    pageNumber = 1,
     retryCount = 0,
   ): Promise<FetchTweetsResult> {
     if (!this.userId) {
@@ -85,6 +108,9 @@ export class TwitterApiClient {
         .url(`${ENDPOINTS.USER_TWEETS}?${params}`)
         .get()
         .json<UserTweetsResponse>();
+
+      // 디버그: API 응답 저장
+      saveDebugResponse(data, pageNumber);
 
       // 디버깅: 응답 구조 로깅
       const instructions =
@@ -118,7 +144,7 @@ export class TwitterApiClient {
         if (waitMs > 0) {
           await delay(Math.min(waitMs, RATE_LIMIT.MAX_WAIT_MS));
         }
-        return this.fetchUserTweets(cursor, retryCount + 1);
+        return this.fetchUserTweets(cursor, pageNumber, retryCount + 1);
       }
       throw new Error(`트윗 조회 실패: ${error.status || error.message}`);
     }

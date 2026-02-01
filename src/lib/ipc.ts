@@ -30,6 +30,7 @@ interface ElectronAPI {
     verify: (auth: TwitterAuth) => Promise<IpcResponse<TwitterUser>>;
     fetchTweets: (
       cursor?: string,
+      pageNumber?: number,
     ) => Promise<IpcResponse<{ tweets: Tweet[]; nextCursor?: string }>>;
     deleteTweet: (tweetId: string) => Promise<IpcResponse<void>>;
     deleteBatch: (tweetIds: string[]) => Promise<
@@ -95,8 +96,8 @@ export async function verifyAuth(
 }
 
 /** 트윗 조회 (페이지네이션) */
-export async function fetchTweets(cursor?: string) {
-  return getAPI().twitter.fetchTweets(cursor);
+export async function fetchTweets(cursor?: string, pageNumber?: number) {
+  return getAPI().twitter.fetchTweets(cursor, pageNumber);
 }
 
 /** 단일 트윗 삭제 */
