@@ -59,6 +59,7 @@ pnpm run test:watch       # vitest watch 모드
 - 응답 및 주석 언어: 한국어
 - 한국어 주석은 복잡한 로직에만 추가. 자명한 코드에는 생략.
 - **포맷/린트**: biome 사용 (ESLint 아님). `biome.json` 참고. 들여쓰기: space 2칸, 따옴표: single quote.
+- **Pre-commit 훅**: husky + lint-staged로 커밋 전 자동 린트. 스테이징된 `*.{js,ts,tsx,json}` 파일만 검사.
 - **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
