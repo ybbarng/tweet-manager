@@ -136,7 +136,7 @@ pnpm run electron:build
 
 ### 릴리즈 배포
 
-GitHub Releases에 자동으로 빌드 파일을 업로드합니다.
+GitHub Releases에 자동으로 빌드 파일을 업로드하고 공개합니다.
 
 ```bash
 pnpm run release patch   # 버그 수정: 0.1.0 → 0.1.1
@@ -145,14 +145,18 @@ pnpm run release major   # 대규모 변경: 0.1.0 → 1.0.0
 ```
 
 스크립트가 자동으로 처리하는 작업:
-1. `package.json` 버전 업데이트
-2. Git commit + tag 생성 및 push
-3. macOS (arm64) + Windows (x64) 빌드
-4. GitHub Releases에 업로드 (Draft 상태)
+1. 린트 검사 및 테스트 실행
+2. `package.json` 버전 업데이트
+3. Git commit + tag 생성 및 push
+4. GitHub Release 생성 (릴리즈 노트 자동 생성)
+5. macOS (arm64) + Windows (x64) 빌드 및 업로드
+6. Release 자동 공개
 
-완료 후 출력되는 GitHub 링크에서 "Publish release" 버튼을 클릭하면 배포가 완료됩니다.
+> **필수 조건**:
+> - `.env.local` 파일에 `GH_TOKEN` 환경변수 필요 (`.env.local.example` 참고)
+> - `gh` CLI 설치 및 인증 필요 (`brew install gh && gh auth login`)
 
-> **참고**: `.env.local` 파일에 `GH_TOKEN` 환경변수가 필요합니다. `.env.local.example` 참고.
+**커스텀 릴리즈 노트**: 프로젝트 루트에 `RELEASE_NOTES.md` 파일을 생성하면 자동 생성 대신 해당 내용이 사용됩니다. 배포 후 파일은 자동 삭제됩니다.
 
 ### 자동 업데이트
 
