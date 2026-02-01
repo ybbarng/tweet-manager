@@ -318,3 +318,280 @@ export const MOCK_BROKEN_VIEWER_MISSING_FIELDS = {
     },
   },
 };
+
+// --- 고정 트윗(Pinned Tweet) ---
+
+/** 고정 트윗 */
+export const MOCK_TWEET_PINNED: TweetResult = {
+  rest_id: '3001',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '123456789',
+        legacy: {
+          screen_name: 'testuser',
+          name: '테스트 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: '고정된 중요 트윗입니다.',
+    created_at: 'Mon Jul 01 12:00:00 +0000 2024',
+    favorite_count: 100,
+    retweet_count: 50,
+    reply_count: 10,
+    conversation_id_str: '3001',
+    entities: {},
+  },
+};
+
+/** 고정 트윗이 포함된 응답 생성 */
+export function createMockResponseWithPinnedTweet(
+  tweetResults: TweetResult[],
+  pinnedTweet: TweetResult,
+): UserTweetsResponse {
+  const entries = tweetResults.map((result, i) => ({
+    entryId: `tweet-${result.rest_id}`,
+    sortIndex: String(tweetResults.length - i),
+    content: {
+      entryType: 'TimelineTimelineItem',
+      itemContent: {
+        tweet_results: { result },
+      },
+    },
+  }));
+
+  return {
+    data: {
+      user: {
+        result: {
+          timeline_v2: {
+            timeline: {
+              instructions: [
+                { type: 'TimelineClearCache' },
+                {
+                  type: 'TimelinePinEntry',
+                  entry: {
+                    entryId: `tweet-${pinnedTweet.rest_id}`,
+                    sortIndex: '999999',
+                    content: {
+                      entryType: 'TimelineTimelineItem',
+                      itemContent: {
+                        tweet_results: { result: pinnedTweet },
+                      },
+                    },
+                  },
+                },
+                {
+                  type: 'TimelineAddEntries',
+                  entries,
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+// --- 쓰레드 모듈(TimelineTimelineModule) ---
+
+/** 쓰레드 모듈용 트윗 - 오래된 것 (시작점) */
+export const MOCK_THREAD_MODULE_OLD: TweetResult = {
+  rest_id: '4001',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '123456789',
+        legacy: {
+          screen_name: 'testuser',
+          name: '테스트 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: '쓰레드 시작 트윗입니다.',
+    created_at: 'Mon Nov 15 06:00:00 +0000 2025',
+    favorite_count: 5,
+    retweet_count: 1,
+    reply_count: 2,
+    conversation_id_str: '4001',
+    entities: {},
+  },
+};
+
+/** 쓰레드 모듈용 트윗 - 중간 */
+export const MOCK_THREAD_MODULE_MID: TweetResult = {
+  rest_id: '4002',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '123456789',
+        legacy: {
+          screen_name: 'testuser',
+          name: '테스트 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: '쓰레드 중간 트윗입니다.',
+    created_at: 'Sat Jan 17 13:00:00 +0000 2026',
+    favorite_count: 3,
+    retweet_count: 0,
+    reply_count: 1,
+    in_reply_to_status_id_str: '4001',
+    conversation_id_str: '4001',
+    entities: {},
+  },
+};
+
+/** 쓰레드 모듈용 트윗 - 최신 */
+export const MOCK_THREAD_MODULE_NEW: TweetResult = {
+  rest_id: '4003',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '123456789',
+        legacy: {
+          screen_name: 'testuser',
+          name: '테스트 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: '쓰레드 최신 트윗입니다.',
+    created_at: 'Sat Feb 01 06:00:00 +0000 2026',
+    favorite_count: 10,
+    retweet_count: 2,
+    reply_count: 0,
+    in_reply_to_status_id_str: '4002',
+    conversation_id_str: '4001',
+    entities: {},
+  },
+};
+
+/** 쓰레드 모듈이 포함된 응답 생성 */
+export function createMockResponseWithThreadModule(
+  normalTweets: TweetResult[],
+  threadTweets: TweetResult[],
+): UserTweetsResponse {
+  const normalEntries = normalTweets.map((result, i) => ({
+    entryId: `tweet-${result.rest_id}`,
+    sortIndex: String(normalTweets.length - i + 100),
+    content: {
+      entryType: 'TimelineTimelineItem',
+      itemContent: {
+        tweet_results: { result },
+      },
+    },
+  }));
+
+  const threadModuleEntry = {
+    entryId: 'profile-conversation-12345',
+    sortIndex: '50',
+    content: {
+      entryType: 'TimelineTimelineModule',
+      items: threadTweets.map((result) => ({
+        entryId: `tweet-${result.rest_id}`,
+        item: {
+          itemContent: {
+            tweet_results: { result },
+          },
+        },
+      })),
+    },
+  };
+
+  return {
+    data: {
+      user: {
+        result: {
+          timeline_v2: {
+            timeline: {
+              instructions: [
+                {
+                  type: 'TimelineAddEntries',
+                  entries: [...normalEntries, threadModuleEntry],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+// --- 리트윗 원본 트윗 번들 ---
+
+/** 리트윗 (원본 ID 포함) */
+export const MOCK_RETWEET_WITH_ORIGINAL_ID: TweetResult = {
+  rest_id: '5001',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '123456789',
+        legacy: {
+          screen_name: 'testuser',
+          name: '테스트 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/test/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: 'RT @other: 원본 트윗 내용입니다.',
+    created_at: 'Sat Feb 01 10:00:00 +0000 2026',
+    favorite_count: 0,
+    retweet_count: 50,
+    reply_count: 0,
+    conversation_id_str: '5001',
+    retweeted_status_result: {
+      result: {
+        rest_id: '5002', // 원본 트윗 ID
+      },
+    },
+    entities: {},
+  },
+};
+
+/** 리트윗의 원본 트윗 (번들로 함께 전송됨) */
+export const MOCK_RETWEET_ORIGINAL: TweetResult = {
+  rest_id: '5002',
+  core: {
+    user_results: {
+      result: {
+        rest_id: '999999',
+        legacy: {
+          screen_name: 'other',
+          name: '다른 사용자',
+          profile_image_url_https:
+            'https://pbs.twimg.com/profile_images/other/photo.jpg',
+        },
+      },
+    },
+  },
+  legacy: {
+    full_text: '원본 트윗 내용입니다.',
+    created_at: 'Fri Jan 01 12:00:00 +0000 2021',
+    favorite_count: 100,
+    retweet_count: 50,
+    reply_count: 10,
+    conversation_id_str: '5002',
+    entities: {},
+  },
+};

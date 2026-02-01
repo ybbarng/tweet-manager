@@ -6,11 +6,19 @@ import {
 } from '../parser';
 import type { TweetResult, UserTweetsResponse, ViewerResponse } from '../types';
 import {
+  createMockResponseWithPinnedTweet,
+  createMockResponseWithThreadModule,
   createMockUserTweetsResponse,
   MOCK_BROKEN_RESPONSE_MISSING_LEGACY,
   MOCK_BROKEN_VIEWER_MISSING_FIELDS,
+  MOCK_RETWEET_ORIGINAL,
+  MOCK_RETWEET_WITH_ORIGINAL_ID,
+  MOCK_THREAD_MODULE_MID,
+  MOCK_THREAD_MODULE_NEW,
+  MOCK_THREAD_MODULE_OLD,
   MOCK_TWEET_HIGH_LIKES,
   MOCK_TWEET_NORMAL,
+  MOCK_TWEET_PINNED,
   MOCK_TWEET_REPLY,
   MOCK_TWEET_RETWEET,
   MOCK_TWEET_THREAD_CONT,
@@ -276,5 +284,131 @@ describe('API 응답 필드명 스냅샷', () => {
     expect(MOCK_VIEWER_RESPONSE).toHaveProperty(
       'data.viewer.user_results.result.legacy.profile_image_url_https',
     );
+  });
+});
+
+// ============================================================
+// 5. 고정 트윗(TimelinePinEntry) 제외 테스트
+// ============================================================
+describe('parseTimelineResponse - 고정 트윗 제외', () => {
+  it('TimelinePinEntry의 고정 트윗은 결과에서 제외된다', () => {
+    const response = createMockResponseWithPinnedTweet(
+      [MOCK_TWEET_NORMAL],
+      MOCK_TWEET_PINNED,
+    );
+
+    const result = parseTimelineResponse(response);
+
+    // 일반 트윗만 포함되어야 함
+    expect(result.tweets).toHaveLength(1);
+    expect(result.tweets[0].id).toBe('1001');
+    // 고정 트윗은 제외됨
+    expect(result.tweets.find((t) => t.id === '3001')).toBeUndefined();
+  });
+
+  it('고정 트윗이 일반 entries에도 있으면 제외된다', () => {
+    const response = createMockResponseWithPinnedTweet(
+      [MOCK_TWEET_NORMAL, MOCK_TWEET_PINNED], // 고정 트윗이 일반 목록에도 있음
+      MOCK_TWEET_PINNED,
+    );
+
+    const result = parseTimelineResponse(response);
+
+    // 고정 트윗은 제외되어야 함
+    expect(result.tweets).toHaveLength(1);
+    expect(result.tweets[0].id).toBe('1001');
+  });
+});
+
+// ============================================================
+// 6. 쓰레드 모듈(TimelineTimelineModule) 처리 테스트
+// ============================================================
+describe('parseTimelineResponse - 쓰레드 모듈 처리', () => {
+  it('쓰레드 모듈에서 가장 최신 트윗만 포함한다', () => {
+    const response = createMockResponseWithThreadModule(
+      [MOCK_TWEET_NORMAL],
+      [MOCK_THREAD_MODULE_OLD, MOCK_THREAD_MODULE_MID, MOCK_THREAD_MODULE_NEW],
+    );
+
+    const result = parseTimelineResponse(response);
+
+    // 일반 트윗 1개 + 쓰레드 최신 트윗 1개 = 2개
+    expect(result.tweets).toHaveLength(2);
+
+    // 쓰레드의 가장 최신 트윗(4003)만 포함
+    const threadTweet = result.tweets.find((t) => t.id === '4003');
+    expect(threadTweet).toBeDefined();
+
+    // 쓰레드의 오래된 트윗들(4001, 4002)은 제외
+    expect(result.tweets.find((t) => t.id === '4001')).toBeUndefined();
+    expect(result.tweets.find((t) => t.id === '4002')).toBeUndefined();
+  });
+
+  it('쓰레드 최신 트윗에 threadInfo가 첨부된다', () => {
+    const response = createMockResponseWithThreadModule(
+      [],
+      [MOCK_THREAD_MODULE_OLD, MOCK_THREAD_MODULE_MID, MOCK_THREAD_MODULE_NEW],
+    );
+
+    const result = parseTimelineResponse(response);
+
+    expect(result.tweets).toHaveLength(1);
+    const tweet = result.tweets[0];
+
+    expect(tweet.threadInfo).toBeDefined();
+    expect(tweet.threadInfo!.size).toBe(3);
+    expect(tweet.threadInfo!.startTweetId).toBe('4001');
+    expect(tweet.threadInfo!.startTweetDate).toBe(
+      'Mon Nov 15 06:00:00 +0000 2025',
+    );
+  });
+
+  it('쓰레드가 1개뿐이면 threadInfo 없이 일반 트윗으로 처리된다', () => {
+    const response = createMockResponseWithThreadModule(
+      [],
+      [MOCK_TWEET_NORMAL],
+    );
+
+    const result = parseTimelineResponse(response);
+
+    expect(result.tweets).toHaveLength(1);
+    expect(result.tweets[0].id).toBe('1001');
+    expect(result.tweets[0].threadInfo).toBeUndefined();
+  });
+});
+
+// ============================================================
+// 7. 리트윗 원본 트윗 제외 테스트
+// ============================================================
+describe('parseTimelineResponse - 리트윗 원본 트윗 제외', () => {
+  it('리트윗과 함께 번들된 원본 트윗은 결과에서 제외된다', () => {
+    // 리트윗과 원본 트윗이 함께 응답에 포함된 경우
+    const response = createMockUserTweetsResponse([
+      MOCK_RETWEET_WITH_ORIGINAL_ID, // 리트윗 (원본 ID: 5002)
+      MOCK_RETWEET_ORIGINAL, // 원본 트윗 (ID: 5002)
+    ]);
+
+    const result = parseTimelineResponse(response);
+
+    // 리트윗만 포함되어야 함
+    expect(result.tweets).toHaveLength(1);
+    expect(result.tweets[0].id).toBe('5001');
+    expect(result.tweets[0].isRetweet).toBe(true);
+
+    // 원본 트윗은 제외됨
+    expect(result.tweets.find((t) => t.id === '5002')).toBeUndefined();
+  });
+
+  it('리트윗이 아닌 일반 트윗은 제외되지 않는다', () => {
+    const response = createMockUserTweetsResponse([
+      MOCK_TWEET_NORMAL,
+      MOCK_RETWEET_WITH_ORIGINAL_ID,
+    ]);
+
+    const result = parseTimelineResponse(response);
+
+    expect(result.tweets).toHaveLength(2);
+    expect(result.tweets.find((t) => t.id === '1001')).toBeDefined();
+    expect(result.tweets.find((t) => t.id === '5001')).toBeDefined();
   });
 });
