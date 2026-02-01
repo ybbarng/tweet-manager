@@ -2,9 +2,27 @@
   <img src="src/app/icon.svg" alt="Tweet Eraser" width="128" height="128">
 </p>
 
-# Tweet Eraser
+<h1 align="center">Tweet Eraser</h1>
 
-Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 삭제할 수 있는 데스크톱 앱.
+<p align="center">
+  Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 삭제할 수 있는 데스크톱 앱
+</p>
+
+<p align="center">
+  <a href="https://github.com/ybbarng/tweet-manager/releases/latest">
+    <img src="https://img.shields.io/github/v/release/ybbarng/tweet-manager" alt="Latest Release">
+  </a>
+  <a href="https://github.com/ybbarng/tweet-manager/releases">
+    <img src="https://img.shields.io/github/downloads/ybbarng/tweet-manager/total" alt="Downloads">
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/ybbarng/tweet-manager" alt="License">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ybbarng/tweet-manager/releases/latest">📥 다운로드</a>
+</p>
 
 ## 주요 기능
 
@@ -23,6 +41,17 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 - 다크모드 지원 (시스템/라이트/다크 전환)
 - **자동 로그인**: 앱 재시작 시 이전 로그인 정보로 자동 인증 (암호화 저장)
 - 인증 정보는 로컬에만 저장, 외부 전송 없음
+
+## 스크린샷
+
+<!-- TODO: 스크린샷 추가 -->
+<!--
+| 필터 설정 | 삭제 미리보기 |
+|-----------|---------------|
+| ![필터](docs/screenshots/filter.png) | ![미리보기](docs/screenshots/preview.png) |
+-->
+
+*스크린샷 준비 중*
 
 ## 사용 흐름
 
@@ -69,7 +98,7 @@ pnpm install
 ### 설치 확인
 
 ```bash
-pnpm test  # 100개 테스트 통과 확인
+pnpm test  # 112개 테스트 통과 확인
 ```
 
 ## 실행
@@ -208,3 +237,32 @@ src/
     store/             zustand 기반 상태 관리
   types/               공통 타입 정의
 ```
+
+## 문제 해결
+
+### macOS에서 "개발자를 확인할 수 없음" 경고
+
+코드 서명이 없어서 발생합니다. 다음 방법으로 실행하세요:
+
+1. Finder에서 앱을 **Control + 클릭** → "열기" 선택
+2. 또는 시스템 설정 → 개인정보 보호 및 보안 → "확인 없이 열기" 클릭
+
+### 로그인이 안 될 때
+
+1. Twitter 웹사이트에서 로그인이 정상적으로 되는지 확인
+2. 2단계 인증(2FA)이 활성화되어 있다면 인증 코드 입력 필요
+3. 계정이 잠겨 있거나 제한된 상태인지 확인
+
+### 트윗이 로드되지 않을 때
+
+1. 인터넷 연결 상태 확인
+2. 앱을 재시작하고 다시 로그인
+3. Twitter API 서버 상태 확인 (일시적 장애일 수 있음)
+
+### 삭제가 느릴 때
+
+계정 보호를 위해 의도적으로 1~2초 간격으로 삭제합니다. 1000개 트윗 삭제 시 약 20~30분 소요됩니다.
+
+## 라이선스
+
+[MIT License](./LICENSE) - 자유롭게 사용, 수정, 배포할 수 있습니다.
