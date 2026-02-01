@@ -84,9 +84,10 @@ export default function TweetManager() {
   const backupMutation = useSaveBackup();
 
   // 삭제 후보 (스토어의 derived state)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getDeletionCandidates 함수 참조는 변하지 않으므로 tweets, filterState를 의존성에 포함해야 재계산됨
   const deletionCandidates = useMemo(
     () => getDeletionCandidates(),
-    [getDeletionCandidates],
+    [getDeletionCandidates, tweets, filterState],
   );
 
   // 표시할 트윗 (limit 적용)
