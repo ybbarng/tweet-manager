@@ -237,7 +237,53 @@ run('git push', 'git push');
 run('git push --tags', 'git push tags');
 console.log('✓ Git 커밋 및 태그 푸시 완료');
 
-// 3. 빌드 및 배포
+const tag = `v${newVersion}`;
+
+// 3. GitHub에서 태그 확인 (최대 30초 대기)
+console.log('');
+console.log('GitHub에서 태그 확인 중...');
+let tagVerified = false;
+for (let i = 0; i < 6; i++) {
+  try {
+    execSync(`gh api repos/:owner/:repo/git/refs/tags/${tag}`, {
+      stdio: 'pipe',
+    });
+    tagVerified = true;
+    console.log('✓ GitHub에서 태그 확인됨');
+    break;
+  } catch {
+    console.log(`  태그 전파 대기 중... (${(i + 1) * 5}초)`);
+    execSync('sleep 5');
+  }
+}
+
+if (!tagVerified) {
+  console.error('✗ GitHub에서 태그를 찾을 수 없습니다.');
+  console.error('  수동으로 태그를 확인한 후 다시 시도해주세요.');
+  process.exit(1);
+}
+
+// 4. GitHub Release 먼저 생성 (draft)
+console.log('');
+console.log('GitHub Release 생성 중 (draft)...');
+const notesPath = path.join(__dirname, '..', '.release-notes.tmp');
+fs.writeFileSync(notesPath, releaseNotes);
+
+try {
+  execSync(
+    `gh release create ${tag} --title "${tag}" --notes-file "${notesPath}" --draft`,
+    {
+      stdio: 'inherit',
+    },
+  );
+  console.log('✓ GitHub Release 생성됨 (draft)');
+} catch (_error) {
+  console.error('✗ GitHub Release 생성 실패');
+  if (fs.existsSync(notesPath)) fs.unlinkSync(notesPath);
+  process.exit(1);
+}
+
+// 5. 빌드 및 배포
 console.log('');
 console.log('macOS + Windows 빌드 및 GitHub Release 배포...');
 console.log('(몇 분 정도 소요됩니다)');
@@ -266,22 +312,13 @@ run(
 console.log('');
 console.log('✓ 빌드 및 업로드 완료');
 
-// 4. gh CLI로 릴리즈 노트 업데이트 및 공개
+// 6. GitHub Release 공개
 console.log('');
-console.log('GitHub Release 업데이트 중...');
-
-const tag = `v${newVersion}`;
-
-// 릴리즈 노트를 임시 파일에 저장
-const notesPath = path.join(__dirname, '..', '.release-notes.tmp');
-fs.writeFileSync(notesPath, releaseNotes);
+console.log('GitHub Release 공개 중...');
 
 try {
-  execSync(
-    `gh release edit ${tag} --title "${tag}" --notes-file "${notesPath}" --draft=false`,
-    { stdio: 'inherit' },
-  );
-  console.log('✓ GitHub Release 업데이트 및 공개 완료');
+  execSync(`gh release edit ${tag} --draft=false`, { stdio: 'inherit' });
+  console.log('✓ GitHub Release 공개 완료');
 } catch (_error) {
   console.log('  gh release edit 실패. 수동으로 공개해주세요.');
   console.log(`  https://github.com/ybbarng/tweet-manager/releases/tag/${tag}`);
