@@ -23,7 +23,16 @@ if (!['patch', 'minor', 'major'].includes(bumpType)) {
   process.exit(1);
 }
 
-// .env.local에서 GH_TOKEN 로드
+// gh CLI 인증 확인
+try {
+  execSync('gh auth status', { stdio: 'pipe' });
+} catch (_error) {
+  console.error('오류: gh CLI 인증이 필요합니다.');
+  console.error('`gh auth login` 명령어로 먼저 인증해주세요.');
+  process.exit(1);
+}
+
+// .env.local에서 GH_TOKEN 로드 (electron-builder용)
 const envPath = path.join(__dirname, '..', '.env.local');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf-8');
@@ -35,10 +44,9 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const GH_TOKEN = process.env.GH_TOKEN;
-if (!GH_TOKEN) {
+if (!process.env.GH_TOKEN) {
   console.error('오류: GH_TOKEN이 설정되지 않았습니다.');
-  console.error('.env.local 파일에 GH_TOKEN을 설정해주세요.');
+  console.error('.env.local 파일에 GH_TOKEN을 설정해주세요. (electron-builder용)');
   process.exit(1);
 }
 
@@ -188,14 +196,6 @@ const run = (cmd, description) => {
   }
 };
 
-const _runSilent = (cmd) => {
-  try {
-    return execSync(cmd, { encoding: 'utf-8' }).trim();
-  } catch (_error) {
-    return null;
-  }
-};
-
 console.log('');
 console.log('Git 커밋 및 태그 생성...');
 run('git add package.json', 'git add');
@@ -234,74 +234,35 @@ run(
 console.log('');
 console.log('✓ 빌드 및 업로드 완료');
 
-// 4. GitHub Release 본문 업데이트
+// 4. gh CLI로 릴리즈 노트 업데이트 및 공개
 console.log('');
-console.log('GitHub Release 본문 업데이트 중...');
+console.log('GitHub Release 업데이트 중...');
 
-async function updateRelease() {
-  const owner = 'ybbarng';
-  const repo = 'tweet-manager';
-  const tag = `v${newVersion}`;
+const tag = `v${newVersion}`;
 
-  try {
-    // 릴리즈 정보 가져오기
-    const getReleaseRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`,
-      {
-        headers: {
-          Authorization: `Bearer ${GH_TOKEN}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      },
-    );
+// 릴리즈 노트를 임시 파일에 저장
+const notesPath = path.join(__dirname, '..', '.release-notes.tmp');
+fs.writeFileSync(notesPath, releaseNotes);
 
-    if (!getReleaseRes.ok) {
-      console.log('  릴리즈를 찾을 수 없습니다. 수동으로 본문을 추가해주세요.');
-      return false;
-    }
-
-    const release = await getReleaseRes.json();
-
-    // 릴리즈 본문 업데이트
-    const updateRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/releases/${release.id}`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${GH_TOKEN}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          body: releaseNotes,
-          name: `v${newVersion}`,
-        }),
-      },
-    );
-
-    if (updateRes.ok) {
-      console.log('✓ GitHub Release 본문 업데이트 완료');
-      return true;
-    } else {
-      console.log('  릴리즈 업데이트 실패. 수동으로 본문을 추가해주세요.');
-      return false;
-    }
-  } catch (error) {
-    console.log('  릴리즈 업데이트 중 오류 발생:', error.message);
-    return false;
+try {
+  execSync(
+    `gh release edit ${tag} --title "${tag}" --notes-file "${notesPath}" --draft=false`,
+    { stdio: 'inherit' },
+  );
+  console.log('✓ GitHub Release 업데이트 및 공개 완료');
+} catch (_error) {
+  console.log('  gh release edit 실패. 수동으로 공개해주세요.');
+  console.log(`  https://github.com/ybbarng/tweet-manager/releases/tag/${tag}`);
+} finally {
+  // 임시 파일 삭제
+  if (fs.existsSync(notesPath)) {
+    fs.unlinkSync(notesPath);
   }
 }
 
-updateRelease().then(() => {
-  console.log('');
-  console.log('========================================');
-  console.log(`릴리즈 v${newVersion} 배포 완료!`);
-  console.log('');
-  console.log('GitHub Release (Draft) 공개하기:');
-  console.log(
-    `https://github.com/ybbarng/tweet-manager/releases/tag/v${newVersion}`,
-  );
-  console.log('');
-  console.log('위 링크에서 "Publish release" 클릭');
-  console.log('========================================');
-});
+console.log('');
+console.log('========================================');
+console.log(`릴리즈 v${newVersion} 배포 완료!`);
+console.log('');
+console.log(`https://github.com/ybbarng/tweet-manager/releases/tag/${tag}`);
+console.log('========================================');
