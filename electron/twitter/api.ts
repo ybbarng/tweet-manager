@@ -1,6 +1,3 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { app } from 'electron';
 import wretch, { type WretchError } from 'wretch';
 import { RATE_LIMIT } from '../constants';
 import { logger } from '../utils/logger';
@@ -19,23 +16,42 @@ import {
 } from './parser';
 import type { UserTweetsResponse, ViewerResponse } from './types';
 
-/** 디버그용 API 응답 저장 */
-function saveDebugResponse(data: unknown, pageNumber: number): void {
-  try {
-    const debugDir = path.join(app.getPath('userData'), 'debug');
-    if (!fs.existsSync(debugDir)) {
-      fs.mkdirSync(debugDir, { recursive: true });
-    }
+/** 디버그용 API 응답 저장소 */
+interface DebugEntry {
+  pageNumber: number;
+  fetchedAt: string;
+  data: unknown;
+}
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `api-response-page${pageNumber}-${timestamp}.json`;
-    const filepath = path.join(debugDir, filename);
+const debugResponses: DebugEntry[] = [];
 
-    fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf-8');
-    logger.log(`[debug] API 응답 저장: ${filepath}`);
-  } catch (err) {
-    logger.error('[debug] API 응답 저장 실패:', err);
-  }
+/** 디버그 응답 추가 */
+function addDebugResponse(data: unknown, pageNumber: number): void {
+  debugResponses.push({
+    pageNumber,
+    fetchedAt: new Date().toISOString(),
+    data,
+  });
+  logger.log(`[debug] API 응답 저장 (메모리): page ${pageNumber}`);
+}
+
+/** 디버그 응답 초기화 */
+export function clearDebugResponses(): void {
+  debugResponses.length = 0;
+  logger.log('[debug] API 응답 초기화');
+}
+
+/** 디버그 응답 내보내기 데이터 반환 */
+export function getDebugExportData(): {
+  exportedAt: string;
+  responseCount: number;
+  responses: DebugEntry[];
+} {
+  return {
+    exportedAt: new Date().toISOString(),
+    responseCount: debugResponses.length,
+    responses: [...debugResponses],
+  };
 }
 
 interface TwitterAuth {
@@ -109,8 +125,8 @@ export class TwitterApiClient {
         .get()
         .json<UserTweetsResponse>();
 
-      // 디버그: API 응답 저장
-      saveDebugResponse(data, pageNumber);
+      // 디버그: API 응답 메모리에 저장
+      addDebugResponse(data, pageNumber);
 
       // 디버깅: 응답 구조 로깅
       const instructions =

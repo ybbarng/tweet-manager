@@ -1,7 +1,8 @@
 'use client';
 
-import { LogOut, RefreshCw } from 'lucide-react';
-import { useMemo } from 'react';
+import { Bug, LogOut, RefreshCw } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { exportDebugData } from '@/lib/ipc';
 import { useAppStore } from '@/lib/store/app-store';
 import { formatDate } from '@/lib/utils/date';
 
@@ -25,6 +26,28 @@ export default function TweetStatusBar({
   onLogout,
 }: TweetStatusBarProps) {
   const { user, tweets } = useAppStore();
+  const [debugExporting, setDebugExporting] = useState(false);
+  const [debugMessage, setDebugMessage] = useState('');
+
+  const handleExportDebug = async () => {
+    setDebugExporting(true);
+    setDebugMessage('');
+    try {
+      const result = await exportDebugData();
+      if (result.success && result.data) {
+        setDebugMessage(`${result.data.responseCount}개 응답 저장 완료`);
+        setTimeout(() => setDebugMessage(''), 3000);
+      } else {
+        setDebugMessage(result.error || '내보내기 실패');
+        setTimeout(() => setDebugMessage(''), 3000);
+      }
+    } catch {
+      setDebugMessage('내보내기 실패');
+      setTimeout(() => setDebugMessage(''), 3000);
+    } finally {
+      setDebugExporting(false);
+    }
+  };
 
   const dateRange = useMemo(() => {
     if (tweets.length === 0) return null;
@@ -35,7 +58,7 @@ export default function TweetStatusBar({
   }, [tweets]);
 
   return (
-    <div className="flex items-center justify-between mb-6 p-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+    <div className="relative flex items-center justify-between mb-6 p-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           {loading && (
@@ -83,6 +106,15 @@ export default function TweetStatusBar({
         </button>
         <button
           type="button"
+          onClick={handleExportDebug}
+          disabled={debugExporting || loading || isRunning}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 disabled:opacity-50"
+          title="API 응답 디버그 내보내기"
+        >
+          <Bug className={`w-4 h-4 ${debugExporting ? 'animate-pulse' : ''}`} />
+        </button>
+        <button
+          type="button"
           onClick={onLogout}
           disabled={loading || isRunning}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 disabled:opacity-50"
@@ -91,6 +123,11 @@ export default function TweetStatusBar({
           <LogOut className="w-4 h-4" />
         </button>
       </div>
+      {debugMessage && (
+        <div className="absolute right-4 top-full mt-1 text-xs text-neutral-500 bg-white dark:bg-neutral-800 px-2 py-1 rounded shadow">
+          {debugMessage}
+        </div>
+      )}
     </div>
   );
 }

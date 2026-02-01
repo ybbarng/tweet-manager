@@ -16,6 +16,10 @@ export interface LoginResult {
 /** Electron IPC API 타입 정의 */
 interface ElectronAPI {
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
+  debug: {
+    export: () => Promise<IpcResponse<{ responseCount: number }>>;
+    clear: () => Promise<IpcResponse<void>>;
+  };
   auth: {
     save: (data: LoginResult) => Promise<IpcResponse<void>>;
     load: () => Promise<IpcResponse<LoginResult | null>>;
@@ -144,4 +148,16 @@ export async function saveHistory(
   entry: DeletionHistoryEntry,
 ): Promise<IpcResponse<void>> {
   return getAPI().history.save(entry);
+}
+
+/** 디버그 데이터 내보내기 */
+export async function exportDebugData(): Promise<
+  IpcResponse<{ responseCount: number }>
+> {
+  return getAPI().debug.export();
+}
+
+/** 디버그 데이터 초기화 */
+export async function clearDebugData(): Promise<IpcResponse<void>> {
+  return getAPI().debug.clear();
 }

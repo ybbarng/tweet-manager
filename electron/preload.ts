@@ -8,6 +8,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('update:available', handler);
   },
 
+  // 디버그
+  debug: {
+    export: () => ipcRenderer.invoke('debug:export'),
+    clear: () => ipcRenderer.invoke('debug:clear'),
+  },
+
   // 인증 저장소
   auth: {
     save: (data: {

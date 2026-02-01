@@ -13,7 +13,11 @@ import {
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { DELETE_BATCH, HISTORY, TWITTER_BEARER_TOKEN } from './constants';
-import { TwitterApiClient } from './twitter/api';
+import {
+  clearDebugResponses,
+  getDebugExportData,
+  TwitterApiClient,
+} from './twitter/api';
 import {
   clearCredentials,
   loadCredentials,
@@ -346,6 +350,41 @@ ipcMain.handle('twitter:save-backup', async (_event, data: string) => {
   } catch (error) {
     return failure(error);
   }
+});
+
+// 디버그 데이터 내보내기
+ipcMain.handle('debug:export', async () => {
+  const debugData = getDebugExportData();
+
+  if (debugData.responseCount === 0) {
+    return failure('내보낼 API 응답이 없습니다. 트윗을 먼저 불러와주세요.');
+  }
+
+  const result = await dialog.showSaveDialog(mainWindow!, {
+    defaultPath: `api-debug-${Date.now()}.json`,
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return failure('저장이 취소되었습니다.');
+  }
+
+  try {
+    await fsPromises.writeFile(
+      result.filePath,
+      JSON.stringify(debugData, null, 2),
+      'utf-8',
+    );
+    return success({ responseCount: debugData.responseCount });
+  } catch (error) {
+    return failure(error);
+  }
+});
+
+// 디버그 데이터 초기화
+ipcMain.handle('debug:clear', () => {
+  clearDebugResponses();
+  return success();
 });
 
 ipcMain.handle('twitter:login', async () => {
