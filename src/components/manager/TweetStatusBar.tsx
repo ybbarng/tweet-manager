@@ -1,6 +1,6 @@
 'use client';
 
-import { Bug, LogOut, RefreshCw } from 'lucide-react';
+import { Bug, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { exportDebugData } from '@/lib/ipc';
 import { useAppStore } from '@/lib/store/app-store';
@@ -13,7 +13,6 @@ interface TweetStatusBarProps {
   isRunning: boolean;
   onLoadMore: () => void;
   onRefresh: () => void;
-  onLogout: () => void;
 }
 
 export default function TweetStatusBar({
@@ -23,7 +22,6 @@ export default function TweetStatusBar({
   isRunning,
   onLoadMore,
   onRefresh,
-  onLogout,
 }: TweetStatusBarProps) {
   const { user, tweets } = useAppStore();
   const [debugExporting, setDebugExporting] = useState(false);
@@ -112,15 +110,6 @@ export default function TweetStatusBar({
           title="API 응답 디버그 내보내기"
         >
           <Bug className={`w-4 h-4 ${debugExporting ? 'animate-pulse' : ''}`} />
-        </button>
-        <button
-          type="button"
-          onClick={onLogout}
-          disabled={loading || isRunning}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 disabled:opacity-50"
-          title="로그아웃"
-        >
-          <LogOut className="w-4 h-4" />
         </button>
       </div>
       {debugMessage && (

@@ -7,7 +7,6 @@ import {
 } from '@/lib/filters/create-filters';
 import { getDeletionCandidates } from '@/lib/filters/engine';
 import {
-  clearAuth,
   fetchTweets,
   isElectron,
   onDeleteProgress,
@@ -33,7 +32,6 @@ export default function TweetManager() {
     removeTweets,
     setDeletionProgress,
     resetDeletionProgress,
-    logout,
   } = useAppStore();
 
   // 데이터 로드 상태
@@ -253,11 +251,6 @@ export default function TweetManager() {
     removeTweets,
   ]);
 
-  const handleLogout = useCallback(async () => {
-    await clearAuth();
-    logout();
-  }, [logout]);
-
   // 삭제 진행 상황 구독
   useEffect(() => {
     if (!isElectron()) return;
@@ -287,7 +280,6 @@ export default function TweetManager() {
         isRunning={isRunning}
         onLoadMore={handleLoadMore}
         onRefresh={() => handleApiLoad(undefined)}
-        onLogout={handleLogout}
       />
 
       <DeletionStatus />
