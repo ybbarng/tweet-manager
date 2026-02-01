@@ -318,6 +318,20 @@ describe('parseTimelineResponse - 고정 트윗 제외', () => {
     expect(result.tweets).toHaveLength(1);
     expect(result.tweets[0].id).toBe('1001');
   });
+
+  it('고정 트윗이 TimelinePinEntry 없이 일반 트윗으로만 오면 삭제 대상이 된다', () => {
+    // 나중에 스크롤해서 고정 트윗이 일반 범위에 들어온 경우
+    const response = createMockUserTweetsResponse([
+      MOCK_TWEET_NORMAL,
+      MOCK_TWEET_PINNED, // 일반 트윗으로 조회됨
+    ]);
+
+    const result = parseTimelineResponse(response);
+
+    // 고정 트윗도 포함되어야 함 (삭제 가능)
+    expect(result.tweets).toHaveLength(2);
+    expect(result.tweets.find((t) => t.id === '3001')).toBeDefined();
+  });
 });
 
 // ============================================================
@@ -374,6 +388,23 @@ describe('parseTimelineResponse - 쓰레드 모듈 처리', () => {
     expect(result.tweets).toHaveLength(1);
     expect(result.tweets[0].id).toBe('1001');
     expect(result.tweets[0].threadInfo).toBeUndefined();
+  });
+
+  it('쓰레드 최초 트윗이 일반 트윗으로 조회되면 삭제 대상이 된다', () => {
+    // 나중에 스크롤해서 쓰레드 시작 트윗이 일반 범위에 들어온 경우
+    const response = createMockUserTweetsResponse([
+      MOCK_THREAD_MODULE_OLD, // 쓰레드 시작 트윗이 일반 트윗으로 조회됨
+      MOCK_TWEET_NORMAL,
+    ]);
+
+    const result = parseTimelineResponse(response);
+
+    // 쓰레드 시작 트윗도 포함되어야 함 (삭제 가능)
+    expect(result.tweets).toHaveLength(2);
+    expect(result.tweets.find((t) => t.id === '4001')).toBeDefined();
+    // 일반 트윗으로 왔으므로 threadInfo 없음
+    const threadStartTweet = result.tweets.find((t) => t.id === '4001');
+    expect(threadStartTweet?.threadInfo).toBeUndefined();
   });
 });
 
