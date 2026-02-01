@@ -44,12 +44,26 @@ export function parseTimelineResponse(
 ): FetchTweetsResult {
   const tweets: ParsedTweet[] = [];
   const retweetedOriginalIds = new Set<string>(); // 리트윗의 원본 트윗 ID
+  const pinnedTweetIds = new Set<string>(); // 고정 트윗 ID (제외 대상)
   let nextCursor: string | undefined;
 
   const instructions = data.data.user.result.timeline_v2.timeline.instructions;
 
-  // 1차: 모든 트윗 파싱 + 리트윗 원본 ID 수집
+  // 1차: 고정 트윗 ID 수집 + 모든 트윗 파싱 + 리트윗 원본 ID 수집
   for (const instruction of instructions) {
+    // 고정 트윗은 삭제 대상이 아니므로 제외
+    // biome-ignore lint/suspicious/noExplicitAny: Twitter API 응답 타입이 복잡하여 any 사용
+    const inst = instruction as any;
+    if (inst.type === 'TimelinePinEntry' && inst.entry) {
+      const pinnedId =
+        inst.entry.content?.itemContent?.tweet_results?.result?.rest_id;
+      if (pinnedId) {
+        pinnedTweetIds.add(pinnedId);
+        logger.log('[parser] 고정 트윗 제외:', pinnedId);
+      }
+      continue;
+    }
+
     if (!instruction.entries) continue;
 
     for (const entry of instruction.entries) {
@@ -95,8 +109,10 @@ export function parseTimelineResponse(
     }
   }
 
-  // 2차: 리트윗 원본 트윗 제외 (번들로 온 원본만 제거)
-  const filteredTweets = tweets.filter((t) => !retweetedOriginalIds.has(t.id));
+  // 2차: 고정 트윗 + 리트윗 원본 트윗 제외
+  const filteredTweets = tweets.filter(
+    (t) => !pinnedTweetIds.has(t.id) && !retweetedOriginalIds.has(t.id),
+  );
 
   return { tweets: filteredTweets, nextCursor };
 }
