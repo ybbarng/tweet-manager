@@ -68,7 +68,7 @@ pnpm install
 ### 설치 확인
 
 ```bash
-pnpm test  # 91개 테스트 통과 확인
+pnpm test  # 94개 테스트 통과 확인
 ```
 
 ## 실행

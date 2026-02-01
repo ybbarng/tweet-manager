@@ -61,7 +61,8 @@ pnpm run test:watch       # vitest watch 모드
 - **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
-- 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `QueryBuilder.tsx`에 UI 연결 → `TweetManager.tsx`에 상태 연동
+- 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `useFilterState.ts` 훅에 상태 추가 → `QueryBuilder.tsx`에 UI 연결
+- **커스텀 훅**: `src/lib/hooks/`에 위치. `useFilterState`는 모든 필터 상태 관리, `useTheme`는 다크모드 관리.
 - IPC 채널 추가 시: `electron/main.ts`에 핸들러 → `electron/preload.ts`에 노출 → `src/lib/ipc.ts`에 래퍼 함수 → `src/lib/queries.ts`에 query/mutation 훅
 
 ## 작업 완료 체크리스트
