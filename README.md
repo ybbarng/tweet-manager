@@ -45,7 +45,7 @@ Twitter(X) 트윗을 조건에 따라 필터링하고, 미리보기 후 일괄 �
 | 가상 스크롤 | @tanstack/react-virtual |
 | HTTP 클라이언트 | wretch |
 | 린트/포맷 | Biome + Husky (pre-commit) |
-| 테스트 | Vitest |
+| 테스트 | Vitest + Testing Library |
 | 패키지 매니저 | pnpm |
 
 ## 개발 환경 설정

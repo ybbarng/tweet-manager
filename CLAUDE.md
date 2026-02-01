@@ -60,7 +60,7 @@ pnpm run test:watch       # vitest watch 모드
 - 한국어 주석은 복잡한 로직에만 추가. 자명한 코드에는 생략.
 - **포맷/린트**: biome 사용 (ESLint 아님). `biome.json` 참고. 들여쓰기: space 2칸, 따옴표: single quote.
 - **Pre-commit 훅**: husky + lint-staged로 커밋 전 자동 린트. 스테이징된 `*.{js,ts,tsx,json}` 파일만 검사.
-- **테스트**: vitest 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts` 패턴으로 작성.
+- **테스트**: vitest + @testing-library/react 사용. 테스트 파일은 `__tests__/` 디렉토리에 `*.test.ts(x)` 패턴으로 작성. jsdom 환경에서 컴포넌트 테스트 가능.
 - 모든 React 컴포넌트에 `'use client'` 지시문 사용 (App Router 클라이언트 컴포넌트)
 - 공통 타입은 `src/types/index.ts`에 정의
 - 필터 추가 시: 필터 타입을 `src/lib/filters/types.ts`에 정의 → `src/lib/filters/`에 필터 파일 추가 → `app-store.ts`에 상태/액션 추가 → `create-filters.ts`에 필터 생성 로직 추가 → `QueryBuilder.tsx`에 UI 연결 (zustand에서 직접 상태 사용)
