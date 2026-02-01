@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MessageCircle, Repeat2 } from 'lucide-react';
+import { Heart, Link2, MessageCircle, Repeat2 } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils/date';
 import type { Tweet } from '@/types';
 
@@ -33,9 +33,18 @@ export default function TweetCard({
           />
         )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             {tweet.isRetweet && (
               <span className="text-xs text-green-500 font-medium">RT</span>
+            )}
+            {tweet.threadInfo && (
+              <span
+                className="flex items-center gap-1 text-xs text-purple-500 font-medium"
+                title={`쓰레드 ${tweet.threadInfo.size}개 중 최신 (시작: ${tweet.threadInfo.startTweetDate})`}
+              >
+                <Link2 className="w-3 h-3" />
+                쓰레드 {tweet.threadInfo.size}
+              </span>
             )}
             <span className="text-xs text-neutral-500">
               {formatDateTime(tweet.createdAt)}

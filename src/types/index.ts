@@ -1,3 +1,13 @@
+/** 쓰레드 정보 */
+export interface ThreadInfo {
+  /** 쓰레드 내 트윗 수 */
+  size: number;
+  /** 쓰레드 시작 트윗 ID */
+  startTweetId: string;
+  /** 쓰레드 시작 날짜 */
+  startTweetDate: string;
+}
+
 /** 트윗 데이터 */
 export interface Tweet {
   id: string;
@@ -14,6 +24,8 @@ export interface Tweet {
   conversationId?: string;
   isRetweet: boolean;
   media?: { type: string; url: string }[];
+  /** 쓰레드의 일부인 경우 쓰레드 정보 */
+  threadInfo?: ThreadInfo;
 }
 
 /** Twitter 인증 정보 */

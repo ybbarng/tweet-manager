@@ -1,6 +1,12 @@
 import { logger } from '../utils/logger';
 import type { TweetResult, UserTweetsResponse, ViewerResponse } from './types';
 
+export interface ThreadInfo {
+  size: number; // 쓰레드 내 트윗 수
+  startTweetId: string; // 쓰레드 시작 트윗 ID
+  startTweetDate: string; // 쓰레드 시작 날짜
+}
+
 export interface ParsedTweet {
   id: string;
   text: string;
@@ -13,6 +19,7 @@ export interface ParsedTweet {
   conversationId?: string;
   isRetweet: boolean;
   media?: { type: string; url: string }[];
+  threadInfo?: ThreadInfo; // 쓰레드의 일부인 경우
 }
 
 export interface FetchTweetsResult {
@@ -89,19 +96,58 @@ export function parseTimelineResponse(
       }
 
       // 쓰레드 모듈 (TimelineTimelineModule) - items 배열 안에 여러 트윗
+      // 가장 최근 트윗만 포함하고, 쓰레드 정보를 첨부
       // biome-ignore lint/suspicious/noExplicitAny: Twitter API 응답 타입이 복잡하여 any 사용
       const items = (entry.content as any).items;
-      if (Array.isArray(items)) {
+      if (Array.isArray(items) && items.length > 0) {
+        // 쓰레드 내 모든 트윗 파싱
+        const threadTweets: { parsed: ParsedTweet; result: unknown }[] = [];
         for (const item of items) {
           const tweetResult = item.item?.itemContent?.tweet_results?.result;
           if (tweetResult) {
             const parsed = parseTweetResultWithWrapper(tweetResult);
             if (parsed) {
-              tweets.push(parsed);
-              const originalId = getRetweetedOriginalId(tweetResult);
-              if (originalId) {
-                retweetedOriginalIds.add(originalId);
-              }
+              threadTweets.push({ parsed, result: tweetResult });
+            }
+          }
+        }
+
+        if (threadTweets.length > 0) {
+          // 날짜순 정렬 (오래된 것 → 최신)
+          threadTweets.sort(
+            (a, b) =>
+              new Date(a.parsed.createdAt).getTime() -
+              new Date(b.parsed.createdAt).getTime(),
+          );
+
+          const oldest = threadTweets[0];
+          const newest = threadTweets[threadTweets.length - 1];
+
+          // 가장 최근 트윗에만 쓰레드 정보 첨부
+          // 최초 트윗은 제외 (나중에 일반 트윗으로 로드될 때 처리)
+          if (newest.parsed.id !== oldest.parsed.id) {
+            newest.parsed.threadInfo = {
+              size: threadTweets.length,
+              startTweetId: oldest.parsed.id,
+              startTweetDate: oldest.parsed.createdAt,
+            };
+            tweets.push(newest.parsed);
+
+            // 리트윗이면 원본 트윗 ID 수집
+            const originalId = getRetweetedOriginalId(newest.result);
+            if (originalId) {
+              retweetedOriginalIds.add(originalId);
+            }
+
+            logger.log(
+              `[parser] 쓰레드 처리: ${threadTweets.length}개 중 최신만 포함 (시작: ${oldest.parsed.id})`,
+            );
+          } else {
+            // 쓰레드가 1개뿐이면 일반 트윗처럼 처리
+            tweets.push(newest.parsed);
+            const originalId = getRetweetedOriginalId(newest.result);
+            if (originalId) {
+              retweetedOriginalIds.add(originalId);
             }
           }
         }
