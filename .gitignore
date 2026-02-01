@@ -44,3 +44,4 @@ next-env.d.ts
 # electron
 /dist-electron
 /release
+RELEASE_NOTES.md

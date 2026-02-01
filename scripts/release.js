@@ -172,8 +172,22 @@ function generateReleaseNotes(previousTag) {
 }
 
 const previousTag = getPreviousTag();
-const releaseNotes = generateReleaseNotes(previousTag);
 
+// RELEASE_NOTES.md 파일이 있으면 사용, 없으면 자동 생성
+const releaseNotesPath = path.join(__dirname, '..', 'RELEASE_NOTES.md');
+let releaseNotes;
+let usingCustomNotes = false;
+
+if (fs.existsSync(releaseNotesPath)) {
+  releaseNotes = fs.readFileSync(releaseNotesPath, 'utf-8').trim();
+  usingCustomNotes = true;
+  console.log('RELEASE_NOTES.md 파일 사용');
+} else {
+  releaseNotes = generateReleaseNotes(previousTag);
+  console.log('릴리즈 노트 자동 생성 (RELEASE_NOTES.md 없음)');
+}
+
+console.log('');
 console.log('릴리즈 노트 미리보기:');
 console.log('----------------------------------------');
 console.log(releaseNotes);
@@ -257,6 +271,11 @@ try {
   // 임시 파일 삭제
   if (fs.existsSync(notesPath)) {
     fs.unlinkSync(notesPath);
+  }
+  // RELEASE_NOTES.md 파일 삭제 (사용한 경우)
+  if (usingCustomNotes && fs.existsSync(releaseNotesPath)) {
+    fs.unlinkSync(releaseNotesPath);
+    console.log('✓ RELEASE_NOTES.md 파일 삭제됨');
   }
 }
 
