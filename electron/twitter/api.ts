@@ -107,13 +107,14 @@ export class TwitterApiClient {
   async fetchUserTweets(
     cursor?: string,
     pageNumber = 1,
+    count = 20,
     retryCount = 0,
   ): Promise<FetchTweetsResult> {
     if (!this.userId) {
       await this.verifyCredentials();
     }
 
-    const variables = getUserTweetsVariables(this.userId!, cursor);
+    const variables = getUserTweetsVariables(this.userId!, cursor, count);
     const params = new URLSearchParams({
       variables: JSON.stringify(variables),
       features: JSON.stringify(USER_TWEETS_FEATURES),
@@ -160,7 +161,7 @@ export class TwitterApiClient {
         if (waitMs > 0) {
           await delay(Math.min(waitMs, RATE_LIMIT.MAX_WAIT_MS));
         }
-        return this.fetchUserTweets(cursor, pageNumber, retryCount + 1);
+        return this.fetchUserTweets(cursor, pageNumber, count, retryCount + 1);
       }
       throw new Error(`트윗 조회 실패: ${error.status || error.message}`);
     }

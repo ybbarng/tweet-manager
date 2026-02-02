@@ -15,10 +15,16 @@ export const VIEWER_FEATURES = {
   responsive_web_graphql_timeline_navigation_enabled: true,
 };
 
-export function getUserTweetsVariables(userId: string, cursor?: string) {
+export const DEFAULT_TWEET_COUNT = 20;
+
+export function getUserTweetsVariables(
+  userId: string,
+  cursor?: string,
+  count = DEFAULT_TWEET_COUNT,
+) {
   const variables: Record<string, unknown> = {
     userId,
-    count: 20,
+    count,
     includePromotedContent: false,
     withQuickPromoteEligibilityTweetFields: true,
     withVoice: true,

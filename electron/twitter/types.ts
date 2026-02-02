@@ -36,6 +36,32 @@ export interface TweetResult {
   };
 }
 
+/** Timeline entry 구조 */
+export interface TimelineEntry {
+  entryId: string;
+  sortIndex: string;
+  content: {
+    entryType: string;
+    itemContent?: {
+      tweet_results: {
+        result: TweetResult;
+      };
+    };
+    items?: Array<{
+      entryId: string;
+      item: {
+        itemContent: {
+          tweet_results: {
+            result: TweetResult;
+          };
+        };
+      };
+    }>;
+    value?: string; // cursor 값
+    cursorType?: string;
+  };
+}
+
 /** UserTweets API 응답 구조 */
 export interface UserTweetsResponse {
   data: {
@@ -45,20 +71,8 @@ export interface UserTweetsResponse {
           timeline: {
             instructions: Array<{
               type: string;
-              entries?: Array<{
-                entryId: string;
-                sortIndex: string;
-                content: {
-                  entryType: string;
-                  itemContent?: {
-                    tweet_results: {
-                      result: TweetResult;
-                    };
-                  };
-                  value?: string; // cursor 값
-                  cursorType?: string;
-                };
-              }>;
+              entry?: TimelineEntry; // TimelinePinEntry용
+              entries?: TimelineEntry[];
             }>;
           };
         };

@@ -49,8 +49,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       bearerToken: string;
     }) => ipcRenderer.invoke('twitter:verify', auth),
 
-    fetchTweets: (cursor?: string, pageNumber?: number) =>
-      ipcRenderer.invoke('twitter:fetch-tweets', cursor, pageNumber),
+    fetchTweets: (cursor?: string, pageNumber?: number, count?: number) =>
+      ipcRenderer.invoke('twitter:fetch-tweets', cursor, pageNumber, count),
 
     deleteTweet: (tweetId: string) =>
       ipcRenderer.invoke('twitter:delete-tweet', tweetId),

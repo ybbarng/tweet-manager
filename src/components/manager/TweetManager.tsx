@@ -20,7 +20,7 @@ import TweetStats from '../tweets/TweetStats';
 import DeleteActions from './DeleteActions';
 import DeletionStatus from './DeletionStatus';
 import TweetPreviewSection from './TweetPreviewSection';
-import TweetStatusBar from './TweetStatusBar';
+import TweetStatusBar, { type BulkLoadSettings } from './TweetStatusBar';
 
 export default function TweetManager() {
   const {
@@ -42,6 +42,13 @@ export default function TweetManager() {
   const lastFetchTime = useRef(0);
   const pageCountRef = useRef(0); // 디버그용 페이지 카운터
   const MIN_FETCH_INTERVAL = 500;
+
+  // 연속 불러오기 상태
+  const [bulkLoadProgress, setBulkLoadProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const bulkLoadAbortRef = useRef(false);
 
   // 사용자가 체크한 트윗 ID (삭제 선택)
   const [selectedForDeletion, setSelectedForDeletion] = useState<Set<string>>(
@@ -95,7 +102,7 @@ export default function TweetManager() {
 
   // 데이터 로드 함수
   const handleApiLoad = useCallback(
-    async (cursor?: string) => {
+    async (cursor?: string, count?: number) => {
       if (!isElectron()) return;
       if (apiLoading) return;
 
@@ -120,7 +127,7 @@ export default function TweetManager() {
       const currentPage = pageCountRef.current;
 
       try {
-        const result = await fetchTweets(cursor, currentPage);
+        const result = await fetchTweets(cursor, currentPage, count);
         if (!result.success || !result.data) {
           setLoadError(result.error || '트윗 조회에 실패했습니다.');
           return;
@@ -154,6 +161,64 @@ export default function TweetManager() {
     if (apiLoading || !nextCursor || !hasMore) return;
     handleApiLoad(nextCursor);
   }, [apiLoading, nextCursor, hasMore, handleApiLoad]);
+
+  // 연속 불러오기
+  const handleBulkLoad = useCallback(
+    async (settings: BulkLoadSettings) => {
+      if (!isElectron() || apiLoading || !hasMore) return;
+
+      bulkLoadAbortRef.current = false;
+      setBulkLoadProgress({ current: 0, total: settings.repeat });
+
+      let currentCursor = nextCursor;
+      for (let i = 0; i < settings.repeat; i++) {
+        if (bulkLoadAbortRef.current || !currentCursor) break;
+
+        setBulkLoadProgress({ current: i + 1, total: settings.repeat });
+
+        // count 파라미터로 불러오기
+        const result = await fetchTweets(
+          currentCursor,
+          pageCountRef.current + 1,
+          settings.count,
+        );
+        if (!result.success || !result.data) {
+          setLoadError(result.error || '트윗 조회에 실패했습니다.');
+          break;
+        }
+
+        const loadedTweets = result.data.tweets.map((t: Tweet) => ({
+          ...t,
+          createdAt: new Date(t.createdAt),
+        }));
+
+        if (loadedTweets.length > 0) {
+          appendTweets(loadedTweets);
+          pageCountRef.current += 1;
+        }
+
+        currentCursor = result.data.nextCursor;
+        setNextCursor(currentCursor);
+        setHasMore(!!currentCursor && loadedTweets.length > 0);
+
+        if (!currentCursor || loadedTweets.length === 0) break;
+
+        // 마지막 반복이 아니면 간격만큼 대기
+        if (i < settings.repeat - 1 && !bulkLoadAbortRef.current) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.interval * 1000),
+          );
+        }
+      }
+
+      setBulkLoadProgress(null);
+    },
+    [apiLoading, hasMore, nextCursor, appendTweets],
+  );
+
+  const handleStopBulkLoad = useCallback(() => {
+    bulkLoadAbortRef.current = true;
+  }, []);
 
   const handleToggleSelection = useCallback((id: string) => {
     setSelectedForDeletion((prev) => {
@@ -278,7 +343,10 @@ export default function TweetManager() {
         loadError={loadError}
         hasMore={hasMore}
         isRunning={isRunning}
+        bulkLoadProgress={bulkLoadProgress ?? undefined}
         onLoadMore={handleLoadMore}
+        onBulkLoad={handleBulkLoad}
+        onStopBulkLoad={handleStopBulkLoad}
         onRefresh={() => handleApiLoad(undefined)}
       />
 

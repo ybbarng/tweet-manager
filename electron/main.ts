@@ -262,8 +262,10 @@ ipcMain.handle(
 
 ipcMain.handle(
   'twitter:fetch-tweets',
-  (_event, cursor?: string, pageNumber?: number) =>
-    handleIpc(() => requireAuth().fetchUserTweets(cursor, pageNumber ?? 1)),
+  (_event, cursor?: string, pageNumber?: number, count?: number) =>
+    handleIpc(() =>
+      requireAuth().fetchUserTweets(cursor, pageNumber ?? 1, count ?? 20),
+    ),
 );
 
 ipcMain.handle('twitter:delete-tweet', (_event, tweetId: string) =>
