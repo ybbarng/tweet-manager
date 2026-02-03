@@ -5,7 +5,18 @@ export const ENDPOINTS = {
   USER_TWEETS: 'https://x.com/i/api/graphql/E3opETHurmVJflFsUBVuUQ/UserTweets',
   DELETE_TWEET:
     'https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet',
+  ACCOUNT_SETTINGS: 'https://api.x.com/1.1/account/settings.json',
 } as const;
+
+export const ACCOUNT_SETTINGS_PARAMS = {
+  include_ext_sharing_audiospaces_listening_data_with_followers: 'true',
+  include_mention_filter: 'true',
+  include_nsfw_user_flag: 'true',
+  include_nsfw_admin_flag: 'true',
+  include_ranked_timeline: 'true',
+  include_alt_text_compose: 'true',
+  include_country_code: 'true',
+};
 
 export const VIEWER_FEATURES = {
   rweb_tipjar_consumption_enabled: true,

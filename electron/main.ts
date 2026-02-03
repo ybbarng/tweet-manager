@@ -502,13 +502,29 @@ ipcMain.handle('twitter:login', async () => {
             });
 
             // DOM에서 사용자 정보 추출 시도
-            const userInfo = await extractUserInfo();
+            let userInfo = await extractUserInfo();
 
-            // DOM 추출 실패해도 계속 진행 (screenName은 트윗 로드 시 추출됨)
+            // DOM 추출 실패 시 account/settings API로 screen_name 가져오기
             if (!userInfo?.screenName) {
               logger.log(
-                '[twitter:login] DOM에서 사용자 정보 추출 실패, 트윗 로드 시 추출 예정',
+                '[twitter:login] DOM에서 사용자 정보 추출 실패, API 호출',
               );
+              try {
+                const settings = await twitterClient.getAccountSettings();
+                userInfo = {
+                  screenName: settings.screenName,
+                  profileImageUrl: userInfo?.profileImageUrl || null,
+                };
+                logger.log(
+                  '[twitter:login] API에서 screenName 가져옴:',
+                  settings.screenName,
+                );
+              } catch (err) {
+                logger.error(
+                  '[twitter:login] API로 사용자 정보 가져오기 실패:',
+                  err,
+                );
+              }
             }
 
             logger.log('[twitter:login] 로그인 성공:', {

@@ -2,6 +2,7 @@ import wretch, { type WretchError } from 'wretch';
 import { RATE_LIMIT } from '../constants';
 import { logger } from '../utils/logger';
 import {
+  ACCOUNT_SETTINGS_PARAMS,
   ENDPOINTS,
   getDeleteTweetVariables,
   getUserTweetsVariables,
@@ -102,6 +103,18 @@ export class TwitterApiClient {
     const user = parseViewer(data);
     this.userId = user.id;
     return user;
+  }
+
+  /** 계정 설정에서 screen_name 가져오기 (Viewer API 대안) */
+  async getAccountSettings(): Promise<{ screenName: string }> {
+    const params = new URLSearchParams(ACCOUNT_SETTINGS_PARAMS);
+
+    const data = await this.api
+      .url(`${ENDPOINTS.ACCOUNT_SETTINGS}?${params}`)
+      .get()
+      .json<{ screen_name: string }>();
+
+    return { screenName: data.screen_name };
   }
 
   async fetchUserTweets(
