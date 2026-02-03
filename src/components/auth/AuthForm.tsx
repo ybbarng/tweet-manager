@@ -76,7 +76,7 @@ export default function AuthForm() {
           userId: user.id,
         } as Parameters<typeof verifyAuth>[0]);
 
-        if (!verifyResult.success) {
+        if (!verifyResult.success || !verifyResult.data) {
           // 토큰 만료 또는 무효화됨
           await clearAuth();
           await ensureMinDisplayTime();
@@ -90,9 +90,18 @@ export default function AuthForm() {
           return;
         }
 
-        // 자동 로그인 성공
+        // 자동 로그인 성공 - API에서 가져온 최신 사용자 정보 사용
+        const verifiedUser = {
+          ...user,
+          ...verifyResult.data,
+        };
         await ensureMinDisplayTime();
-        setAuth(auth, user);
+        setAuth(auth, verifiedUser);
+
+        // 사용자 정보가 업데이트되었으면 저장소도 갱신
+        if (verifiedUser.screenName !== user.screenName) {
+          await saveAuth({ auth, user: verifiedUser });
+        }
       } catch (err) {
         await ensureMinDisplayTime();
         setAutoLoginError((err as Error).message);

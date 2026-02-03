@@ -234,21 +234,7 @@ ipcMain.handle(
       });
       twitterClient = new TwitterApiClient({ ...auth, userAgent });
 
-      // userId가 있으면 API 호출 없이 인증 성공으로 처리
-      if (auth.userId) {
-        logger.log('[twitter:verify] userId 있음, 인증 완료');
-        return {
-          success: true,
-          data: {
-            id: auth.userId,
-            name: '',
-            screenName: '',
-            profileImageUrl: '',
-          },
-        };
-      }
-
-      // userId 없으면 (수동 입력) verifyCredentials 호출
+      // 항상 verifyCredentials 호출하여 토큰 유효성 및 사용자 정보 확인
       const user = await twitterClient.verifyCredentials();
       logger.log('[twitter:verify] 성공:', user);
       return { success: true, data: user };
