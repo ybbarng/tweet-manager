@@ -365,26 +365,12 @@ export default function TweetManager() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <TweetStatusBar
-        loading={apiLoading}
-        loadError={loadError}
-        hasMore={hasMore}
-        isRunning={isRunning}
-        bulkLoadProgress={bulkLoadProgress ?? undefined}
-        startDate={filterState.startDate.date}
-        oldestTweetDate={oldestTweetDate}
-        onLoadMore={handleLoadMore}
-        onBulkLoad={handleBulkLoad}
-        onStopBulkLoad={handleStopBulkLoad}
-        onRefresh={() => handleApiLoad(undefined)}
-      />
-
       <DeletionStatus />
 
       {!isRunning && !isDone && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 왼쪽: SQL 스타일 쿼리 빌더 */}
-          <div className="lg:col-span-1">
+        <>
+          {/* 삭제 조건 쿼리 빌더 */}
+          <div className="mb-6">
             <h3 className="font-bold mb-4">삭제 조건</h3>
             <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-4">
               조건에 맞는 트윗을{' '}
@@ -393,41 +379,55 @@ export default function TweetManager() {
               </span>
               로 선정합니다.
             </p>
-
             <QueryBuilder resultCount={deletionCandidates.length} />
           </div>
 
-          {/* 오른쪽: 트윗 목록 + 삭제 */}
-          <div className="lg:col-span-2">
-            <TweetStats
-              total={tweets.length}
-              toDelete={toDelete.length}
-              preserved={tweets.length - toDelete.length}
-            />
+          {/* 트윗 로드 상태 */}
+          <TweetStatusBar
+            loading={apiLoading}
+            loadError={loadError}
+            hasMore={hasMore}
+            isRunning={isRunning}
+            bulkLoadProgress={bulkLoadProgress ?? undefined}
+            startDate={filterState.startDate.date}
+            oldestTweetDate={oldestTweetDate}
+            onLoadMore={handleLoadMore}
+            onBulkLoad={handleBulkLoad}
+            onStopBulkLoad={handleStopBulkLoad}
+            onRefresh={() => handleApiLoad(undefined)}
+          />
 
-            <TweetPreviewSection
-              activeConditions={activeConditions}
-              displayedTweets={displayedTweets}
-              deletionCandidatesCount={deletionCandidates.length}
-              displayLimit={filterState.displayLimit}
-              selectedForDeletion={selectedForDeletion}
-              onToggleSelection={handleToggleSelection}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-            />
+          {/* 트윗 통계 */}
+          <TweetStats
+            total={tweets.length}
+            toDelete={toDelete.length}
+            preserved={tweets.length - toDelete.length}
+          />
 
-            <DeleteActions
-              toDelete={toDelete}
-              confirmed={confirmed}
-              backupBeforeDelete={backupBeforeDelete}
-              backupPending={backupMutation.isPending}
-              onConfirmedChange={setConfirmed}
-              onBackupBeforeDeleteChange={setBackupBeforeDelete}
-              onBackup={handleBackup}
-              onDelete={handleDelete}
-            />
-          </div>
-        </div>
+          {/* 트윗 목록 */}
+          <TweetPreviewSection
+            activeConditions={activeConditions}
+            displayedTweets={displayedTweets}
+            deletionCandidatesCount={deletionCandidates.length}
+            displayLimit={filterState.displayLimit}
+            selectedForDeletion={selectedForDeletion}
+            onToggleSelection={handleToggleSelection}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
+          />
+
+          {/* 삭제 액션 */}
+          <DeleteActions
+            toDelete={toDelete}
+            confirmed={confirmed}
+            backupBeforeDelete={backupBeforeDelete}
+            backupPending={backupMutation.isPending}
+            onConfirmedChange={setConfirmed}
+            onBackupBeforeDeleteChange={setBackupBeforeDelete}
+            onBackup={handleBackup}
+            onDelete={handleDelete}
+          />
+        </>
       )}
     </div>
   );

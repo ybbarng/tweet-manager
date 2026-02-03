@@ -66,7 +66,7 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   hasVideo: { enabled: false, value: false },
   reply: { enabled: false, value: false },
   thread: { enabled: false, excludedIds: [] },
-  startDate: { enabled: false, date: null },
+  startDate: { enabled: true, date: null },
   endDate: { enabled: false, date: null },
   displayLimit: 100,
 };

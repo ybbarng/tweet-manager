@@ -119,7 +119,7 @@ export function hasActiveConditions(filterState: FilterState): boolean {
     filterState.hasPhoto.enabled ||
     filterState.hasVideo.enabled ||
     filterState.reply.enabled ||
-    filterState.startDate.enabled ||
-    filterState.endDate.enabled
+    (filterState.startDate.enabled && filterState.startDate.date !== null) ||
+    (filterState.endDate.enabled && filterState.endDate.date !== null)
   );
 }
