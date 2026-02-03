@@ -3,7 +3,10 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { History } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import AuthForm, { resetWarningDismissed } from '@/components/auth/AuthForm';
+import AuthForm, {
+  resetWarningDismissed,
+  setManualLogout,
+} from '@/components/auth/AuthForm';
 import SecurityWarningModal from '@/components/auth/SecurityWarningModal';
 import DeletionHistoryModal from '@/components/history/DeletionHistoryModal';
 import TweetManager from '@/components/manager/TweetManager';
@@ -85,7 +88,10 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={() => {
+                    setManualLogout(true);
+                    logout();
+                  }}
                   className="text-red-500 hover:text-red-600"
                 >
                   로그아웃

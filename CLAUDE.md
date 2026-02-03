@@ -52,7 +52,8 @@ pnpm run test:watch       # vitest watch 모드
   - 배포: `pnpm run release <patch|minor|major>`
 - **다크모드**: `useTheme` 훅으로 상태 관리. system/light/dark 순환. localStorage에 저장. CSS는 `.dark` 클래스만 사용 (미디어 쿼리 제거하여 수동 전환과 충돌 방지).
 - **삭제 히스토리**: `app.getPath('userData')/deletion-history.json`에 저장. IPC 채널: `history:load`, `history:save`. 최근 100개 유지.
-- **자동 로그인**: Electron safeStorage API로 인증 정보 암호화 저장. 저장 위치: `app.getPath('userData')/credentials.dat`. IPC 채널: `auth:save`, `auth:load`, `auth:clear`. 앱 시작 시 저장된 정보로 `twitter:verify` 호출하여 유효성 검증, 실패 시 재로그인 안내.
+- **자동 로그인**: Electron safeStorage API로 인증 정보 암호화 저장. 저장 위치: `app.getPath('userData')/credentials.dat`. IPC 채널: `auth:save`, `auth:load`, `auth:clear`. 앱 시작 시 저장된 정보로 유효성 검증, 실패 시 재로그인 안내.
+  - **수동 로그아웃**: localStorage의 `tweet-manager-manual-logout` 플래그로 관리. 로그아웃 시 플래그 설정 → 다음 실행 시 자동 로그인 건너뛰고 "기존 정보로 로그인" / "다른 계정으로 로그인" 버튼 표시.
 
 ## 코딩 컨벤션
 
