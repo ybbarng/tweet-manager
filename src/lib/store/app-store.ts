@@ -84,6 +84,7 @@ interface AppStore {
   auth: TwitterAuth | null;
   user: TwitterUser | null;
   setAuth: (auth: TwitterAuth, user: TwitterUser) => void;
+  updateUser: (user: Partial<TwitterUser>) => void;
   logout: () => void;
 
   // === Tweets ===
@@ -144,6 +145,10 @@ export const useAppStore = create<AppStore>((set) => ({
   auth: null,
   user: null,
   setAuth: (auth, user) => set({ auth, user }),
+  updateUser: (partialUser) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...partialUser } : null,
+    })),
   logout: () =>
     set({
       auth: null,

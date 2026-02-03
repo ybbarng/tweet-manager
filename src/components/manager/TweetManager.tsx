@@ -25,11 +25,13 @@ import TweetStatusBar, { type BulkLoadSettings } from './TweetStatusBar';
 export default function TweetManager() {
   const {
     tweets,
+    user,
     deletionProgress,
     filterState,
     setTweets,
     appendTweets,
     removeTweets,
+    updateUser,
     setDeletionProgress,
     resetDeletionProgress,
   } = useAppStore();
@@ -153,6 +155,11 @@ export default function TweetManager() {
           }
         }
 
+        // 트윗에서 사용자 정보 업데이트 (screenName이 비어있을 때)
+        if (result.data.user?.screenName && !user?.screenName) {
+          updateUser(result.data.user);
+        }
+
         setNextCursor(result.data.nextCursor);
         setHasMore(!!result.data.nextCursor && loadedTweets.length > 0);
       } catch (err) {
@@ -161,7 +168,14 @@ export default function TweetManager() {
         setApiLoading(false);
       }
     },
-    [apiLoading, appendTweets, resetDeletionProgress, setTweets],
+    [
+      apiLoading,
+      appendTweets,
+      resetDeletionProgress,
+      setTweets,
+      user,
+      updateUser,
+    ],
   );
 
   const handleLoadMore = useCallback(() => {

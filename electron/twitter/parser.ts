@@ -25,6 +25,7 @@ export interface ParsedTweet {
 export interface FetchTweetsResult {
   tweets: ParsedTweet[];
   nextCursor?: string;
+  user?: ParsedUser;
 }
 
 export interface ParsedUser {
@@ -160,7 +161,28 @@ export function parseTimelineResponse(
     (t) => !pinnedTweetIds.has(t.id) && !retweetedOriginalIds.has(t.id),
   );
 
-  return { tweets: filteredTweets, nextCursor };
+  // 첫 번째 트윗에서 사용자 정보 추출
+  let user: ParsedUser | undefined;
+  for (const instruction of instructions) {
+    if (!instruction.entries) continue;
+    for (const entry of instruction.entries) {
+      const userResult =
+        entry.content.itemContent?.tweet_results?.result?.core?.user_results
+          ?.result;
+      if (userResult?.rest_id && userResult?.legacy) {
+        user = {
+          id: userResult.rest_id,
+          name: userResult.legacy.name || '',
+          screenName: userResult.legacy.screen_name || '',
+          profileImageUrl: userResult.legacy.profile_image_url_https || '',
+        };
+        break;
+      }
+    }
+    if (user) break;
+  }
+
+  return { tweets: filteredTweets, nextCursor, user };
 }
 
 /** 리트윗의 원본 트윗 ID 추출 */
