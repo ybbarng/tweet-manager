@@ -100,6 +100,13 @@ export async function verifyAuth(
   return getAPI().twitter.verify(auth);
 }
 
+/** 계정 설정 조회 (screenName 등) */
+export async function getAccountSettings(): Promise<
+  IpcResponse<{ screenName: string }>
+> {
+  return getAPI().twitter.getAccountSettings();
+}
+
 /** 트윗 조회 (페이지네이션) */
 export async function fetchTweets(
   cursor?: string,

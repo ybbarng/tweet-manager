@@ -49,6 +49,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       bearerToken: string;
     }) => ipcRenderer.invoke('twitter:verify', auth),
 
+    getAccountSettings: () =>
+      ipcRenderer.invoke('twitter:get-account-settings'),
+
     fetchTweets: (cursor?: string, pageNumber?: number, count?: number) =>
       ipcRenderer.invoke('twitter:fetch-tweets', cursor, pageNumber, count),
 

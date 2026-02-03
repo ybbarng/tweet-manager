@@ -252,6 +252,10 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle('twitter:get-account-settings', () =>
+  handleIpc(() => requireAuth().getAccountSettings()),
+);
+
 ipcMain.handle(
   'twitter:fetch-tweets',
   (_event, cursor?: string, pageNumber?: number, count?: number) =>
