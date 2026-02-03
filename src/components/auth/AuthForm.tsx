@@ -90,18 +90,25 @@ export default function AuthForm() {
           return;
         }
 
-        // 자동 로그인 성공 - API에서 가져온 최신 사용자 정보 사용
-        const verifiedUser = {
-          ...user,
-          ...verifyResult.data,
-        };
-        await ensureMinDisplayTime();
-        setAuth(auth, verifiedUser);
+        // 자동 로그인 성공
+        let finalUser = user;
 
-        // 사용자 정보가 업데이트되었으면 저장소도 갱신
-        if (verifiedUser.screenName !== user.screenName) {
-          await saveAuth({ auth, user: verifiedUser });
+        // screenName이 비어있으면 API로 가져오기 시도
+        if (!user.screenName) {
+          try {
+            const userInfoResult = await verifyAuth(auth);
+            if (userInfoResult.success && userInfoResult.data?.screenName) {
+              finalUser = { ...user, ...userInfoResult.data };
+              // 저장소도 갱신
+              await saveAuth({ auth, user: finalUser });
+            }
+          } catch {
+            // 실패해도 자동 로그인은 진행
+          }
         }
+
+        await ensureMinDisplayTime();
+        setAuth(auth, finalUser);
       } catch (err) {
         await ensureMinDisplayTime();
         setAutoLoginError((err as Error).message);
