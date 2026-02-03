@@ -501,18 +501,39 @@ ipcMain.handle('twitter:login', async () => {
         if (hasTokens) {
           // 페이지 로드 완료 대기 후 사용자 정보 추출
           setTimeout(async () => {
-            const userInfo = await extractUserInfo();
-            logger.log('[twitter:login] 로그인 성공:', {
-              userId,
-              screenName: userInfo?.screenName,
-            });
-
             // twitterClient 초기화
             twitterClient = new TwitterApiClient({
               authToken,
               csrfToken,
               bearerToken: TWITTER_BEARER_TOKEN,
               userId,
+            });
+
+            // DOM에서 사용자 정보 추출 시도
+            let userInfo = await extractUserInfo();
+
+            // DOM 추출 실패 시 API로 사용자 정보 가져오기
+            if (!userInfo?.screenName) {
+              logger.log(
+                '[twitter:login] DOM에서 사용자 정보 추출 실패, API 호출',
+              );
+              try {
+                const apiUser = await twitterClient.verifyCredentials();
+                userInfo = {
+                  screenName: apiUser.screenName,
+                  profileImageUrl: apiUser.profileImageUrl,
+                };
+              } catch (err) {
+                logger.error(
+                  '[twitter:login] API로 사용자 정보 가져오기 실패:',
+                  err,
+                );
+              }
+            }
+
+            logger.log('[twitter:login] 로그인 성공:', {
+              userId,
+              screenName: userInfo?.screenName,
             });
 
             resolveOnce({
