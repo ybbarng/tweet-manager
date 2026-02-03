@@ -38,7 +38,7 @@ export default function TweetStatusBar({
   onStopBulkLoad,
   onRefresh,
 }: TweetStatusBarProps) {
-  const { user, tweets } = useAppStore();
+  const tweets = useAppStore((s) => s.tweets);
   const [debugExporting, setDebugExporting] = useState(false);
   const [debugMessage, setDebugMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -105,9 +105,6 @@ export default function TweetStatusBar({
             {tweets.length.toLocaleString()}
           </span>
           <span className="text-neutral-500">개의 트윗</span>
-          {user && (
-            <span className="text-neutral-400 ml-2">@{user.screenName}</span>
-          )}
           {loading && !isBulkLoading && (
             <span className="text-blue-500 text-sm">불러오는 중...</span>
           )}
