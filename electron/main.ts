@@ -232,18 +232,18 @@ ipcMain.handle(
         userId: auth.userId,
         userAgent: `${userAgent.slice(0, 50)}...`,
       });
-      twitterClient = new TwitterApiClient({ ...auth, userAgent });
-
-      // userId가 있으면 API 호출 없이 인증 성공으로 처리 (자동 로그인)
-      if (auth.userId) {
-        logger.log('[twitter:verify] userId 있음, API 호출 생략');
-        return { success: true, data: { id: auth.userId } };
+      // userId가 없으면 에러 (Viewer API가 404를 반환하므로)
+      if (!auth.userId) {
+        logger.error('[twitter:verify] userId 없음');
+        return {
+          success: false,
+          error: 'userId가 없습니다. 다시 로그인해주세요.',
+        };
       }
 
-      // userId 없으면 verifyCredentials 호출
-      const user = await twitterClient.verifyCredentials();
-      logger.log('[twitter:verify] 성공:', user);
-      return { success: true, data: user };
+      twitterClient = new TwitterApiClient({ ...auth, userAgent });
+      logger.log('[twitter:verify] 성공:', { id: auth.userId });
+      return { success: true, data: { id: auth.userId } };
     } catch (error) {
       logger.error('[twitter:verify] 실패:', error);
       twitterClient = null;
@@ -502,25 +502,13 @@ ipcMain.handle('twitter:login', async () => {
             });
 
             // DOM에서 사용자 정보 추출 시도
-            let userInfo = await extractUserInfo();
+            const userInfo = await extractUserInfo();
 
-            // DOM 추출 실패 시 API로 사용자 정보 가져오기
+            // DOM 추출 실패해도 계속 진행 (screenName은 트윗 로드 시 추출됨)
             if (!userInfo?.screenName) {
               logger.log(
-                '[twitter:login] DOM에서 사용자 정보 추출 실패, API 호출',
+                '[twitter:login] DOM에서 사용자 정보 추출 실패, 트윗 로드 시 추출 예정',
               );
-              try {
-                const apiUser = await twitterClient.verifyCredentials();
-                userInfo = {
-                  screenName: apiUser.screenName,
-                  profileImageUrl: apiUser.profileImageUrl,
-                };
-              } catch (err) {
-                logger.error(
-                  '[twitter:login] API로 사용자 정보 가져오기 실패:',
-                  err,
-                );
-              }
             }
 
             logger.log('[twitter:login] 로그인 성공:', {

@@ -111,7 +111,7 @@ export class TwitterApiClient {
     retryCount = 0,
   ): Promise<FetchTweetsResult> {
     if (!this.userId) {
-      await this.verifyCredentials();
+      throw new Error('userId가 설정되지 않았습니다. 다시 로그인해주세요.');
     }
 
     const variables = getUserTweetsVariables(this.userId!, cursor, count);

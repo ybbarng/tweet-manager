@@ -120,25 +120,9 @@ export default function AuthForm() {
           return;
         }
 
-        // 자동 로그인 성공
-        let finalUser = user;
-
-        // screenName이 비어있으면 API로 가져오기 시도
-        if (!user.screenName) {
-          try {
-            const userInfoResult = await verifyAuth(auth);
-            if (userInfoResult.success && userInfoResult.data?.screenName) {
-              finalUser = { ...user, ...userInfoResult.data };
-              // 저장소도 갱신
-              await saveAuth({ auth, user: finalUser });
-            }
-          } catch {
-            // 실패해도 자동 로그인은 진행
-          }
-        }
-
+        // 자동 로그인 성공 (screenName은 트윗 로드 시 추출됨)
         await ensureMinDisplayTime();
-        setAuth(auth, finalUser);
+        setAuth(auth, user);
       } catch (err) {
         await ensureMinDisplayTime();
         setAutoLoginError((err as Error).message);
