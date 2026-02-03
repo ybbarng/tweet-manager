@@ -46,9 +46,16 @@ export default function TweetManager() {
   // 연속 불러오기 상태
   const [bulkLoadProgress, setBulkLoadProgress] = useState<{
     current: number;
-    total: number;
+    targetDate?: string;
   } | null>(null);
   const bulkLoadAbortRef = useRef(false);
+
+  // 가장 오래된 트윗의 날짜
+  const oldestTweetDate = useMemo(() => {
+    if (tweets.length === 0) return null;
+    const dates = tweets.map((t) => t.createdAt.getTime());
+    return new Date(Math.min(...dates));
+  }, [tweets]);
 
   // 사용자가 체크한 트윗 ID (삭제 선택)
   const [selectedForDeletion, setSelectedForDeletion] = useState<Set<string>>(
@@ -162,19 +169,31 @@ export default function TweetManager() {
     handleApiLoad(nextCursor);
   }, [apiLoading, nextCursor, hasMore, handleApiLoad]);
 
-  // 연속 불러오기
+  // 연속 불러오기 (startDate까지 자동 로드)
   const handleBulkLoad = useCallback(
     async (settings: BulkLoadSettings) => {
-      if (!isElectron() || apiLoading || !hasMore) return;
+      const startDate = filterState.startDate.date;
+      if (!isElectron() || apiLoading || !hasMore || !startDate) return;
+
+      // startDate의 0시 (시작 시간)
+      const targetDate = new Date(startDate);
+      targetDate.setHours(0, 0, 0, 0);
+      const targetDateStr = targetDate.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
 
       bulkLoadAbortRef.current = false;
-      setBulkLoadProgress({ current: 0, total: settings.repeat });
+      setBulkLoadProgress({ current: 0, targetDate: targetDateStr });
 
       let currentCursor = nextCursor;
-      for (let i = 0; i < settings.repeat; i++) {
-        if (bulkLoadAbortRef.current || !currentCursor) break;
+      let iteration = 0;
+      let reachedTarget = false;
 
-        setBulkLoadProgress({ current: i + 1, total: settings.repeat });
+      while (!bulkLoadAbortRef.current && currentCursor && !reachedTarget) {
+        iteration++;
+        setBulkLoadProgress({ current: iteration, targetDate: targetDateStr });
 
         // count 파라미터로 불러오기
         const result = await fetchTweets(
@@ -195,6 +214,14 @@ export default function TweetManager() {
         if (loadedTweets.length > 0) {
           appendTweets(loadedTweets);
           pageCountRef.current += 1;
+
+          // 가장 오래된 트윗이 targetDate에 도달했는지 확인
+          const oldestLoaded = new Date(
+            Math.min(...loadedTweets.map((t: Tweet) => t.createdAt.getTime())),
+          );
+          if (oldestLoaded <= targetDate) {
+            reachedTarget = true;
+          }
         }
 
         currentCursor = result.data.nextCursor;
@@ -203,8 +230,8 @@ export default function TweetManager() {
 
         if (!currentCursor || loadedTweets.length === 0) break;
 
-        // 마지막 반복이 아니면 간격만큼 대기
-        if (i < settings.repeat - 1 && !bulkLoadAbortRef.current) {
+        // 다음 반복 전 간격만큼 대기
+        if (!reachedTarget && !bulkLoadAbortRef.current) {
           await new Promise((resolve) =>
             setTimeout(resolve, settings.interval * 1000),
           );
@@ -213,7 +240,7 @@ export default function TweetManager() {
 
       setBulkLoadProgress(null);
     },
-    [apiLoading, hasMore, nextCursor, appendTweets],
+    [apiLoading, hasMore, nextCursor, appendTweets, filterState.startDate.date],
   );
 
   const handleStopBulkLoad = useCallback(() => {
@@ -344,6 +371,8 @@ export default function TweetManager() {
         hasMore={hasMore}
         isRunning={isRunning}
         bulkLoadProgress={bulkLoadProgress ?? undefined}
+        startDate={filterState.startDate.date}
+        oldestTweetDate={oldestTweetDate}
         onLoadMore={handleLoadMore}
         onBulkLoad={handleBulkLoad}
         onStopBulkLoad={handleStopBulkLoad}

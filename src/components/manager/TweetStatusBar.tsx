@@ -9,7 +9,6 @@ import { formatDate } from '@/lib/utils/date';
 export interface BulkLoadSettings {
   count: number; // 한 번에 n개씩
   interval: number; // m초 간격
-  repeat: number; // l회 반복
 }
 
 interface TweetStatusBarProps {
@@ -17,7 +16,9 @@ interface TweetStatusBarProps {
   loadError: string;
   hasMore: boolean;
   isRunning: boolean;
-  bulkLoadProgress?: { current: number; total: number };
+  bulkLoadProgress?: { current: number; targetDate?: string };
+  startDate: Date | null;
+  oldestTweetDate: Date | null;
   onLoadMore: () => void;
   onBulkLoad: (settings: BulkLoadSettings) => void;
   onStopBulkLoad: () => void;
@@ -30,6 +31,8 @@ export default function TweetStatusBar({
   hasMore,
   isRunning,
   bulkLoadProgress,
+  startDate,
+  oldestTweetDate,
   onLoadMore,
   onBulkLoad,
   onStopBulkLoad,
@@ -43,7 +46,6 @@ export default function TweetStatusBar({
   // 고급 설정 값
   const [count, setCount] = useState(20);
   const [interval, setInterval] = useState(1);
-  const [repeat, setRepeat] = useState(5);
 
   const handleExportDebug = async () => {
     setDebugExporting(true);
@@ -67,8 +69,20 @@ export default function TweetStatusBar({
 
   const handleBulkLoad = () => {
     setShowSettings(false);
-    onBulkLoad({ count, interval, repeat });
+    onBulkLoad({ count, interval });
   };
+
+  // 이미 startDate까지 로드했는지 확인
+  const alreadyReachedStartDate = useMemo(() => {
+    if (!startDate || !oldestTweetDate) return false;
+    // startDate의 0시 (시작 시간)
+    const targetDate = new Date(startDate);
+    targetDate.setHours(0, 0, 0, 0);
+    return oldestTweetDate <= targetDate;
+  }, [startDate, oldestTweetDate]);
+
+  // 연속 불러오기 가능 여부
+  const canBulkLoad = startDate && hasMore && !alreadyReachedStartDate;
 
   const dateRange = useMemo(() => {
     if (tweets.length === 0) return null;
@@ -99,8 +113,8 @@ export default function TweetStatusBar({
           )}
           {isBulkLoading && (
             <span className="text-blue-500 text-sm">
-              연속 불러오기 중... ({bulkLoadProgress.current}/
-              {bulkLoadProgress.total})
+              {bulkLoadProgress.targetDate}까지 불러오는 중... (
+              {bulkLoadProgress.current}회차)
             </span>
           )}
           {loadError && (
@@ -181,32 +195,32 @@ export default function TweetStatusBar({
                     />
                     <span className="text-sm text-neutral-500">초</span>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-neutral-600 dark:text-neutral-300 w-24">
-                      반복
-                    </span>
-                    <input
-                      type="number"
-                      value={repeat}
-                      onChange={(e) =>
-                        setRepeat(
-                          Math.max(1, Math.min(100, Number(e.target.value))),
-                        )
-                      }
-                      className="w-16 px-2 py-1 text-sm border border-neutral-300 dark:border-neutral-500 rounded bg-white dark:bg-neutral-600"
-                      min={1}
-                      max={100}
-                    />
-                    <span className="text-sm text-neutral-500">회</span>
-                  </div>
                 </div>
+
+                {startDate && (
+                  <div className="mt-3 text-xs text-neutral-500">
+                    {formatDate(startDate)}까지 자동으로 불러옵니다.
+                  </div>
+                )}
+
+                {!startDate && (
+                  <div className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+                    시작일 필터를 설정해주세요.
+                  </div>
+                )}
+
+                {alreadyReachedStartDate && (
+                  <div className="mt-3 text-xs text-green-600 dark:text-green-400">
+                    이미 해당 날짜까지 불러왔습니다.
+                  </div>
+                )}
 
                 <div className="mt-4 flex gap-2">
                   <button
                     type="button"
                     onClick={handleBulkLoad}
-                    className="flex-1 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
+                    disabled={!canBulkLoad}
+                    className="flex-1 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 disabled:bg-neutral-400 text-white rounded"
                   >
                     시작
                   </button>
