@@ -366,10 +366,10 @@ export default function TweetManager() {
     return unsubscribe;
   }, [setDeletionProgress]);
 
-  // 마운트 시 트윗 로드
+  // 마운트 시 트윗 로드 (시작일이 설정된 경우에만)
   // biome-ignore lint/correctness/useExhaustiveDependencies: 의도적으로 마운트 시에만 실행
   useEffect(() => {
-    if (tweets.length === 0 && !apiLoading) {
+    if (tweets.length === 0 && !apiLoading && filterState.startDate.date) {
       handleApiLoad(undefined);
     }
   }, []);
