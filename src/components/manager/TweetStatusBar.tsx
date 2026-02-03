@@ -105,7 +105,7 @@ export default function TweetStatusBar({
             {tweets.length.toLocaleString()}
           </span>
           <span className="text-neutral-500">개의 트윗</span>
-          {user?.screenName && (
+          {user && (
             <span className="text-neutral-400 ml-2">@{user.screenName}</span>
           )}
           {loading && !isBulkLoading && (
