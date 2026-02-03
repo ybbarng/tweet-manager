@@ -17,7 +17,7 @@ interface TweetStatusBarProps {
   hasMore: boolean;
   isRunning: boolean;
   bulkLoadProgress?: { current: number; targetDate?: string };
-  startDate: Date | null;
+  startDate: string | null;
   oldestTweetDate: Date | null;
   onLoadMore: () => void;
   onBulkLoad: (settings: BulkLoadSettings) => void;

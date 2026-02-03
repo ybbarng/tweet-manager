@@ -86,6 +86,13 @@ export interface IpcResponse<T> {
   error?: string;
 }
 
+/** 트윗 조회 결과 */
+export interface FetchTweetsResult {
+  tweets: Tweet[];
+  nextCursor?: string;
+  user?: TwitterUser;
+}
+
 /** 테마 모드 */
 export type ThemeMode = 'system' | 'light' | 'dark';
 

@@ -105,7 +105,9 @@ export async function fetchTweets(
   cursor?: string,
   pageNumber?: number,
   count?: number,
-) {
+): Promise<
+  IpcResponse<{ tweets: Tweet[]; nextCursor?: string; user?: TwitterUser }>
+> {
   return getAPI().twitter.fetchTweets(cursor, pageNumber, count);
 }
 
