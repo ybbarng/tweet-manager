@@ -179,9 +179,10 @@ export default function TweetManager() {
   );
 
   const handleLoadMore = useCallback(() => {
-    if (apiLoading || !nextCursor || !hasMore) return;
+    if (apiLoading || !hasMore) return;
+    // nextCursor가 없으면 처음부터 로드 (트윗이 0개인 경우)
     handleApiLoad(nextCursor);
-  }, [apiLoading, nextCursor, hasMore, handleApiLoad]);
+  }, [apiLoading, hasMore, handleApiLoad, nextCursor]);
 
   // 연속 불러오기 (startDate까지 자동 로드)
   const handleBulkLoad = useCallback(

@@ -134,7 +134,7 @@ export default function TweetStatusBar({
                 disabled={loading || isRunning}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 disabled:bg-neutral-400 text-white rounded-l-lg"
               >
-                더 불러오기
+                {tweets.length === 0 ? '트윗 불러오기' : '더 불러오기'}
               </button>
               <button
                 type="button"
